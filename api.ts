@@ -1,6 +1,6 @@
 /**
  * Knetik Platform API Documentation latest 
- * This is the spec for the Knetik API.  Use this in conjunction with the documentation found at https://knetikcloud.com
+ * This is the spec for the Knetik API.  Use this in conjunction with the documentation found at https://knetikcloud.com.
  *
  * OpenAPI spec version: latest 
  * Contact: support@knetik.com
@@ -21,91 +21,6 @@ let defaultBasePath = 'https://sandbox.knetikcloud.com';
 // ===============================================
 
 /* tslint:disable:no-unused-variable */
-
-export class AOccurrenceOfAnActivityTheActualGameForExampleUsedToTrackScoresParticipantsAndProvideSettings {
-    /**
-    * The id of the activity
-    */
-    'activityId': number;
-    /**
-    * The id of the challenge activity (as part of the event, required if eventId set)
-    */
-    'challengeActivityId': number;
-    /**
-    * The date this occurrence was created, unix timestamp in seconds
-    */
-    'createdDate': number;
-    /**
-    * The entitlement item required to enter the occurrence. Required if not part of an event. Must come from the set of entitlement items listed in the activity
-    */
-    'entitlement': ActivityEntitlementResource;
-    /**
-    * The id of the event
-    */
-    'eventId': number;
-    /**
-    * The id of the activity occurrence
-    */
-    'id': number;
-    /**
-    * Indicate if the rewards have been given out already
-    */
-    'rewardStatus': AOccurrenceOfAnActivityTheActualGameForExampleUsedToTrackScoresParticipantsAndProvideSettings.RewardStatusEnum;
-    /**
-    * The values selected from the available settings defined for the activity. Ex: difficulty: hard. Can be left out if the activity is played during an event and the settings are already set at the event level. Ex: every monday, difficulty: hard, number of questions: 10, category: sport. Otherwise, the set must exactly match those of the activity.
-    */
-    'settings': Array<SelectedSettingResource>;
-    /**
-    * Whether this occurrence will be ran as a simulation. Simulations will not be rewarded. Useful for bot play or trials
-    */
-    'simulated': boolean;
-    /**
-    * The date this occurrence was started, unix timestamp in seconds. null if not yet started
-    */
-    'startDate': number;
-    /**
-    * The current status of the occurrence (default: OPEN)
-    */
-    'status': AOccurrenceOfAnActivityTheActualGameForExampleUsedToTrackScoresParticipantsAndProvideSettings.StatusEnum;
-    /**
-    * The date this occurrence was last updated, unix timestamp in seconds
-    */
-    'updatedDate': number;
-    /**
-    * The list of users participating in this occurrence. Can only be set directly with ACTIVITIES_ADMIN permission
-    */
-    'users': Array<ActivityUserResource>;
-}
-
-export namespace AOccurrenceOfAnActivityTheActualGameForExampleUsedToTrackScoresParticipantsAndProvideSettings {
-    export enum RewardStatusEnum {
-        Pending = <any> 'pending',
-        Failed = <any> 'failed',
-        Complete = <any> 'complete',
-        Partial = <any> 'partial'
-    }
-    export enum StatusEnum {
-        SETUP = <any> 'SETUP',
-        OPEN = <any> 'OPEN',
-        PLAYING = <any> 'PLAYING',
-        FINISHED = <any> 'FINISHED',
-        ABANDONED = <any> 'ABANDONED'
-    }
-}
-export class ARequestToResetAUsersPasswordByUsingAKnownUserProperty {
-    /**
-    * The user's email address
-    */
-    'email': string;
-    /**
-    * The user's mobile phone number
-    */
-    'mobileNumber': string;
-    /**
-    * The user's username
-    */
-    'username': string;
-}
 
 export class AchievementDefinitionResource {
     /**
@@ -267,11 +182,157 @@ export class ActivityOccurrenceJoinResult {
     'userId': number;
 }
 
+/**
+* A occurrence of an activity (the actual game for example). Used to track scores, participants, and provide settings
+*/
+export class ActivityOccurrenceResource {
+    /**
+    * The id of the activity
+    */
+    'activityId': number;
+    /**
+    * The id of the challenge activity (as part of the event, required if eventId set)
+    */
+    'challengeActivityId': number;
+    /**
+    * The date this occurrence was created, unix timestamp in seconds
+    */
+    'createdDate': number;
+    /**
+    * The entitlement item required to enter the occurrence. Required if not part of an event. Must come from the set of entitlement items listed in the activity
+    */
+    'entitlement': ActivityEntitlementResource;
+    /**
+    * The id of the event
+    */
+    'eventId': number;
+    /**
+    * The id of the activity occurrence
+    */
+    'id': number;
+    /**
+    * Indicate if the rewards have been given out already
+    */
+    'rewardStatus': ActivityOccurrenceResource.RewardStatusEnum;
+    /**
+    * The values selected from the available settings defined for the activity. Ex: difficulty: hard. Can be left out if the activity is played during an event and the settings are already set at the event level. Ex: every monday, difficulty: hard, number of questions: 10, category: sport. Otherwise, the set must exactly match those of the activity.
+    */
+    'settings': Array<SelectedSettingResource>;
+    /**
+    * Whether this occurrence will be ran as a simulation. Simulations will not be rewarded. Useful for bot play or trials
+    */
+    'simulated': boolean;
+    /**
+    * The date this occurrence was started, unix timestamp in seconds. null if not yet started
+    */
+    'startDate': number;
+    /**
+    * The current status of the occurrence (default: OPEN)
+    */
+    'status': ActivityOccurrenceResource.StatusEnum;
+    /**
+    * The date this occurrence was last updated, unix timestamp in seconds
+    */
+    'updatedDate': number;
+    /**
+    * The list of users participating in this occurrence. Can only be set directly with ACTIVITIES_ADMIN permission
+    */
+    'users': Array<ActivityUserResource>;
+}
+
+export namespace ActivityOccurrenceResource {
+    export enum RewardStatusEnum {
+        Pending = <any> 'pending',
+        Failed = <any> 'failed',
+        Complete = <any> 'complete',
+        Partial = <any> 'partial'
+    }
+    export enum StatusEnum {
+        SETUP = <any> 'SETUP',
+        OPEN = <any> 'OPEN',
+        PLAYING = <any> 'PLAYING',
+        FINISHED = <any> 'FINISHED',
+        ABANDONED = <any> 'ABANDONED'
+    }
+}
 export class ActivityOccurrenceResults {
     /**
     * The game results for each user. Include all users that played (paid to get in) even if they were eliminated without a result. A null metric is allowed
     */
+    'users': Array<UserActivityResults>;
+}
+
+export class ActivityOccurrenceResultsResource {
+    /**
+    * The game results for each user. Include all users that played (paid to get in) even if they were eliminated without a result. A null metric is allowed
+    */
     'users': Array<UserActivityResultsResource>;
+}
+
+/**
+* Represents an activity that can be parameterized and tracked through metrics (scores, etc)
+*/
+export class ActivityResource {
+    /**
+    * A map of additional properties keyed on the property name. Used to further describe an activity. While settings will vary from one activity occurrence (a game) to another, additional properties are shared by all the occurrences of this activity. Ex: Activity Logo, Disclaimer, Greeting, etc. Validated against template if one exists for activities
+    */
+    'additionalProperties': { [key: string]: Property; };
+    /**
+    * The date/time this resource was created in seconds since unix epoch
+    */
+    'createdDate': number;
+    /**
+    * The list of items that can be used for entitlement (wager amounts/etc)
+    */
+    'entitlements': Array<ActivityEntitlementResource>;
+    /**
+    * The unique ID for that resource
+    */
+    'id': number;
+    /**
+    * Details about how to launch the activity
+    */
+    'launch': string;
+    /**
+    * The user friendly name of that resource. Defaults to blank string
+    */
+    'longDescription': string;
+    /**
+    * The user friendly name of that resource
+    */
+    'name': string;
+    /**
+    * The rewards to give at the end of each occurence of the activity. When creating/updating only id is used. Reward set must be pre-existing
+    */
+    'rewardSet': RewardSetResource;
+    /**
+    * Define what parameters are required/available to start and run an activity. For example: Difficulty, Number of Questions, Character name, Avatar, Duration, etc. Not populated when getting listing
+    */
+    'settings': Array<AvailableSettingResource>;
+    /**
+    * The user friendly name of that resource. Defaults to blank string
+    */
+    'shortDescription': string;
+    /**
+    * Whether this activity is a template for other activities. Default: false
+    */
+    'template': boolean;
+    /**
+    * An activity template this activity is validated against (private). May be null and no validation of additional_properties will be done
+    */
+    'templateId': string;
+    /**
+    * The type of the activity
+    */
+    'type': string;
+    /**
+    * The unique key (for static reference in code) of the activity
+    */
+    'uniqueKey': string;
+    /**
+    * The date/time this resource was last updated in seconds since unix epoch
+    */
+    'updatedDate': number;
 }
 
 export class ActivityUserResource {
@@ -512,36 +573,34 @@ export class ArtistResource {
     'updatedDate': number;
 }
 
-export class AudioGroupProperty extends FileGroupProperty {
-}
-
-export class AudioGroupPropertyDefinitionResource extends FileGroupPropertyDefinitionResource {
+/**
+* The definition of an activity parameters: ex: difficulty level
+*/
+export class AvailableSettingResource {
     /**
-    * If provided, the maximum length of the audio
+    * Whether the setting is advanced. Default: false
     */
-    'maxLength': number;
+    'advancedOption': boolean;
     /**
-    * If provided, the minimum length of the audio
+    * The default value of the setting (must be in options array). Ex: easy
     */
-    'minLength': number;
-}
-
-export class AudioProperty extends FileProperty {
-}
-
-export class AudioPropertyDefinitionResource extends PropertyDefinitionResource {
+    'defaultValue': string;
     /**
-    * If provided, a file type the property must match
+    * The description of the setting: Ex: Choose the difficulty level to show more or less complicated questions (for a trivia activity)
     */
-    'fileType': string;
+    'description': string;
     /**
-    * If provided, the maximum length of the audio
+    * The unique ID for the setting: Ex: difficulty
     */
-    'maxLength': number;
+    'key': string;
     /**
-    * If provided, the minimum length of the audio
+    * The textual name of the setting: Ex: Difficulty Level
     */
-    'minLength': number;
+    'name': string;
+    /**
+    * The set of options available for this setting, Ex: easy, medium, hard
+    */
+    'options': Array<SettingOption>;
 }
 
 export class BareActivityResource {
@@ -694,7 +753,7 @@ export class BehaviorDefinitionResource {
     /**
     * Configurable properties of the behavior
     */
-    'properties': Array<PropertyDefinitionResource>;
+    'properties': Array<PropertyFieldResource>;
     /**
     * The behavior type
     */
@@ -706,16 +765,6 @@ export class BillingReport {
     'id': string;
     'lastKnownFailures': Array<string>;
     'statistics': { [key: string]: number; };
-}
-
-export class BooleanProperty extends Property {
-    /**
-    * The value
-    */
-    'value': boolean;
-}
-
-export class BooleanPropertyDefinitionResource extends PropertyDefinitionResource {
 }
 
 export class BooleanResource {
@@ -905,6 +954,10 @@ export class BreTriggerParameterDefinition {
     */
     'name': string;
     /**
+    * Whether this parameter can be left off when firing the event. Default false
+    */
+    'optional': boolean;
+    /**
     * The variable type of this parameter. See Bre Variables endpoint for list
     */
     'type': string;
@@ -982,15 +1035,6 @@ export class BroadcastableEvent {
     'type': string;
 }
 
-export class BundleItem extends StoreItem {
-    /**
-    * The skus of items to be included in this bundle, and how they influence the bundle total price.  Must have at least one SKU
-    */
-    'bundledSkus': Array<BundledSku>;
-}
-
-export namespace BundleItem {
-}
 export class BundledSku {
     /**
     * The amount this item will cost inside the bundle instead of its regular price
@@ -1004,9 +1048,6 @@ export class BundledSku {
     * The stock keeping unit (SKU) for an item included in the bundle
     */
     'sku': string;
-}
-
-export class CacheClearEvent extends BroadcastableEvent {
 }
 
 export class CampaignResource {
@@ -1517,7 +1558,7 @@ export class ClientResource {
     */
     'clientKey': string;
     /**
-    * The oauth grant type as in: password (username/password auth), client_credentials (server-to-server, private clients), refresh_token (to allow clients to refresh their initial token), facebook, google, etc) See documentation for a complete list. use dedicated endpoint PUT /grant-types to edit this list
+    * The oauth grant type as in: password (username/password auth), client_credentials (server-to-server, private clients), refresh_token (to allow clients to refresh their initial token), facebook, google, etc) See documentation for a complete list. Use dedicated endpoint PUT /grant-types to edit this list
     */
     'grantTypes': Array<string>;
     /**
@@ -1629,13 +1670,6 @@ export class ConstantResource {
     'type': string;
     'value': any;
     'valueType': string;
-}
-
-export class Consumable extends Behavior {
-    /**
-    * The maximum number of times an item can be used
-    */
-    'maxUse': number;
 }
 
 export class ContributionResource {
@@ -1770,62 +1804,6 @@ export namespace CouponDefinition {
         Tag = <any> 'coupon_tag'
     }
 }
-export class CouponItem extends StoreItem {
-    /**
-    * The type of coupon
-    */
-    'couponTypeHint': CouponItem.CouponTypeHintEnum;
-    /**
-    * The amount this coupon is maxed out at.  Applies if coupon_type_hint is coupon_cart
-    */
-    'discountMax': number;
-    /**
-    * The minimium amount needed in the cart for the coupon to apply.  Applies if coupon_type_hint is coupon_cart
-    */
-    'discountMinCartValue': number;
-    /**
-    * The type of discount in terms of how it deducts price. Value based discount not available for coupon_cart type coupons
-    */
-    'discountType': CouponItem.DiscountTypeEnum;
-    /**
-    * The amount the coupon will discount the item. If discount_type is 'value' this will be a flat amount of currency. If discount type is 'percentage' this will be a fraction (0.2 for 20% off) multiplied by the price of the matching item or items.
-    */
-    'discountValue': number;
-    /**
-    * Whether this coupon is exclusive or not (true means cannot be in same cart as another).  Default = false
-    */
-    'exclusive': boolean;
-    /**
-    * The id of the item the coupon is applied to.  Applies if coupon_type_hint is coupon_single_item or coupon_voucher
-    */
-    'itemId': number;
-    /**
-    * The maximum quantity of items the coupon can apply to, null if no limit and minimum 1 otherwise.  Applies if coupon_type_hint is coupon_single_item or coupon_voucher
-    */
-    'maxQuantity': number;
-    /**
-    * Whether this coupon is exclusive to itself or not (true means cannot add two of this same coupon to the same cart).  Default = false
-    */
-    'selfExclusive': boolean;
-    /**
-    * A list of tags for a coupon.  The coupon can only apply to an item that has at least one of these tags.  Applies if coupon_type_hint is coupon_tag
-    */
-    'validForTags': Array<string>;
-}
-
-export namespace CouponItem {
-    export enum CouponTypeHintEnum {
-        Cart = <any> 'coupon_cart',
-        SingleItem = <any> 'coupon_single_item',
-        Voucher = <any> 'coupon_voucher',
-        Vendor = <any> 'coupon_vendor',
-        Tag = <any> 'coupon_tag'
-    }
-    export enum DiscountTypeEnum {
-        Value = <any> 'value',
-        Percentage = <any> 'percentage'
-    }
-}
 export class CreateBillingAgreementRequest {
     /**
     * The endpoint URL to which PayPal should forward the user if they cancel (do not accept) the agreement
@@ -1900,6 +1878,7 @@ export namespace CurrencyResource {
 export class CustomerConfig {
     'aliases': string;
     'database': DatabaseConfig;
+    'io': IOConfig;
     'name': string;
     's3Config': S3Config;
 }
@@ -1913,24 +1892,6 @@ export class DateOperationResource {
     'args': Array<ExpressionResource>;
     'op': string;
     'type': string;
-}
-
-export class DateProperty extends Property {
-    /**
-    * The value
-    */
-    'value': number;
-}
-
-export class DatePropertyDefinitionResource extends PropertyDefinitionResource {
-    /**
-    * If provided, the maximum value
-    */
-    'max': number;
-    /**
-    * If provided, the minimum value
-    */
-    'min': number;
 }
 
 export class DeltaResource {
@@ -2106,32 +2067,11 @@ export class DoubleOperationResource {
     'type': string;
 }
 
-export class DoubleProperty extends Property {
-    /**
-    * The value
-    */
-    'value': number;
-}
-
-export class DoublePropertyDefinitionResource extends PropertyDefinitionResource {
-    /**
-    * If provided, the maximum value
-    */
-    'max': number;
-    /**
-    * If provided, the minimum value
-    */
-    'min': number;
-}
-
 export class EntitlementGrantRequest {
     /**
     * The ID of the entitlement item to grant
     */
     'entitlementId': number;
-}
-
-export class EntitlementItem extends Item {
 }
 
 export class ErrorResource {
@@ -2155,17 +2095,6 @@ export class EventContextResource {
     'type': string;
 }
 
-export class Expirable extends Behavior {
-    /**
-    * The length of time
-    */
-    'timeLength': number;
-    /**
-    * The unit of time
-    */
-    'unitOfTime': string;
-}
-
 export class ExpressionResource {
     'type': string;
 }
@@ -2178,62 +2107,6 @@ export class FacebookToken {
     * A valid access token from facebook. See facebook documention for how to obtain one.
     */
     'accessToken': string;
-}
-
-export class FileGroupProperty extends Property {
-    /**
-    * The list of files
-    */
-    'files': Array<FileProperty>;
-}
-
-export class FileGroupPropertyDefinitionResource extends PropertyDefinitionResource {
-    /**
-    * If provided, a file type that the property must match
-    */
-    'fileType': string;
-    /**
-    * If provided, the maximum number of files in the group
-    */
-    'maxCount': number;
-    /**
-    * If provided, the maximum allowed size per file in bytes
-    */
-    'maxFileSize': number;
-    /**
-    * If provided, the minimum number of files in the group
-    */
-    'minCount': number;
-}
-
-export class FileProperty extends Property {
-    /**
-    * A crc value for file integrity verification
-    */
-    'crc': string;
-    /**
-    * A description of the file
-    */
-    'description': string;
-    /**
-    * The type of file such as txt, mp3, mov or csv
-    */
-    'fileType': string;
-    /**
-    * The url of the file
-    */
-    'url': string;
-}
-
-export class FilePropertyDefinitionResource extends PropertyDefinitionResource {
-    /**
-    * If provided, a file type that the property must match
-    */
-    'fileType': string;
-    /**
-    * If provided, the maximum allowed file size in bytes
-    */
-    'maxFileSize': number;
 }
 
 export class FinalizeBillingAgreementRequest {
@@ -2346,20 +2219,6 @@ export class FlagResource {
     'user': SimpleUserResource;
 }
 
-export class FormattedTextProperty extends Property {
-    /**
-    * The value
-    */
-    'value': string;
-}
-
-export class FormattedTextPropertyDefinitionResource extends PropertyDefinitionResource {
-    /**
-    * If provided, the maximum length of the text
-    */
-    'maxLength': number;
-}
-
 export class ForwardLog {
     /**
     * The end date of the forward log entry
@@ -2394,13 +2253,6 @@ export class ForwardLog {
     * The endpoint url of the forward log entry
     */
     'url': string;
-}
-
-export class Fulfillable extends Behavior {
-    /**
-    * The name of the fulfillment type that describes how the item should be fulfilled.  Examples: inventory, wallet, amazon
-    */
-    'typeName': string;
 }
 
 export class FulfillmentType {
@@ -2541,63 +2393,11 @@ export namespace GroupResource {
         Closed = <any> 'closed'
     }
 }
-export class GuestPlayable extends Behavior {
-    /**
-    * Whether guests are allowed to use items
-    */
-    'allowed': boolean;
-    /**
-    * Whether guests are allowed on the leaderboard
-    */
-    'leaderboard': boolean;
-}
-
-export class ImageGroupProperty extends FileGroupProperty {
-}
-
-export class ImageGroupPropertyDefinitionResource extends FileGroupPropertyDefinitionResource {
-    /**
-    * If provided, the maximum height of each image
-    */
-    'maxHeight': number;
-    /**
-    * If provided, the maximum width of each image
-    */
-    'maxWidth': number;
-    /**
-    * If provided, the minimum height of each image
-    */
-    'minHeight': number;
-    /**
-    * If provided, the minumum width of each image
-    */
-    'minWidth': number;
-}
-
-export class ImageProperty extends FileProperty {
-}
-
-export class ImagePropertyDefinitionResource extends PropertyDefinitionResource {
-    /**
-    * If provided, a file type that the property must match
-    */
-    'fileType': string;
-    /**
-    * If provided, the maximum height of the image
-    */
-    'maxHeight': number;
-    /**
-    * If provided, the maximum width of the image
-    */
-    'maxWidth': number;
-    /**
-    * If provided, the minimum height of the image
-    */
-    'minHeight': number;
-    /**
-    * If provided, the minimum width of the image
-    */
-    'minWidth': number;
+export class IOConfig {
+    'customer': string;
+    'enabled': boolean;
+    'environment': string;
+    'product': string;
 }
 
 export class ImportJobOutputResource {
@@ -2672,24 +2472,6 @@ export class IntegerOperationResource {
     'type': string;
 }
 
-export class IntegerProperty extends Property {
-    /**
-    * The value
-    */
-    'value': number;
-}
-
-export class IntegerPropertyDefinitionResource extends PropertyDefinitionResource {
-    /**
-    * If provided, the maximum value
-    */
-    'max': number;
-    /**
-    * If provided, the minimum value
-    */
-    'min': number;
-}
-
 export class InventorySubscriptionResource {
     /**
     * The date the subscription will be billed
@@ -2724,11 +2506,19 @@ export class InventorySubscriptionResource {
     */
     'paymentMethod': PaymentMethodResource;
     /**
-    * The recurring price
+    * The recurring price that has been set to override the base price. Null if not overriding
+    */
+    'priceOverride': number;
+    /**
+    * An explanation for the reason the price is being overridden
+    */
+    'priceOverrideReason': string;
+    /**
+    * The default recurring price
     */
     'recurringPrice': number;
     /**
-    * The sku of the subscription
+    * The recurring sku of the subscription
     */
     'sku': string;
     /**
@@ -2760,7 +2550,6 @@ export class InvoiceCreateRequest {
 }
 
 export class InvoiceItemResource {
-    'affiliateId': number;
     'bundleSku': string;
     'currentFulfillmentStatus': string;
     'id': number;
@@ -3092,6 +2881,10 @@ export class LeaderboardEntryResource {
     */
     'score': number;
     /**
+    * The date this score was recorded or updated. Unix timestamp in seconds
+    */
+    'updatedDate': number;
+    /**
     * The player for this entry
     */
     'user': SimpleUserResource;
@@ -3139,10 +2932,6 @@ export class LevelingResource {
     'updatedDate': number;
 }
 
-export class LimitedGettable extends Behavior {
-    'group': LimitedGettableGroup;
-}
-
 export class LimitedGettableGroup {
     /**
     * Whether to get active items only
@@ -3165,24 +2954,6 @@ export class LocationLogResource {
     'country': string;
     'ip': string;
     'time': number;
-}
-
-export class LongProperty extends Property {
-    /**
-    * The value
-    */
-    'value': number;
-}
-
-export class LongPropertyDefinitionResource extends PropertyDefinitionResource {
-    /**
-    * If provided, the maximum value
-    */
-    'max': number;
-    /**
-    * If provided, the minimum value
-    */
-    'min': number;
 }
 
 export class LookupResource {
@@ -3269,10 +3040,6 @@ export class NestedCategory {
     * The name of the category
     */
     'name': string;
-}
-
-export class NewCustomerEvent extends BroadcastableEvent {
-    'customerConfig': CustomerConfig;
 }
 
 export class NewPasswordRequest {
@@ -4267,6 +4034,24 @@ export class ParameterResource {
     'value': any;
 }
 
+/**
+* A request to reset a user's password by using a known user property
+*/
+export class PasswordResetRequest {
+    /**
+    * The user's email address
+    */
+    'email': string;
+    /**
+    * The user's mobile phone number
+    */
+    'mobileNumber': string;
+    /**
+    * The user's username
+    */
+    'username': string;
+}
+
 export class PayBySavedMethodRequest {
     /**
     * The id of the payment method to use. Must belong to the caller, be public or have PAYMENTS_ADMIN permission
@@ -4324,7 +4109,7 @@ export class PaymentMethodResource {
     */
     'expirationYear': number;
     /**
-    * The unique ID for that resource
+    * The unique ID of the resource
     */
     'id': number;
     /**
@@ -4332,11 +4117,7 @@ export class PaymentMethodResource {
     */
     'last4': string;
     /**
-    * The user friendly name of that resource. Defaults to blank string
-    */
-    'longDescription': string;
-    /**
-    * The user friendly name of that resource
+    * The user friendly name of the resource
     */
     'name': string;
     /**
@@ -4347,10 +4128,6 @@ export class PaymentMethodResource {
     * The generic payment type. Default is card
     */
     'paymentType': PaymentMethodResource.PaymentTypeEnum;
-    /**
-    * The user friendly name of that resource. Defaults to blank string
-    */
-    'shortDescription': string;
     /**
     * The sort value for the payment method
     */
@@ -4515,13 +4292,6 @@ export class PollResponseResource {
     'user': SimpleUserResource;
 }
 
-export class PreReqEntitlement extends Behavior {
-    /**
-    * The item ids that must already be in the user's inventory
-    */
-    'itemIds': Array<number>;
-}
-
 export class PredicateOperation {
     'args': Array<Expressionobject>;
     'operator': Operator;
@@ -4537,17 +4307,6 @@ export class PredicateResource {
     */
     'op': string;
     'type': string;
-}
-
-export class PriceOverridable extends Behavior {
-    /**
-    * The maximum price allowed
-    */
-    'maxPrice': number;
-    /**
-    * The minimum price allowed
-    */
-    'minPrice': number;
 }
 
 export class Property {
@@ -4791,6 +4550,10 @@ export class RefundRequest {
     */
     'amount': number;
     /**
+    * The SKU of a bundle item from the invoice that the target item is within.
+    */
+    'bundleSku': string;
+    /**
     * Notes about or reason for the refund
     */
     'notes': string;
@@ -4813,69 +4576,6 @@ export class RefundResource {
     * The id of the original transaction
     */
     'transactionId': number;
-}
-
-export class RepresentsAnActivityThatCanBeParameterizedAndTrackedThroughMetricsScoresEtc {
-    /**
-    * A map of additional properties keyed on the property name. Used to further describe an activity. While settings will vary from one activity occurrence (a game) to another, additional properties are shared by all the occurrences of this activity. Ex: Activity Logo, Disclaimer, Greeting, etc. Validated against template if one exists for activities
-    */
-    'additionalProperties': { [key: string]: Property; };
-    /**
-    * The date/time this resource was created in seconds since unix epoch
-    */
-    'createdDate': number;
-    /**
-    * The list of items that can be used for entitlement (wager amounts/etc)
-    */
-    'entitlements': Array<ActivityEntitlementResource>;
-    /**
-    * The unique ID for that resource
-    */
-    'id': number;
-    /**
-    * Details about how to launch the activity
-    */
-    'launch': string;
-    /**
-    * The user friendly name of that resource. Defaults to blank string
-    */
-    'longDescription': string;
-    /**
-    * The user friendly name of that resource
-    */
-    'name': string;
-    /**
-    * The rewards to give at the end of each occurence of the activity. When creating/updating only id is used. Reward set must be pre-existing
-    */
-    'rewardSet': RewardSetResource;
-    /**
-    * Define what parameters are required/available to start and run an activity. For example: Difficulty, Number of Questions, Character name, Avatar, Duration, etc. Not populated when getting listing
-    */
-    'settings': Array<TheDefinitionOfAnActivityParametersExDifficultyLevel>;
-    /**
-    * The user friendly name of that resource. Defaults to blank string
-    */
-    'shortDescription': string;
-    /**
-    * Whether this activity is a template for other activities. Default: false
-    */
-    'template': boolean;
-    /**
-    * An activity template this activity is validated against (private). May be null and no validation of additional_properties will be done
-    */
-    'templateId': string;
-    /**
-    * The type of the activity
-    */
-    'type': string;
-    /**
-    * The unique key (for static reference in code) of the activity
-    */
-    'uniqueKey': string;
-    /**
-    * The date/time this resource was last updated in seconds since unix epoch
-    */
-    'updatedDate': number;
 }
 
 export class Result {
@@ -5185,23 +4885,6 @@ export class SettingOption {
     'value': string;
 }
 
-export class ShippingItem extends StoreItem {
-    /**
-    * A unique list of country iso3 codes that allow the shipping option
-    */
-    'countries': Array<string>;
-    /**
-    * An abstract max value that the values of item's shipping_tier work against to decide whether an order can be fulfilled
-    */
-    'maxTierTotal': number;
-    /**
-    * Whether tax should be applied to the shipping price.  Default = false
-    */
-    'taxable': boolean;
-}
-
-export namespace ShippingItem {
-}
 export class SimpleReferenceResourceint {
     /**
     * The id of the referenced object
@@ -5350,17 +5033,6 @@ export class SkuRequest {
     'sku': string;
 }
 
-export class Spendable extends Behavior {
-    /**
-    * The code of the currency
-    */
-    'currencyCode': string;
-    /**
-    * The spendable value
-    */
-    'value': number;
-}
-
 export class SqlDatabaseConfig {
     'connectionPoolSize': number;
     'dbName': string;
@@ -5416,47 +5088,6 @@ export class StateTaxResource {
     'taxShipping': boolean;
 }
 
-export class StoreItem extends Item {
-    /**
-    * Whether or not the item is currently displayable.  Default = true
-    */
-    'displayable': boolean;
-    /**
-    * A list of country ID to include in the blacklist/whitelist geo policy
-    */
-    'geoCountryList': Array<string>;
-    /**
-    * Whether to use the geo_country_list as a black list or white list for item geographical availability
-    */
-    'geoPolicyType': StoreItem.GeoPolicyTypeEnum;
-    /**
-    * Provides the abstract shipping needs if this item is physical and can be shipped.  A value of zero means no shipping needed.  Default = 0
-    */
-    'shippingTier': number;
-    /**
-    * The skus for the item. Each defines a unique configuration for the item to be purchased (Large-Blue, Small-Green, etc). These are what is ultimately selected in the store and added to the cart
-    */
-    'skus': Array<Sku>;
-    /**
-    * The date the item will leave the store, unix timestamp in seconds.  If set to null, item will never leave the store
-    */
-    'storeEnd': number;
-    /**
-    * The date the item will appear in the store, unix timestamp in seconds.  If set to null, item will appear in store immediately
-    */
-    'storeStart': number;
-    /**
-    * The vendor who provides the item
-    */
-    'vendorId': number;
-}
-
-export namespace StoreItem {
-    export enum GeoPolicyTypeEnum {
-        Whitelist = <any> 'whitelist',
-        Blacklist = <any> 'blacklist'
-    }
-}
 export class StoreItemTemplateResource {
     /**
     * The customized behaviors that are required or default for this type of item
@@ -5516,18 +5147,6 @@ export class StripePaymentRequest {
     'token': string;
 }
 
-export class Subscription extends StoreItem {
-    'availability': Subscription.AvailabilityEnum;
-    'consolidationDayOfMonth': number;
-    'subscriptionPlans': Array<SubscriptionPlan>;
-}
-
-export namespace Subscription {
-    export enum AvailabilityEnum {
-        All = <any> 'all',
-        NewSubscribers = <any> 'new_subscribers'
-    }
-}
 export class SubscriptionCreditResource {
     /**
     * The amount of the credit, negative for debt
@@ -5729,6 +5348,17 @@ export namespace SubscriptionPlanResource {
         Year = <any> 'year'
     }
 }
+export class SubscriptionPriceOverrideRequest {
+    /**
+    * The recurring price that has been set to override the base price. Null if not overriding
+    */
+    'newPrice': number;
+    /**
+    * An explanation for the reason the price is being overridden
+    */
+    'reason': string;
+}
+
 export class SubscriptionResource {
     /**
     * A map of item additional properties, keyed on the property name. Must match the names and types defined in the template for this item type.
@@ -5911,47 +5541,6 @@ export class TemplateSMSResource {
     'templateVars': Array<string>;
 }
 
-export class TextProperty extends Property {
-    /**
-    * The value
-    */
-    'value': string;
-}
-
-export class TextPropertyDefinitionResource extends PropertyDefinitionResource {
-    /**
-    * If provided, the maximum length of the text
-    */
-    'maxLength': number;
-}
-
-export class TheDefinitionOfAnActivityParametersExDifficultyLevel {
-    /**
-    * Whether the setting is advanced. Default: false
-    */
-    'advancedOption': boolean;
-    /**
-    * The default value of the setting (must be in options array). Ex: easy
-    */
-    'defaultValue': string;
-    /**
-    * The description of the setting: Ex: Choose the difficulty level to show more or less complicated questions (for a trivia activity)
-    */
-    'description': string;
-    /**
-    * The unique ID for the setting: Ex: difficulty
-    */
-    'key': string;
-    /**
-    * The textual name of the setting: Ex: Difficulty Level
-    */
-    'name': string;
-    /**
-    * The set of options available for this setting, Ex: easy, medium, hard
-    */
-    'options': Array<SettingOption>;
-}
-
 export class TierResource {
     /**
     * A map of additional properties, keyed on the property name.  Must match the names and types defined in the template for this item type
@@ -5971,41 +5560,8 @@ export class TierResource {
     'triggerEventName': string;
 }
 
-export class TimePeriodGettable extends Behavior {
-    /**
-    * The time period limit
-    */
-    'getLimit': number;
-    /**
-    * The name of a group of items. Multiple items with the same group name will be limited together, leave null to be assigned a random unique name. It is typical that the other properties here will be the same for all, but this is not enforced and the item being recieved will use its settings.
-    */
-    'groupName': string;
-    /**
-    * The length of time
-    */
-    'timeLength': number;
-    /**
-    * The unit of time
-    */
-    'unitOfTime': string;
-}
-
-export class TimePeriodUsable extends Behavior {
-    /**
-    * The amount of times it can be used
-    */
-    'maxUse': number;
-    /**
-    * The length of time
-    */
-    'timeLength': number;
-    /**
-    * The unit of time
-    */
-    'unitOfTime': string;
-}
-
 export class TokenDetailsResource {
+    'clientId': string;
     'roles': Array<string>;
     'userId': number;
 }
@@ -6173,7 +5729,7 @@ export class UserActionLog {
     'userId': number;
 }
 
-export class UserActivityResultsResource {
+export class UserActivityResults {
     /**
     * Any currency rewarded to this user
     */
@@ -6199,9 +5755,28 @@ export class UserActivityResultsResource {
     */
     'ties': number;
     /**
+    * The date this score was recorded or updated. Unix timestamp in seconds
+    */
+    'updatedDate': number;
+    /**
     * The player for this entry
     */
     'user': SimpleUserResource;
+}
+
+export class UserActivityResultsResource {
+    /**
+    * The raw score. Null means non-compete or disqualification
+    */
+    'score': number;
+    /**
+    * Any tags for the metric. Each unique tag will translate into a unique leaderboard. Maximum 5 tags and 50 characters each
+    */
+    'tags': Array<string>;
+    /**
+    * The id of the player
+    */
+    'userId': number;
 }
 
 export class UserBaseResource {
@@ -6225,6 +5800,10 @@ export class UserBaseResource {
     * The id of the user
     */
     'id': number;
+    /**
+    * The date the user last interacted with the API (private)
+    */
+    'lastActivity': number;
     /**
     * The date the user's info was last updated as a unix timestamp
     */
@@ -6494,6 +6073,10 @@ export class UserResource {
     */
     'languageCode': string;
     /**
+    * The date the user last interacted with the API (private)
+    */
+    'lastActivity': number;
+    /**
     * The user's last name (private)
     */
     'lastName': string;
@@ -6648,70 +6231,6 @@ export class VendorResource {
 
 export class Version {
     'version': string;
-}
-
-export class VideoGroupProperty extends FileGroupProperty {
-}
-
-export class VideoGroupPropertyDefinitionResource extends FileGroupPropertyDefinitionResource {
-    /**
-    * If provided, the maximum height of each video
-    */
-    'maxHeight': number;
-    /**
-    * If provided, the maximum length of each video
-    */
-    'maxLength': number;
-    /**
-    * If provided, the maximum width of each video
-    */
-    'maxWidth': number;
-    /**
-    * If provided, the minimum height of each video
-    */
-    'minHeight': number;
-    /**
-    * If provided, the minimum length of each video
-    */
-    'minLength': number;
-    /**
-    * If provided, the minimum width of each video
-    */
-    'minWidth': number;
-}
-
-export class VideoProperty extends FileProperty {
-}
-
-export class VideoPropertyDefinitionResource extends PropertyDefinitionResource {
-    /**
-    * If provided, a file type that teh property must match
-    */
-    'fileType': string;
-    /**
-    * If provided, the maximum height of the video
-    */
-    'maxHeight': number;
-    /**
-    * If provided, the maximum length of the video
-    */
-    'maxLength': number;
-    /**
-    * If provided, the maximum width of the video
-    */
-    'maxWidth': number;
-    /**
-    * If provided, the minimum height of the video
-    */
-    'minHeight': number;
-    /**
-    * If provided, the minimum length of the video
-    */
-    'minLength': number;
-    /**
-    * If provided, the minimum width of the video
-    */
-    'minWidth': number;
 }
 
 export class VideoRelationshipResource {
@@ -6969,6 +6488,570 @@ export class XsollaPaymentRequest {
     'returnUrl': string;
 }
 
+export class AudioPropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, a file type the property must match
+    */
+    'fileType': string;
+    /**
+    * If provided, the maximum length of the audio
+    */
+    'maxLength': number;
+    /**
+    * If provided, the minimum length of the audio
+    */
+    'minLength': number;
+}
+
+export class BooleanProperty extends Property {
+    /**
+    * The value
+    */
+    'value': boolean;
+}
+
+export class BooleanPropertyDefinitionResource extends PropertyDefinitionResource {
+}
+
+export class CacheClearEvent extends BroadcastableEvent {
+    'customerSetup': boolean;
+    'customerTeardown': boolean;
+}
+
+export class Consumable extends Behavior {
+    /**
+    * The maximum number of times an item can be used
+    */
+    'maxUse': number;
+}
+
+export class DateProperty extends Property {
+    /**
+    * The value
+    */
+    'value': number;
+}
+
+export class DatePropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, the maximum value
+    */
+    'max': number;
+    /**
+    * If provided, the minimum value
+    */
+    'min': number;
+}
+
+export class DoubleProperty extends Property {
+    /**
+    * The value
+    */
+    'value': number;
+}
+
+export class DoublePropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, the maximum value
+    */
+    'max': number;
+    /**
+    * If provided, the minimum value
+    */
+    'min': number;
+}
+
+export class EntitlementItem extends Item {
+}
+
+export class Expirable extends Behavior {
+    /**
+    * The length of time
+    */
+    'timeLength': number;
+    /**
+    * The unit of time
+    */
+    'unitOfTime': string;
+}
+
+export class FileGroupProperty extends Property {
+    /**
+    * The list of files
+    */
+    'files': Array<FileProperty>;
+}
+
+export class FileGroupPropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, a file type that the property must match
+    */
+    'fileType': string;
+    /**
+    * If provided, the maximum number of files in the group
+    */
+    'maxCount': number;
+    /**
+    * If provided, the maximum allowed size per file in bytes
+    */
+    'maxFileSize': number;
+    /**
+    * If provided, the minimum number of files in the group
+    */
+    'minCount': number;
+}
+
+export class FileProperty extends Property {
+    /**
+    * A crc value for file integrity verification
+    */
+    'crc': string;
+    /**
+    * A description of the file
+    */
+    'description': string;
+    /**
+    * The type of file such as txt, mp3, mov or csv
+    */
+    'fileType': string;
+    /**
+    * The url of the file
+    */
+    'url': string;
+}
+
+export class FilePropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, a file type that the property must match
+    */
+    'fileType': string;
+    /**
+    * If provided, the maximum allowed file size in bytes
+    */
+    'maxFileSize': number;
+}
+
+export class FormattedTextProperty extends Property {
+    /**
+    * The value
+    */
+    'value': string;
+}
+
+export class FormattedTextPropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, the maximum length of the text
+    */
+    'maxLength': number;
+}
+
+export class Fulfillable extends Behavior {
+    /**
+    * The name of the fulfillment type that describes how the item should be fulfilled.  Examples: inventory, wallet, amazon
+    */
+    'typeName': string;
+}
+
+export class GuestPlayable extends Behavior {
+    /**
+    * Whether guests are allowed to use items
+    */
+    'allowed': boolean;
+    /**
+    * Whether guests are allowed on the leaderboard
+    */
+    'leaderboard': boolean;
+}
+
+export class ImagePropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, a file type that the property must match
+    */
+    'fileType': string;
+    /**
+    * If provided, the maximum height of the image
+    */
+    'maxHeight': number;
+    /**
+    * If provided, the maximum width of the image
+    */
+    'maxWidth': number;
+    /**
+    * If provided, the minimum height of the image
+    */
+    'minHeight': number;
+    /**
+    * If provided, the minimum width of the image
+    */
+    'minWidth': number;
+}
+
+export class IntegerProperty extends Property {
+    /**
+    * The value
+    */
+    'value': number;
+}
+
+export class IntegerPropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, the maximum value
+    */
+    'max': number;
+    /**
+    * If provided, the minimum value
+    */
+    'min': number;
+}
+
+export class LimitedGettable extends Behavior {
+    'group': LimitedGettableGroup;
+}
+
+export class LongProperty extends Property {
+    /**
+    * The value
+    */
+    'value': number;
+}
+
+export class LongPropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, the maximum value
+    */
+    'max': number;
+    /**
+    * If provided, the minimum value
+    */
+    'min': number;
+}
+
+export class NewCustomerEvent extends BroadcastableEvent {
+    'customerConfig': CustomerConfig;
+}
+
+export class PreReqEntitlement extends Behavior {
+    /**
+    * The item ids that must already be in the user's inventory
+    */
+    'itemIds': Array<number>;
+}
+
+export class PriceOverridable extends Behavior {
+    /**
+    * The maximum price allowed
+    */
+    'maxPrice': number;
+    /**
+    * The minimum price allowed
+    */
+    'minPrice': number;
+}
+
+export class RemoveCustomerEvent extends BroadcastableEvent {
+    'customerConfig': CustomerConfig;
+}
+
+export class Spendable extends Behavior {
+    /**
+    * The code of the currency
+    */
+    'currencyCode': string;
+    /**
+    * The spendable value
+    */
+    'value': number;
+}
+
+export class StoreItem extends Item {
+    /**
+    * Whether or not the item is currently displayable.  Default = true
+    */
+    'displayable': boolean;
+    /**
+    * A list of country ID to include in the blacklist/whitelist geo policy
+    */
+    'geoCountryList': Array<string>;
+    /**
+    * Whether to use the geo_country_list as a black list or white list for item geographical availability
+    */
+    'geoPolicyType': StoreItem.GeoPolicyTypeEnum;
+    /**
+    * Provides the abstract shipping needs if this item is physical and can be shipped.  A value of zero means no shipping needed.  Default = 0
+    */
+    'shippingTier': number;
+    /**
+    * The skus for the item. Each defines a unique configuration for the item to be purchased (Large-Blue, Small-Green, etc). These are what is ultimately selected in the store and added to the cart
+    */
+    'skus': Array<Sku>;
+    /**
+    * The date the item will leave the store, unix timestamp in seconds.  If set to null, item will never leave the store
+    */
+    'storeEnd': number;
+    /**
+    * The date the item will appear in the store, unix timestamp in seconds.  If set to null, item will appear in store immediately
+    */
+    'storeStart': number;
+    /**
+    * The vendor who provides the item
+    */
+    'vendorId': number;
+}
+
+export namespace StoreItem {
+    export enum GeoPolicyTypeEnum {
+        Whitelist = <any> 'whitelist',
+        Blacklist = <any> 'blacklist'
+    }
+}
+export class TextProperty extends Property {
+    /**
+    * The value
+    */
+    'value': string;
+}
+
+export class TextPropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, the maximum length of the text
+    */
+    'maxLength': number;
+}
+
+export class TimePeriodGettable extends Behavior {
+    /**
+    * The time period limit
+    */
+    'getLimit': number;
+    /**
+    * The name of a group of items. Multiple items with the same group name will be limited together, leave null to be assigned a random unique name. It is typical that the other properties here will be the same for all, but this is not enforced and the item being recieved will use its settings.
+    */
+    'groupName': string;
+    /**
+    * The length of time
+    */
+    'timeLength': number;
+    /**
+    * The unit of time
+    */
+    'unitOfTime': string;
+}
+
+export class TimePeriodUsable extends Behavior {
+    /**
+    * The amount of times it can be used
+    */
+    'maxUse': number;
+    /**
+    * The length of time
+    */
+    'timeLength': number;
+    /**
+    * The unit of time
+    */
+    'unitOfTime': string;
+}
+
+export class VideoPropertyDefinitionResource extends PropertyDefinitionResource {
+    /**
+    * If provided, a file type that teh property must match
+    */
+    'fileType': string;
+    /**
+    * If provided, the maximum height of the video
+    */
+    'maxHeight': number;
+    /**
+    * If provided, the maximum length of the video
+    */
+    'maxLength': number;
+    /**
+    * If provided, the maximum width of the video
+    */
+    'maxWidth': number;
+    /**
+    * If provided, the minimum height of the video
+    */
+    'minHeight': number;
+    /**
+    * If provided, the minimum length of the video
+    */
+    'minLength': number;
+    /**
+    * If provided, the minimum width of the video
+    */
+    'minWidth': number;
+}
+
+export class AudioGroupProperty extends FileGroupProperty {
+}
+
+export class AudioGroupPropertyDefinitionResource extends FileGroupPropertyDefinitionResource {
+    /**
+    * If provided, the maximum length of the audio
+    */
+    'maxLength': number;
+    /**
+    * If provided, the minimum length of the audio
+    */
+    'minLength': number;
+}
+
+export class AudioProperty extends FileProperty {
+}
+
+export class BundleItem extends StoreItem {
+    /**
+    * The skus of items to be included in this bundle, and how they influence the bundle total price.  Must have at least one SKU
+    */
+    'bundledSkus': Array<BundledSku>;
+}
+
+export namespace BundleItem {
+}
+export class CouponItem extends StoreItem {
+    /**
+    * The type of coupon
+    */
+    'couponTypeHint': CouponItem.CouponTypeHintEnum;
+    /**
+    * The amount this coupon is maxed out at.  Applies if coupon_type_hint is coupon_cart
+    */
+    'discountMax': number;
+    /**
+    * The minimium amount needed in the cart for the coupon to apply.  Applies if coupon_type_hint is coupon_cart
+    */
+    'discountMinCartValue': number;
+    /**
+    * The type of discount in terms of how it deducts price. Value based discount not available for coupon_cart type coupons
+    */
+    'discountType': CouponItem.DiscountTypeEnum;
+    /**
+    * The amount the coupon will discount the item. If discount_type is 'value' this will be a flat amount of currency. If discount type is 'percentage' this will be a fraction (0.2 for 20% off) multiplied by the price of the matching item or items.
+    */
+    'discountValue': number;
+    /**
+    * Whether this coupon is exclusive or not (true means cannot be in same cart as another).  Default = false
+    */
+    'exclusive': boolean;
+    /**
+    * The id of the item the coupon is applied to.  Applies if coupon_type_hint is coupon_single_item or coupon_voucher
+    */
+    'itemId': number;
+    /**
+    * The maximum quantity of items the coupon can apply to, null if no limit and minimum 1 otherwise.  Applies if coupon_type_hint is coupon_single_item or coupon_voucher
+    */
+    'maxQuantity': number;
+    /**
+    * Whether this coupon is exclusive to itself or not (true means cannot add two of this same coupon to the same cart).  Default = false
+    */
+    'selfExclusive': boolean;
+    /**
+    * A list of tags for a coupon.  The coupon can only apply to an item that has at least one of these tags.  Applies if coupon_type_hint is coupon_tag
+    */
+    'validForTags': Array<string>;
+}
+
+export namespace CouponItem {
+    export enum CouponTypeHintEnum {
+        Cart = <any> 'coupon_cart',
+        SingleItem = <any> 'coupon_single_item',
+        Voucher = <any> 'coupon_voucher',
+        Vendor = <any> 'coupon_vendor',
+        Tag = <any> 'coupon_tag'
+    }
+    export enum DiscountTypeEnum {
+        Value = <any> 'value',
+        Percentage = <any> 'percentage'
+    }
+}
+export class ImageGroupProperty extends FileGroupProperty {
+}
+
+export class ImageGroupPropertyDefinitionResource extends FileGroupPropertyDefinitionResource {
+    /**
+    * If provided, the maximum height of each image
+    */
+    'maxHeight': number;
+    /**
+    * If provided, the maximum width of each image
+    */
+    'maxWidth': number;
+    /**
+    * If provided, the minimum height of each image
+    */
+    'minHeight': number;
+    /**
+    * If provided, the minumum width of each image
+    */
+    'minWidth': number;
+}
+
+export class ImageProperty extends FileProperty {
+}
+
+export class ShippingItem extends StoreItem {
+    /**
+    * A unique list of country iso3 codes that allow the shipping option
+    */
+    'countries': Array<string>;
+    /**
+    * An abstract max value that the values of item's shipping_tier work against to decide whether an order can be fulfilled
+    */
+    'maxTierTotal': number;
+    /**
+    * Whether tax should be applied to the shipping price.  Default = false
+    */
+    'taxable': boolean;
+}
+
+export namespace ShippingItem {
+}
+export class Subscription extends StoreItem {
+    'availability': Subscription.AvailabilityEnum;
+    'consolidationDayOfMonth': number;
+    'subscriptionPlans': Array<SubscriptionPlan>;
+}
+
+export namespace Subscription {
+    export enum AvailabilityEnum {
+        All = <any> 'all',
+        NewSubscribers = <any> 'new_subscribers'
+    }
+}
+export class VideoGroupProperty extends FileGroupProperty {
+}
+
+export class VideoGroupPropertyDefinitionResource extends FileGroupPropertyDefinitionResource {
+    /**
+    * If provided, the maximum height of each video
+    */
+    'maxHeight': number;
+    /**
+    * If provided, the maximum length of each video
+    */
+    'maxLength': number;
+    /**
+    * If provided, the maximum width of each video
+    */
+    'maxWidth': number;
+    /**
+    * If provided, the minimum height of each video
+    */
+    'minHeight': number;
+    /**
+    * If provided, the minimum length of each video
+    */
+    'minLength': number;
+    /**
+    * If provided, the minimum width of each video
+    */
+    'minWidth': number;
+}
+
+export class VideoProperty extends FileProperty {
+}
+
 
 export interface Authentication {
     /**
@@ -7024,7 +7107,7 @@ export enum AccessTokenApiApiKeys {
 }
 
 export class AccessTokenApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -7050,6 +7133,18 @@ export class AccessTokenApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: AccessTokenApiApiKeys, value: string) {
         this.authentications[AccessTokenApiApiKeys[key]].apiKey = value;
     }
@@ -7058,8 +7153,8 @@ export class AccessTokenApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get access token
      * 
+     * @summary Get access token
      * @param grantType Grant type
      * @param clientId The id of the client
      * @param clientSecret The secret key of the client.  Used only with a grant_type of client_credentials
@@ -7142,7 +7237,7 @@ export enum ActivitiesApiApiKeys {
 }
 
 export class ActivitiesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -7168,6 +7263,18 @@ export class ActivitiesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ActivitiesApiApiKeys, value: string) {
         this.authentications[ActivitiesApiApiKeys[key]].apiKey = value;
     }
@@ -7176,11 +7283,11 @@ export class ActivitiesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create an activity
      * 
+     * @summary Create an activity
      * @param activityResource The activity resource object
      */
-    public createActivity (activityResource?: RepresentsAnActivityThatCanBeParameterizedAndTrackedThroughMetricsScoresEtc) : Promise<{ response: http.ClientResponse; body: RepresentsAnActivityThatCanBeParameterizedAndTrackedThroughMetricsScoresEtc;  }> {
+    public createActivity (activityResource?: ActivityResource) : Promise<{ response: http.ClientResponse; body: ActivityResource;  }> {
         const localVarPath = this.basePath + '/activities';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
@@ -7210,7 +7317,7 @@ export class ActivitiesApi {
                 requestOptions.form = formParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: RepresentsAnActivityThatCanBeParameterizedAndTrackedThroughMetricsScoresEtc;  }>((resolve, reject) => {
+        return new Promise<{ response: http.ClientResponse; body: ActivityResource;  }>((resolve, reject) => {
             request(requestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
@@ -7225,12 +7332,12 @@ export class ActivitiesApi {
         });
     }
     /**
-     * Create a new activity occurrence. Ex: start a game
      * Has to enforce extra rules if not used as an admin
+     * @summary Create a new activity occurrence. Ex: start a game
      * @param test if true, indicates that the occurrence should NOT be created. This can be used to test for eligibility and valid settings
      * @param activityOccurrenceResource The activity occurrence object
      */
-    public createActivityOccurrence (test?: boolean, activityOccurrenceResource?: AOccurrenceOfAnActivityTheActualGameForExampleUsedToTrackScoresParticipantsAndProvideSettings) : Promise<{ response: http.ClientResponse; body: AOccurrenceOfAnActivityTheActualGameForExampleUsedToTrackScoresParticipantsAndProvideSettings;  }> {
+    public createActivityOccurrence (test?: boolean, activityOccurrenceResource?: ActivityOccurrenceResource) : Promise<{ response: http.ClientResponse; body: ActivityOccurrenceResource;  }> {
         const localVarPath = this.basePath + '/activity-occurrences';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
@@ -7264,7 +7371,7 @@ export class ActivitiesApi {
                 requestOptions.form = formParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: AOccurrenceOfAnActivityTheActualGameForExampleUsedToTrackScoresParticipantsAndProvideSettings;  }>((resolve, reject) => {
+        return new Promise<{ response: http.ClientResponse; body: ActivityOccurrenceResource;  }>((resolve, reject) => {
             request(requestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
@@ -7279,8 +7386,8 @@ export class ActivitiesApi {
         });
     }
     /**
-     * Create a activity template
      * Activity Templates define a type of activity and the properties they have
+     * @summary Create a activity template
      * @param activityTemplateResource The activity template resource object
      */
     public createActivityTemplate (activityTemplateResource?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -7328,8 +7435,8 @@ export class ActivitiesApi {
         });
     }
     /**
-     * Delete an activity
      * 
+     * @summary Delete an activity
      * @param id The id of the activity
      */
     public deleteActivity (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -7382,8 +7489,8 @@ export class ActivitiesApi {
         });
     }
     /**
-     * Delete a activity template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete a activity template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -7441,8 +7548,8 @@ export class ActivitiesApi {
         });
     }
     /**
-     * List activity definitions
      * 
+     * @summary List activity definitions
      * @param filterTemplate Filter for activities that are templates, or specifically not if false
      * @param filterName Filter for activities that have a name starting with specified string
      * @param filterId Filter for activities with an id in the given comma separated list of ids
@@ -7450,7 +7557,7 @@ export class ActivitiesApi {
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
      */
-    public getActivities (filterTemplate?: boolean, filterName?: string, filterId?: ModelObject, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceBareActivityResource;  }> {
+    public getActivities (filterTemplate?: boolean, filterName?: string, filterId?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceBareActivityResource;  }> {
         const localVarPath = this.basePath + '/activities';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
@@ -7516,11 +7623,11 @@ export class ActivitiesApi {
         });
     }
     /**
-     * Get a single activity
      * 
+     * @summary Get a single activity
      * @param id The id of the activity
      */
-    public getActivity (id: number) : Promise<{ response: http.ClientResponse; body: RepresentsAnActivityThatCanBeParameterizedAndTrackedThroughMetricsScoresEtc;  }> {
+    public getActivity (id: number) : Promise<{ response: http.ClientResponse; body: ActivityResource;  }> {
         const localVarPath = this.basePath + '/activities/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -7553,7 +7660,7 @@ export class ActivitiesApi {
                 requestOptions.form = formParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: RepresentsAnActivityThatCanBeParameterizedAndTrackedThroughMetricsScoresEtc;  }>((resolve, reject) => {
+        return new Promise<{ response: http.ClientResponse; body: ActivityResource;  }>((resolve, reject) => {
             request(requestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
@@ -7568,8 +7675,8 @@ export class ActivitiesApi {
         });
     }
     /**
-     * Get a single activity template
      * 
+     * @summary Get a single activity template
      * @param id The id of the template
      */
     public getActivityTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -7622,8 +7729,8 @@ export class ActivitiesApi {
         });
     }
     /**
-     * List and search activity templates
      * 
+     * @summary List and search activity templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -7684,12 +7791,12 @@ export class ActivitiesApi {
         });
     }
     /**
-     * Sets the status of an activity occurrence to FINISHED and logs metrics
      * 
+     * @summary Sets the status of an activity occurrence to FINISHED and logs metrics
      * @param activityOccurrenceId The id of the activity occurrence
      * @param activityOccurrenceResults The activity occurrence object
      */
-    public setActivityOccurrenceResults (activityOccurrenceId: number, activityOccurrenceResults?: ActivityOccurrenceResults) : Promise<{ response: http.ClientResponse; body: ActivityOccurrenceResults;  }> {
+    public setActivityOccurrenceResults (activityOccurrenceId: number, activityOccurrenceResults?: ActivityOccurrenceResultsResource) : Promise<{ response: http.ClientResponse; body: ActivityOccurrenceResults;  }> {
         const localVarPath = this.basePath + '/activity-occurrences/{activity_occurrence_id}/results'
             .replace('{' + 'activity_occurrence_id' + '}', String(activityOccurrenceId));
         let queryParameters: any = {};
@@ -7740,12 +7847,12 @@ export class ActivitiesApi {
         });
     }
     /**
-     * Update an activity
      * 
+     * @summary Update an activity
      * @param id The id of the activity
      * @param activityResource The activity resource object
      */
-    public updateActivity (id: number, activityResource?: RepresentsAnActivityThatCanBeParameterizedAndTrackedThroughMetricsScoresEtc) : Promise<{ response: http.ClientResponse; body: RepresentsAnActivityThatCanBeParameterizedAndTrackedThroughMetricsScoresEtc;  }> {
+    public updateActivity (id: number, activityResource?: ActivityResource) : Promise<{ response: http.ClientResponse; body: ActivityResource;  }> {
         const localVarPath = this.basePath + '/activities/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -7781,7 +7888,7 @@ export class ActivitiesApi {
                 requestOptions.form = formParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: RepresentsAnActivityThatCanBeParameterizedAndTrackedThroughMetricsScoresEtc;  }>((resolve, reject) => {
+        return new Promise<{ response: http.ClientResponse; body: ActivityResource;  }>((resolve, reject) => {
             request(requestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
@@ -7796,8 +7903,8 @@ export class ActivitiesApi {
         });
     }
     /**
-     * Updated the status of an activity occurrence
-     * If setting to &#39;FINISHED&#39; you must POST to /results instead to record the metrics and get synchronous reward results
+     * If setting to 'FINISHED' you must POST to /results instead to record the metrics and get synchronous reward results
+     * @summary Updated the status of an activity occurrence
      * @param activityOccurrenceId The id of the activity occurrence
      * @param activityCccurrenceStatus The activity occurrence status object
      */
@@ -7852,8 +7959,8 @@ export class ActivitiesApi {
         });
     }
     /**
-     * Update an activity template
      * 
+     * @summary Update an activity template
      * @param id The id of the template
      * @param activityTemplateResource The activity template resource object
      */
@@ -7912,7 +8019,7 @@ export enum AmazonWebServicesS3ApiApiKeys {
 }
 
 export class AmazonWebServicesS3Api {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -7938,6 +8045,18 @@ export class AmazonWebServicesS3Api {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: AmazonWebServicesS3ApiApiKeys, value: string) {
         this.authentications[AmazonWebServicesS3ApiApiKeys[key]].apiKey = value;
     }
@@ -7946,8 +8065,8 @@ export class AmazonWebServicesS3Api {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get a signed S3 URL
-     * Requires the file name and file content type (i.e., &#39;video/mpeg&#39;)
+     * Requires the file name and file content type (i.e., 'video/mpeg')
+     * @summary Get a signed S3 URL
      * @param filename The file name
      * @param contentType The content type
      */
@@ -8007,7 +8126,7 @@ export enum AuthClientsApiApiKeys {
 }
 
 export class AuthClientsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -8033,6 +8152,18 @@ export class AuthClientsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: AuthClientsApiApiKeys, value: string) {
         this.authentications[AuthClientsApiApiKeys[key]].apiKey = value;
     }
@@ -8041,8 +8172,8 @@ export class AuthClientsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a new client
      * 
+     * @summary Create a new client
      * @param clientResource The client resource object
      */
     public createClient (clientResource?: ClientResource) : Promise<{ response: http.ClientResponse; body: ClientResource;  }> {
@@ -8090,8 +8221,8 @@ export class AuthClientsApi {
         });
     }
     /**
-     * Delete a client
      * 
+     * @summary Delete a client
      * @param clientKey The key of the client
      */
     public deleteClient (clientKey: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -8144,8 +8275,8 @@ export class AuthClientsApi {
         });
     }
     /**
-     * Get a single client
      * 
+     * @summary Get a single client
      * @param clientKey The key of the client
      */
     public getClient (clientKey: string) : Promise<{ response: http.ClientResponse; body: ClientResource;  }> {
@@ -8198,8 +8329,8 @@ export class AuthClientsApi {
         });
     }
     /**
-     * List available client grant types
      * 
+     * @summary List available client grant types
      */
     public getClientGrantTypes () : Promise<{ response: http.ClientResponse; body: Array<GrantTypeResource>;  }> {
         const localVarPath = this.basePath + '/auth/clients/grant-types';
@@ -8245,8 +8376,8 @@ export class AuthClientsApi {
         });
     }
     /**
-     * List and search clients
      * 
+     * @summary List and search clients
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -8307,8 +8438,8 @@ export class AuthClientsApi {
         });
     }
     /**
-     * Set grant types for a client
      * 
+     * @summary Set grant types for a client
      * @param clientKey The key of the client
      * @param grantList A list of unique grant types
      */
@@ -8363,8 +8494,8 @@ export class AuthClientsApi {
         });
     }
     /**
-     * Set redirect uris for a client
      * 
+     * @summary Set redirect uris for a client
      * @param clientKey The key of the client
      * @param redirectList A list of unique redirect uris
      */
@@ -8419,8 +8550,8 @@ export class AuthClientsApi {
         });
     }
     /**
-     * Update a client
      * 
+     * @summary Update a client
      * @param clientKey The key of the client
      * @param clientResource The client resource object
      */
@@ -8479,7 +8610,7 @@ export enum AuthPermissionsApiApiKeys {
 }
 
 export class AuthPermissionsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -8505,6 +8636,18 @@ export class AuthPermissionsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: AuthPermissionsApiApiKeys, value: string) {
         this.authentications[AuthPermissionsApiApiKeys[key]].apiKey = value;
     }
@@ -8513,8 +8656,8 @@ export class AuthPermissionsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a new permission
      * 
+     * @summary Create a new permission
      * @param permissionResource The permission resource object
      */
     public createPermission (permissionResource?: PermissionResource) : Promise<{ response: http.ClientResponse; body: PermissionResource;  }> {
@@ -8562,8 +8705,8 @@ export class AuthPermissionsApi {
         });
     }
     /**
-     * Delete a permission
      * 
+     * @summary Delete a permission
      * @param permission The permission value
      * @param force If true, removes permission assigned to roles
      */
@@ -8621,8 +8764,8 @@ export class AuthPermissionsApi {
         });
     }
     /**
-     * Get a single permission
      * 
+     * @summary Get a single permission
      * @param permission The permission value
      */
     public getPermission (permission: string) : Promise<{ response: http.ClientResponse; body: PermissionResource;  }> {
@@ -8675,8 +8818,8 @@ export class AuthPermissionsApi {
         });
     }
     /**
-     * List and search permissions
      * 
+     * @summary List and search permissions
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -8737,8 +8880,8 @@ export class AuthPermissionsApi {
         });
     }
     /**
-     * Update a permission
      * 
+     * @summary Update a permission
      * @param permission The permission value
      * @param permissionResource The permission resource object
      */
@@ -8797,7 +8940,7 @@ export enum AuthRolesApiApiKeys {
 }
 
 export class AuthRolesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -8823,6 +8966,18 @@ export class AuthRolesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: AuthRolesApiApiKeys, value: string) {
         this.authentications[AuthRolesApiApiKeys[key]].apiKey = value;
     }
@@ -8831,8 +8986,8 @@ export class AuthRolesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a new role
      * 
+     * @summary Create a new role
      * @param roleResource The role resource object
      */
     public createRole (roleResource?: RoleResource) : Promise<{ response: http.ClientResponse; body: RoleResource;  }> {
@@ -8880,8 +9035,8 @@ export class AuthRolesApi {
         });
     }
     /**
-     * Delete a role
      * 
+     * @summary Delete a role
      * @param role The role value
      * @param force If true, removes role from users/clients
      */
@@ -8939,8 +9094,8 @@ export class AuthRolesApi {
         });
     }
     /**
-     * Get roles for a client
      * 
+     * @summary Get roles for a client
      * @param clientKey The client key
      */
     public getClientRoles (clientKey: string) : Promise<{ response: http.ClientResponse; body: Array<RoleResource>;  }> {
@@ -8993,8 +9148,8 @@ export class AuthRolesApi {
         });
     }
     /**
-     * Get a single role
      * 
+     * @summary Get a single role
      * @param role The role value
      */
     public getRole (role: string) : Promise<{ response: http.ClientResponse; body: RoleResource;  }> {
@@ -9047,8 +9202,8 @@ export class AuthRolesApi {
         });
     }
     /**
-     * List and search roles
      * 
+     * @summary List and search roles
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -9109,8 +9264,8 @@ export class AuthRolesApi {
         });
     }
     /**
-     * Get roles for a user
      * 
+     * @summary Get roles for a user
      * @param userId The user&#39;s id
      */
     public getUserRoles (userId: number) : Promise<{ response: http.ClientResponse; body: Array<RoleResource>;  }> {
@@ -9163,8 +9318,8 @@ export class AuthRolesApi {
         });
     }
     /**
-     * Set roles for a client
      * 
+     * @summary Set roles for a client
      * @param clientKey The client key
      * @param rolesList The list of unique roles
      */
@@ -9219,8 +9374,8 @@ export class AuthRolesApi {
         });
     }
     /**
-     * Set permissions for a role
      * 
+     * @summary Set permissions for a role
      * @param role The role value
      * @param permissionsList The list of unique permissions
      */
@@ -9275,8 +9430,8 @@ export class AuthRolesApi {
         });
     }
     /**
-     * Set roles for a user
      * 
+     * @summary Set roles for a user
      * @param userId The user&#39;s id
      * @param rolesList The list of unique roles
      */
@@ -9331,8 +9486,8 @@ export class AuthRolesApi {
         });
     }
     /**
-     * Update a role
      * 
+     * @summary Update a role
      * @param role The role value
      * @param roleResource The role resource object
      */
@@ -9391,7 +9546,7 @@ export enum AuthTokensApiApiKeys {
 }
 
 export class AuthTokensApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -9417,6 +9572,18 @@ export class AuthTokensApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: AuthTokensApiApiKeys, value: string) {
         this.authentications[AuthTokensApiApiKeys[key]].apiKey = value;
     }
@@ -9425,8 +9592,8 @@ export class AuthTokensApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Delete tokens by username, client id, or both
      * 
+     * @summary Delete tokens by username, client id, or both
      * @param username The username of the user
      * @param clientId The id of the client
      */
@@ -9482,8 +9649,8 @@ export class AuthTokensApi {
         });
     }
     /**
-     * Get a single token by username and client id
      * 
+     * @summary Get a single token by username and client id
      * @param username The username of the user
      * @param clientId The id of the client
      */
@@ -9543,8 +9710,8 @@ export class AuthTokensApi {
         });
     }
     /**
-     * List usernames and client ids
      * Token value not shown
+     * @summary List usernames and client ids
      * @param filterClientId Filters for token whose client id matches provided string
      * @param filterUsername Filters for token whose username matches provided string
      * @param size The number of objects returned per page
@@ -9619,7 +9786,7 @@ export enum BRERuleEngineActionsApiApiKeys {
 }
 
 export class BRERuleEngineActionsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -9645,6 +9812,18 @@ export class BRERuleEngineActionsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: BRERuleEngineActionsApiApiKeys, value: string) {
         this.authentications[BRERuleEngineActionsApiApiKeys[key]].apiKey = value;
     }
@@ -9653,8 +9832,8 @@ export class BRERuleEngineActionsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get a list of available actions
      * 
+     * @summary Get a list of available actions
      * @param filterCategory Filter for actions that are within a specific category
      * @param filterName Filter for actions that have names containing the given string
      * @param filterTags Filter for actions that have all of the given tags (comma separated list)
@@ -9724,7 +9903,7 @@ export enum BRERuleEngineCategoriesApiApiKeys {
 }
 
 export class BRERuleEngineCategoriesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -9750,6 +9929,18 @@ export class BRERuleEngineCategoriesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: BRERuleEngineCategoriesApiApiKeys, value: string) {
         this.authentications[BRERuleEngineCategoriesApiApiKeys[key]].apiKey = value;
     }
@@ -9758,8 +9949,8 @@ export class BRERuleEngineCategoriesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a BRE category template
      * Templates define a type of BRE category and the properties they have
+     * @summary Create a BRE category template
      * @param template The category template to create
      */
     public createBRECategoryTemplate (template?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -9807,8 +9998,8 @@ export class BRERuleEngineCategoriesApi {
         });
     }
     /**
-     * Delete a BRE category template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete a BRE category template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -9866,8 +10057,8 @@ export class BRERuleEngineCategoriesApi {
         });
     }
     /**
-     * List categories
      * 
+     * @summary List categories
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      */
@@ -9923,8 +10114,8 @@ export class BRERuleEngineCategoriesApi {
         });
     }
     /**
-     * Get a single category
      * 
+     * @summary Get a single category
      * @param name The category name
      */
     public getBRECategory (name: string) : Promise<{ response: http.ClientResponse; body: BreCategoryResource;  }> {
@@ -9977,8 +10168,8 @@ export class BRERuleEngineCategoriesApi {
         });
     }
     /**
-     * Get a single BRE category template
      * 
+     * @summary Get a single BRE category template
      * @param id The id of the template
      */
     public getBRECategoryTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -10031,8 +10222,8 @@ export class BRERuleEngineCategoriesApi {
         });
     }
     /**
-     * List and search BRE category templates
      * 
+     * @summary List and search BRE category templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -10093,8 +10284,8 @@ export class BRERuleEngineCategoriesApi {
         });
     }
     /**
-     * Update a category
      * 
+     * @summary Update a category
      * @param name The category name
      * @param category The updated BRE category information
      */
@@ -10149,8 +10340,8 @@ export class BRERuleEngineCategoriesApi {
         });
     }
     /**
-     * Update a BRE category template
      * 
+     * @summary Update a BRE category template
      * @param id The id of the template
      * @param template The updated category template definition
      */
@@ -10209,7 +10400,7 @@ export enum BRERuleEngineEventsApiApiKeys {
 }
 
 export class BRERuleEngineEventsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -10235,6 +10426,18 @@ export class BRERuleEngineEventsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: BRERuleEngineEventsApiApiKeys, value: string) {
         this.authentications[BRERuleEngineEventsApiApiKeys[key]].apiKey = value;
     }
@@ -10243,8 +10446,8 @@ export class BRERuleEngineEventsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Fire a new event, based on an existing trigger
      * Parameters within the event must match names and types from the trigger. Actual rule execution is asynchornous.  Returns request id, which will be used as the event id
+     * @summary Fire a new event, based on an existing trigger
      * @param breEvent The BRE event object
      */
     public sendBREEvent (breEvent?: BreEvent) : Promise<{ response: http.ClientResponse; body: string;  }> {
@@ -10296,7 +10499,7 @@ export enum BRERuleEngineExpressionsApiApiKeys {
 }
 
 export class BRERuleEngineExpressionsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -10322,6 +10525,18 @@ export class BRERuleEngineExpressionsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: BRERuleEngineExpressionsApiApiKeys, value: string) {
         this.authentications[BRERuleEngineExpressionsApiApiKeys[key]].apiKey = value;
     }
@@ -10330,8 +10545,8 @@ export class BRERuleEngineExpressionsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get a list of &#39;lookup&#39; type expressions
      * These are expression types that take a second expression as input and produce a value. These can be used in addition to the standard types, like parameter, global and constant (see BRE documentation for details).
+     * @summary Get a list of 'lookup' type expressions
      */
     public getBREExpressions () : Promise<{ response: http.ClientResponse; body: Array<LookupTypeResource>;  }> {
         const localVarPath = this.basePath + '/bre/expressions/lookup';
@@ -10381,7 +10596,7 @@ export enum BRERuleEngineGlobalsApiApiKeys {
 }
 
 export class BRERuleEngineGlobalsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -10407,6 +10622,18 @@ export class BRERuleEngineGlobalsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: BRERuleEngineGlobalsApiApiKeys, value: string) {
         this.authentications[BRERuleEngineGlobalsApiApiKeys[key]].apiKey = value;
     }
@@ -10415,8 +10642,8 @@ export class BRERuleEngineGlobalsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a global definition
      * Once created you can then use in a custom rule. Note that global definitions cannot be modified or deleted if in use.
+     * @summary Create a global definition
      * @param breGlobalResource The BRE global resource object
      */
     public createBREGlobal (breGlobalResource?: BreGlobalResource) : Promise<{ response: http.ClientResponse; body: BreGlobalResource;  }> {
@@ -10464,8 +10691,8 @@ export class BRERuleEngineGlobalsApi {
         });
     }
     /**
-     * Delete a global
      * May fail if there are existing rules against it. Cannot delete core globals
+     * @summary Delete a global
      * @param id The id of the global definition
      */
     public deleteBREGlobal (id: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -10518,8 +10745,8 @@ export class BRERuleEngineGlobalsApi {
         });
     }
     /**
-     * Get a single global definition
      * 
+     * @summary Get a single global definition
      * @param id The id of the global definition
      */
     public getBREGlobal (id: string) : Promise<{ response: http.ClientResponse; body: BreGlobalResource;  }> {
@@ -10572,8 +10799,8 @@ export class BRERuleEngineGlobalsApi {
         });
     }
     /**
-     * List global definitions
      * 
+     * @summary List global definitions
      * @param filterSystem Filter for globals that are system globals when true, or not when false. Leave off for both mixed
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -10634,8 +10861,8 @@ export class BRERuleEngineGlobalsApi {
         });
     }
     /**
-     * Update a global definition
      * May fail if new parameters mismatch requirements of existing rules. Cannot update core globals
+     * @summary Update a global definition
      * @param id The id of the global definition
      * @param breGlobalResource The BRE global resource object
      */
@@ -10694,7 +10921,7 @@ export enum BRERuleEngineRulesApiApiKeys {
 }
 
 export class BRERuleEngineRulesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -10720,6 +10947,18 @@ export class BRERuleEngineRulesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: BRERuleEngineRulesApiApiKeys, value: string) {
         this.authentications[BRERuleEngineRulesApiApiKeys[key]].apiKey = value;
     }
@@ -10728,8 +10967,8 @@ export class BRERuleEngineRulesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a rule
-     * Rules define which actions to run when a given event verifies the specified conditions. Conditions and actions are defined by binding event or context parameters to arguments. Conditions also known as Predicates are logical expressions that result in a boolean. Operators are used to describe rules between arguments to form that condition. There are 3 families of operators: Boolean, Math and String. Math and String operators are functions that transform arguments into numbers or strings...&lt;h1&gt;Boolean Operators&lt;/h1&gt;&lt;br /&gt;&lt;br /&gt;1 arg:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;IS_NULL&lt;/li&gt; &lt;li&gt;IS_NOT_NULL&lt;/li&gt; &lt;li&gt;STRING_IS_EMPTY&lt;/li&gt; &lt;li&gt;NOT &lt;/li&gt; &lt;li&gt;MAP_IS_EMPTY&lt;/li&gt;&lt;/ul&gt;&lt;br /&gt;2 args:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;EQ&lt;/li&gt; &lt;li&gt;NE (Not Equals)&lt;/li&gt; &lt;li&gt;GT (Greater Than)&lt;/li&gt; &lt;li&gt;GOE (Greater Or Equals)&lt;/li&gt; &lt;li&gt;LT (Lesser Than)&lt;/li&gt; &lt;li&gt;LOE (Lesser Or Equals)&lt;/li&gt; &lt;li&gt;OR&lt;/li&gt; &lt;li&gt;AND&lt;/li&gt; &lt;li&gt;XNOR&lt;/li&gt; &lt;li&gt;XOR&lt;/li&gt; &lt;li&gt;CONTAINS_KEY (for maps only)&lt;/li&gt; &lt;li&gt;CONTAINS_VALUE (for maps only)&lt;/li&gt; &lt;li&gt;MATCHES (regex)&lt;/li&gt; &lt;li&gt;MATCHES_IC (regex ignore case)&lt;/li&gt; &lt;li&gt;STARTS_WITH&lt;/li&gt; &lt;li&gt;STARTS_WITH_IC&lt;/li&gt; &lt;li&gt;EQ_IGNORE_CASE&lt;/li&gt; &lt;li&gt;ENDS_WITH&lt;/li&gt; &lt;li&gt;ENDS_WITH_IC&lt;/li&gt; &lt;li&gt;STRING_CONTAINS&lt;/li&gt; &lt;li&gt;STRING_CONTAINS_IC&lt;/li&gt; &lt;li&gt;LIKE (SQL like)&lt;/li&gt;&lt;/ul&gt;&lt;br /&gt;3 args exceptions:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;BETWEEN&lt;/li&gt;&lt;/ul&gt;&lt;br /&gt;n args:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;IN&lt;/li&gt; &lt;li&gt;NOT_INT&lt;/li&gt;&lt;/ul&gt;&lt;h1&gt;Math Operators&lt;/h1&gt;1 arg:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;NEGATE&lt;/li&gt; &lt;li&gt;MAP_SIZE&lt;/li&gt; &lt;li&gt;STRING_LENGTH&lt;/li&gt; &lt;li&gt;CEIL&lt;/li&gt; &lt;li&gt;ABS&lt;/li&gt; &lt;li&gt;FLOOR&lt;/li&gt; &lt;li&gt;ROUND&lt;/li&gt; &lt;li&gt;RANDOM (no arg)&lt;/li&gt; &lt;li&gt;RANDOM2 (seed arg)&lt;/li&gt; &lt;li&gt;NUMCAST&lt;/li&gt; &lt;li&gt;HOUR&lt;/li&gt; &lt;li&gt;MINUTE&lt;/li&gt; &lt;li&gt;SECOND&lt;/li&gt; &lt;li&gt;MILLISECOND&lt;/li&gt; &lt;li&gt;YEAR&lt;/li&gt; &lt;li&gt;WEEK&lt;/li&gt; &lt;li&gt;YEAR_MONTH&lt;/li&gt; &lt;li&gt;YEAR_WEEK&lt;/li&gt; &lt;li&gt;DAY_OF_WEEK&lt;/li&gt; &lt;li&gt;DAY_OF_MONTH&lt;/li&gt; &lt;li&gt;DAY_OF_YEAR&lt;/li&gt; &lt;li&gt;WEEK&lt;/li&gt; &lt;li&gt;WEEK&lt;/li&gt; &lt;li&gt;WEEK&lt;/li&gt;&lt;/ul&gt;&lt;br /&gt;&lt;br /&gt;2 args:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;ADD&lt;/li&gt; &lt;li&gt;DIV&lt;/li&gt; &lt;li&gt;MULT&lt;/li&gt; &lt;li&gt;SUB&lt;/li&gt; &lt;li&gt;POWER&lt;/li&gt; &lt;li&gt;MOD&lt;/li&gt; &lt;li&gt;LOCATE (index of (string, char))&lt;/li&gt; &lt;li&gt;DIFF_YEARS&lt;/li&gt; &lt;li&gt;DIFF_MONTHS&lt;/li&gt; &lt;li&gt;DIFF_WEEKS&lt;/li&gt; &lt;li&gt;DIFF_DAYS&lt;/li&gt; &lt;li&gt;DIFF_HOURS&lt;/li&gt; &lt;li&gt;DIFF_MINUTES&lt;/li&gt; &lt;li&gt;DIFF_SECONDS&lt;/li&gt;&lt;/ul&gt;&lt;br /&gt;&lt;br /&gt;2 args:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;MIN&lt;/li&gt; &lt;li&gt;MAX&lt;/li&gt;&lt;/ul&gt;&lt;h1&gt;String Operators&lt;/h1&gt;0 arg:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;CURRENT_TIME&lt;/li&gt;&lt;/ul&gt;&lt;br /&gt;&lt;br /&gt;1 arg:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;CURRENT_TIME&lt;/li&gt; &lt;li&gt;LOWER&lt;/li&gt; &lt;li&gt;UPPER&lt;/li&gt; &lt;li&gt;TRIM&lt;/li&gt; &lt;li&gt;STRING_CAST&lt;/li&gt;&lt;/ul&gt;&lt;br /&gt;&lt;br /&gt;2 args:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;CHAR_AT&lt;/li&gt; &lt;li&gt;SUBSTR_1ARG (substr(string, start))&lt;/li&gt; &lt;li&gt;CONCAT&lt;/li&gt; &lt;li&gt;TRIM&lt;/li&gt; &lt;li&gt;STRING_CAST&lt;/li&gt;&lt;/ul&gt;&lt;br /&gt;&lt;br /&gt;3 args:&lt;br /&gt;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&lt;br /&gt;&lt;br /&gt;&lt;ul&gt; &lt;li&gt;SUBSTR_2ARGS (substr(string, start, length))&lt;/li&gt;&lt;/ul&gt;
+     * Rules define which actions to run when a given event verifies the specified conditions. Conditions and actions are defined by binding event or context parameters to arguments. Conditions also known as Predicates are logical expressions that result in a boolean. Operators are used to describe rules between arguments to form that condition. There are 3 families of operators: Boolean, Math and String. Math and String operators are functions that transform arguments into numbers or strings...<h1>Boolean Operators</h1><br /><br />1 arg:<br />======<br /><br /><ul> <li>IS_NULL</li> <li>IS_NOT_NULL</li> <li>STRING_IS_EMPTY</li> <li>NOT </li> <li>MAP_IS_EMPTY</li></ul><br />2 args:<br />=======<br /><br /><ul> <li>EQ</li> <li>NE (Not Equals)</li> <li>GT (Greater Than)</li> <li>GOE (Greater Or Equals)</li> <li>LT (Lesser Than)</li> <li>LOE (Lesser Or Equals)</li> <li>OR</li> <li>AND</li> <li>XNOR</li> <li>XOR</li> <li>CONTAINS_KEY (for maps only)</li> <li>CONTAINS_VALUE (for maps only)</li> <li>MATCHES (regex)</li> <li>MATCHES_IC (regex ignore case)</li> <li>STARTS_WITH</li> <li>STARTS_WITH_IC</li> <li>EQ_IGNORE_CASE</li> <li>ENDS_WITH</li> <li>ENDS_WITH_IC</li> <li>STRING_CONTAINS</li> <li>STRING_CONTAINS_IC</li> <li>LIKE (SQL like)</li></ul><br />3 args exceptions:<br />=================<br /><br /><ul> <li>BETWEEN</li></ul><br />n args:<br />=======<br /><br /><ul> <li>IN</li> <li>NOT_INT</li></ul><h1>Math Operators</h1>1 arg:<br />=====<br /><br /><ul> <li>NEGATE</li> <li>MAP_SIZE</li> <li>STRING_LENGTH</li> <li>CEIL</li> <li>ABS</li> <li>FLOOR</li> <li>ROUND</li> <li>RANDOM (no arg)</li> <li>RANDOM2 (seed arg)</li> <li>NUMCAST</li> <li>HOUR</li> <li>MINUTE</li> <li>SECOND</li> <li>MILLISECOND</li> <li>YEAR</li> <li>WEEK</li> <li>YEAR_MONTH</li> <li>YEAR_WEEK</li> <li>DAY_OF_WEEK</li> <li>DAY_OF_MONTH</li> <li>DAY_OF_YEAR</li> <li>WEEK</li> <li>WEEK</li> <li>WEEK</li></ul><br /><br />2 args:<br />======<br /><br /><ul> <li>ADD</li> <li>DIV</li> <li>MULT</li> <li>SUB</li> <li>POWER</li> <li>MOD</li> <li>LOCATE (index of (string, char))</li> <li>DIFF_YEARS</li> <li>DIFF_MONTHS</li> <li>DIFF_WEEKS</li> <li>DIFF_DAYS</li> <li>DIFF_HOURS</li> <li>DIFF_MINUTES</li> <li>DIFF_SECONDS</li></ul><br /><br />2 args:<br />======<br /><br /><ul> <li>MIN</li> <li>MAX</li></ul><h1>String Operators</h1>0 arg:<br />=====<br /><br /><ul> <li>CURRENT_TIME</li></ul><br /><br />1 arg:<br />=====<br /><br /><ul> <li>CURRENT_TIME</li> <li>LOWER</li> <li>UPPER</li> <li>TRIM</li> <li>STRING_CAST</li></ul><br /><br />2 args:<br />=====<br /><br /><ul> <li>CHAR_AT</li> <li>SUBSTR_1ARG (substr(string, start))</li> <li>CONCAT</li> <li>TRIM</li> <li>STRING_CAST</li></ul><br /><br />3 args:<br />=====<br /><br /><ul> <li>SUBSTR_2ARGS (substr(string, start, length))</li></ul>
+     * @summary Create a rule
      * @param breRule The BRE rule object
      */
     public createBRERule (breRule?: BreRule) : Promise<{ response: http.ClientResponse; body: BreRule;  }> {
@@ -10777,8 +11016,8 @@ export class BRERuleEngineRulesApi {
         });
     }
     /**
-     * Delete a rule
      * May fail if there are existing rules against it. Cannot delete core rules
+     * @summary Delete a rule
      * @param id The id of the rule
      */
     public deleteBRERule (id: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -10831,8 +11070,8 @@ export class BRERuleEngineRulesApi {
         });
     }
     /**
-     * Returns a string representation of the provided expression
      * 
+     * @summary Returns a string representation of the provided expression
      * @param expression The expression
      */
     public getBREExpressionAsString (expression?: Expressionobject) : Promise<{ response: http.ClientResponse; body: string;  }> {
@@ -10880,8 +11119,8 @@ export class BRERuleEngineRulesApi {
         });
     }
     /**
-     * Get a single rule
      * 
+     * @summary Get a single rule
      * @param id The id of the rule
      */
     public getBRERule (id: string) : Promise<{ response: http.ClientResponse; body: BreRule;  }> {
@@ -10934,8 +11173,8 @@ export class BRERuleEngineRulesApi {
         });
     }
     /**
-     * List rules
      * 
+     * @summary List rules
      * @param filterName Filter for rules containing the given name
      * @param filterEnabled Filter for rules by active status, null for both
      * @param filterSystem Filter for rules that are system rules when true, or not when false. Leave off for both mixed
@@ -11021,8 +11260,8 @@ export class BRERuleEngineRulesApi {
         });
     }
     /**
-     * Enable or disable a rule
      * This is helpful for turning off systems rules which cannot be deleted or modified otherwise
+     * @summary Enable or disable a rule
      * @param id The id of the rule
      * @param enabled The boolean value
      */
@@ -11077,8 +11316,8 @@ export class BRERuleEngineRulesApi {
         });
     }
     /**
-     * Update a rule
      * Cannot update system rules
+     * @summary Update a rule
      * @param id The id of the rule
      * @param breRule The BRE rule object
      */
@@ -11137,7 +11376,7 @@ export enum BRERuleEngineTriggersApiApiKeys {
 }
 
 export class BRERuleEngineTriggersApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -11163,6 +11402,18 @@ export class BRERuleEngineTriggersApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: BRERuleEngineTriggersApiApiKeys, value: string) {
         this.authentications[BRERuleEngineTriggersApiApiKeys[key]].apiKey = value;
     }
@@ -11171,8 +11422,8 @@ export class BRERuleEngineTriggersApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a trigger
      * Customer added triggers will not be fired automatically or have rules associated with them by default. Custom rules must be added to get use from the trigger and it must then be fired from the outside. See the Bre Event services
+     * @summary Create a trigger
      * @param breTriggerResource The BRE trigger resource object
      */
     public createBRETrigger (breTriggerResource?: BreTriggerResource) : Promise<{ response: http.ClientResponse; body: BreTriggerResource;  }> {
@@ -11220,8 +11471,8 @@ export class BRERuleEngineTriggersApi {
         });
     }
     /**
-     * Delete a trigger
      * May fail if there are existing rules against it. Cannot delete core triggers
+     * @summary Delete a trigger
      * @param eventName The trigger event name
      */
     public deleteBRETrigger (eventName: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -11274,8 +11525,8 @@ export class BRERuleEngineTriggersApi {
         });
     }
     /**
-     * Get a single trigger
      * 
+     * @summary Get a single trigger
      * @param eventName The trigger event name
      */
     public getBRETrigger (eventName: string) : Promise<{ response: http.ClientResponse; body: BreTriggerResource;  }> {
@@ -11328,8 +11579,8 @@ export class BRERuleEngineTriggersApi {
         });
     }
     /**
-     * List triggers
      * 
+     * @summary List triggers
      * @param filterSystem Filter for triggers that are system triggers when true, or not when false. Leave off for both mixed
      * @param filterCategory Filter for triggers that are within a specific category
      * @param filterTags Filter for triggers that have all of the given tags (comma separated list)
@@ -11410,8 +11661,8 @@ export class BRERuleEngineTriggersApi {
         });
     }
     /**
-     * Update a trigger
      * May fail if new parameters mismatch requirements of existing rules. Cannot update core triggers
+     * @summary Update a trigger
      * @param eventName The trigger event name
      * @param breTriggerResource The BRE trigger resource object
      */
@@ -11470,7 +11721,7 @@ export enum BRERuleEngineVariablesApiApiKeys {
 }
 
 export class BRERuleEngineVariablesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -11496,6 +11747,18 @@ export class BRERuleEngineVariablesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: BRERuleEngineVariablesApiApiKeys, value: string) {
         this.authentications[BRERuleEngineVariablesApiApiKeys[key]].apiKey = value;
     }
@@ -11504,8 +11767,8 @@ export class BRERuleEngineVariablesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get a list of variable types available
      * Types include integer, string, user and invoice. These are used to qualify trigger parameters and action variables with strong typing.
+     * @summary Get a list of variable types available
      */
     public getBREVariableTypes () : Promise<{ response: http.ClientResponse; body: Array<VariableTypeResource>;  }> {
         const localVarPath = this.basePath + '/bre/variable-types';
@@ -11551,8 +11814,8 @@ export class BRERuleEngineVariablesApi {
         });
     }
     /**
-     * List valid values for a type
      * Used to lookup users to fill in a user constant for example. Only types marked as enumerable are suppoorted here.
+     * @summary List valid values for a type
      * @param name The name of the type
      * @param filterName Filter results by those with names starting with this string
      * @param size The number of objects returned per page
@@ -11624,7 +11887,7 @@ export enum CampaignsApiApiKeys {
 }
 
 export class CampaignsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -11650,6 +11913,18 @@ export class CampaignsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: CampaignsApiApiKeys, value: string) {
         this.authentications[CampaignsApiApiKeys[key]].apiKey = value;
     }
@@ -11658,8 +11933,8 @@ export class CampaignsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add a challenge to a campaign
      * 
+     * @summary Add a challenge to a campaign
      * @param id The id of the campaign
      * @param challengeId The id of the challenge
      */
@@ -11714,8 +11989,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * Create a campaign
      * 
+     * @summary Create a campaign
      * @param campaignResource The campaign resource object
      */
     public createCampaign (campaignResource?: CampaignResource) : Promise<{ response: http.ClientResponse; body: CampaignResource;  }> {
@@ -11763,8 +12038,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * Create a campaign template
      * Campaign Templates define a type of campaign and the properties they have
+     * @summary Create a campaign template
      * @param campaignTemplateResource The campaign template resource object
      */
     public createCampaignTemplate (campaignTemplateResource?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -11812,8 +12087,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * Delete a campaign
      * 
+     * @summary Delete a campaign
      * @param id The campaign id
      */
     public deleteCampaign (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -11866,8 +12141,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * Delete a campaign template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete a campaign template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -11925,8 +12200,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * Returns a single campaign
      * 
+     * @summary Returns a single campaign
      * @param id The campaign id
      */
     public getCampaign (id: number) : Promise<{ response: http.ClientResponse; body: CampaignResource;  }> {
@@ -11977,8 +12252,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * List the challenges associated with a campaign
      * 
+     * @summary List the challenges associated with a campaign
      * @param id The campaign id
      * @param filterStartDate A comma separated string without spaces.  First value is the operator to search on, second value is the challenge start date, a unix timestamp in seconds.  Allowed operators: (GT, LT, EQ, GOE, LOE).
      * @param filterEndDate A comma separated string without spaces.  First value is the operator to search on, second value is the challenge end date, a unix timestamp in seconds.  Allowed operators: (GT, LT, EQ, GOE, LOE).
@@ -12054,8 +12329,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * Get a single campaign template
      * 
+     * @summary Get a single campaign template
      * @param id The id of the template
      */
     public getCampaignTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -12108,8 +12383,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * List and search campaign templates
      * 
+     * @summary List and search campaign templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -12170,8 +12445,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * List and search campaigns
      * 
+     * @summary List and search campaigns
      * @param filterActive Filter for campaigns that are active
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -12235,8 +12510,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * Remove a challenge from a campaign
      * 
+     * @summary Remove a challenge from a campaign
      * @param campaignId The campaign id
      * @param id The challenge id
      */
@@ -12296,8 +12571,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * Update a campaign
      * 
+     * @summary Update a campaign
      * @param id The campaign id
      * @param campaignResource The campaign resource object
      */
@@ -12352,8 +12627,8 @@ export class CampaignsApi {
         });
     }
     /**
-     * Update an campaign template
      * 
+     * @summary Update an campaign template
      * @param id The id of the template
      * @param campaignTemplateResource The campaign template resource object
      */
@@ -12412,7 +12687,7 @@ export enum CampaignsChallengesApiApiKeys {
 }
 
 export class CampaignsChallengesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -12438,6 +12713,18 @@ export class CampaignsChallengesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: CampaignsChallengesApiApiKeys, value: string) {
         this.authentications[CampaignsChallengesApiApiKeys[key]].apiKey = value;
     }
@@ -12446,8 +12733,8 @@ export class CampaignsChallengesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a challenge
      * Challenges do not run on their own.  They must be added to a campaign before events will spawn.
+     * @summary Create a challenge
      * @param challengeResource The challenge resource object
      */
     public createChallenge (challengeResource?: ChallengeResource) : Promise<{ response: http.ClientResponse; body: ChallengeResource;  }> {
@@ -12495,8 +12782,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Create a challenge activity
      * 
+     * @summary Create a challenge activity
      * @param challengeId The challenge id
      * @param challengeActivityResource The challenge activity resource object
      * @param validateSettings Whether to validate the settings being sent against the available settings on the base activity.
@@ -12556,8 +12843,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Create a challenge activity template
      * Challenge Activity Templates define a type of challenge activity and the properties they have
+     * @summary Create a challenge activity template
      * @param challengeActivityTemplateResource The challengeActivity template resource object
      */
     public createChallengeActivityTemplate (challengeActivityTemplateResource?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -12605,8 +12892,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Create a challenge template
      * Challenge Templates define a type of challenge and the properties they have
+     * @summary Create a challenge template
      * @param challengeTemplateResource The challenge template resource object
      */
     public createChallengeTemplate (challengeTemplateResource?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -12654,8 +12941,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Delete a challenge
      * 
+     * @summary Delete a challenge
      * @param id The challenge id
      */
     public deleteChallenge (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -12708,23 +12995,23 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Delete a challenge activity
-     * 
-     * @param activityId The activity id
+     * A challenge can have multiple instances of the same activity and thus the id used is of the specific entry within the challenge
+     * @summary Delete a challenge activity
+     * @param id The challenge_activity id
      * @param challengeId The challenge id
      */
-    public deleteChallengeActivity (activityId: number, challengeId: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/challenges/{challenge_id}/activities/{activity_id}'
-            .replace('{' + 'activity_id' + '}', String(activityId))
+    public deleteChallengeActivity (id: number, challengeId: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/challenges/{challenge_id}/activities/{id}'
+            .replace('{' + 'id' + '}', String(id))
             .replace('{' + 'challenge_id' + '}', String(challengeId));
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
 
 
-        // verify required parameter 'activityId' is not null or undefined
-        if (activityId === null || activityId === undefined) {
-            throw new Error('Required parameter activityId was null or undefined when calling deleteChallengeActivity.');
+        // verify required parameter 'id' is not null or undefined
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling deleteChallengeActivity.');
         }
 
         // verify required parameter 'challengeId' is not null or undefined
@@ -12769,8 +13056,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Delete a challenge activity template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete a challenge activity template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -12828,8 +13115,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Delete a challenge event
      * 
+     * @summary Delete a challenge event
      * @param id The challenge event id
      */
     public deleteChallengeEvent (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -12882,8 +13169,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Delete a challenge template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete a challenge template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -12941,8 +13228,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Retrieve a challenge
      * 
+     * @summary Retrieve a challenge
      * @param id The challenge id
      */
     public getChallenge (id: number) : Promise<{ response: http.ClientResponse; body: ChallengeResource;  }> {
@@ -12993,8 +13280,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * List and search challenge activities
      * 
+     * @summary List and search challenge activities
      * @param challengeId The challenge id
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -13060,21 +13347,28 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Get a single challenge activity
-     * 
-     * @param activityId The activity id
+     * A challenge can have multiple instances of the same activity and thus the id used is of the specific entry within the challenge
+     * @summary Get a single challenge activity
+     * @param id The challenge_activity id
+     * @param challengeId The challenge id
      */
-    public getChallengeActivity (activityId: number) : Promise<{ response: http.ClientResponse; body: ChallengeActivityResource;  }> {
-        const localVarPath = this.basePath + '/challenges/{challenge_id}/activities/{activity_id}'
-            .replace('{' + 'activity_id' + '}', String(activityId));
+    public getChallengeActivity (id: number, challengeId: number) : Promise<{ response: http.ClientResponse; body: ChallengeActivityResource;  }> {
+        const localVarPath = this.basePath + '/challenges/{challenge_id}/activities/{id}'
+            .replace('{' + 'id' + '}', String(id))
+            .replace('{' + 'challenge_id' + '}', String(challengeId));
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
 
 
-        // verify required parameter 'activityId' is not null or undefined
-        if (activityId === null || activityId === undefined) {
-            throw new Error('Required parameter activityId was null or undefined when calling getChallengeActivity.');
+        // verify required parameter 'id' is not null or undefined
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling getChallengeActivity.');
+        }
+
+        // verify required parameter 'challengeId' is not null or undefined
+        if (challengeId === null || challengeId === undefined) {
+            throw new Error('Required parameter challengeId was null or undefined when calling getChallengeActivity.');
         }
 
         let useFormData = false;
@@ -13112,8 +13406,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Get a single challenge activity template
      * 
+     * @summary Get a single challenge activity template
      * @param id The id of the template
      */
     public getChallengeActivityTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -13166,8 +13460,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * List and search challenge activity templates
      * 
+     * @summary List and search challenge activity templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -13228,8 +13522,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Retrieve a single challenge event details
      * 
+     * @summary Retrieve a single challenge event details
      * @param id The challenge event id
      */
     public getChallengeEvent (id: number) : Promise<{ response: http.ClientResponse; body: ChallengeEventResource;  }> {
@@ -13280,8 +13574,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Retrieve a list of challenge events
      * 
+     * @summary Retrieve a list of challenge events
      * @param filterStartDate A comma separated string without spaces.  First value is the operator to search on, second value is the event start date, a unix timestamp in seconds.  Allowed operators: (GT, LT, EQ, GOE, LOE).
      * @param filterEndDate A comma separated string without spaces.  First value is the operator to search on, second value is the event end date, a unix timestamp in seconds.  Allowed operators: (GT, LT, EQ, GOE, LOE).
      * @param filterCampaigns check only for events from currently running campaigns
@@ -13360,8 +13654,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Get a single challenge template
      * 
+     * @summary Get a single challenge template
      * @param id The id of the template
      */
     public getChallengeTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -13414,8 +13708,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * List and search challenge templates
      * 
+     * @summary List and search challenge templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -13476,8 +13770,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Retrieve a list of challenges
      * 
+     * @summary Retrieve a list of challenges
      * @param filterTemplate Filter for challenges that are not tied to campaigns (templates)
      * @param filterActiveCampaign Filter for challenges that are tied to active campaigns
      * @param filterStartDate A comma separated string without spaces.  First value is the operator to search on, second value is the challenge start date, a unix timestamp in seconds.  Allowed operators: (GT, LT, EQ, GOE, LOE).
@@ -13556,8 +13850,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Update a challenge
      * If the challenge is a copy, changes will propagate to all the related challenges
+     * @summary Update a challenge
      * @param id The challenge id
      * @param challengeResource The challenge resource object
      */
@@ -13612,24 +13906,24 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Update a challenge activity
-     * 
-     * @param activityId The activity id
+     * A challenge can have multiple instances of the same activity and thus the id used is of the specific entry within the challenge
+     * @summary Update a challenge activity
+     * @param id The challenge_activity id
      * @param challengeId The challenge id
      * @param challengeActivityResource The challenge activity resource object
      */
-    public updateChallengeActivity (activityId: number, challengeId: number, challengeActivityResource?: ChallengeActivityResource) : Promise<{ response: http.ClientResponse; body: ChallengeActivityResource;  }> {
-        const localVarPath = this.basePath + '/challenges/{challenge_id}/activities/{activity_id}'
-            .replace('{' + 'activity_id' + '}', String(activityId))
+    public updateChallengeActivity (id: number, challengeId: number, challengeActivityResource?: ChallengeActivityResource) : Promise<{ response: http.ClientResponse; body: ChallengeActivityResource;  }> {
+        const localVarPath = this.basePath + '/challenges/{challenge_id}/activities/{id}'
+            .replace('{' + 'id' + '}', String(id))
             .replace('{' + 'challenge_id' + '}', String(challengeId));
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
 
 
-        // verify required parameter 'activityId' is not null or undefined
-        if (activityId === null || activityId === undefined) {
-            throw new Error('Required parameter activityId was null or undefined when calling updateChallengeActivity.');
+        // verify required parameter 'id' is not null or undefined
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling updateChallengeActivity.');
         }
 
         // verify required parameter 'challengeId' is not null or undefined
@@ -13675,8 +13969,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Update an challenge activity template
      * 
+     * @summary Update an challenge activity template
      * @param id The id of the template
      * @param challengeActivityTemplateResource The challengeActivity template resource object
      */
@@ -13731,8 +14025,8 @@ export class CampaignsChallengesApi {
         });
     }
     /**
-     * Update a challenge template
      * 
+     * @summary Update a challenge template
      * @param id The id of the template
      * @param challengeTemplateResource The challenge template resource object
      */
@@ -13791,7 +14085,7 @@ export enum CampaignsRewardsApiApiKeys {
 }
 
 export class CampaignsRewardsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -13817,6 +14111,18 @@ export class CampaignsRewardsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: CampaignsRewardsApiApiKeys, value: string) {
         this.authentications[CampaignsRewardsApiApiKeys[key]].apiKey = value;
     }
@@ -13825,8 +14131,8 @@ export class CampaignsRewardsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a reward set
      * 
+     * @summary Create a reward set
      * @param rewardSetResource The reward set resource object
      */
     public createRewardSet (rewardSetResource?: RewardSetResource) : Promise<{ response: http.ClientResponse; body: RewardSetResource;  }> {
@@ -13874,8 +14180,8 @@ export class CampaignsRewardsApi {
         });
     }
     /**
-     * Delete a reward set
      * 
+     * @summary Delete a reward set
      * @param id The reward id
      */
     public deleteRewardSet (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -13928,8 +14234,8 @@ export class CampaignsRewardsApi {
         });
     }
     /**
-     * Get a single reward set
      * 
+     * @summary Get a single reward set
      * @param id The reward id
      */
     public getRewardSet (id: number) : Promise<{ response: http.ClientResponse; body: RewardSetResource;  }> {
@@ -13980,8 +14286,8 @@ export class CampaignsRewardsApi {
         });
     }
     /**
-     * List and search reward sets
      * 
+     * @summary List and search reward sets
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -14040,8 +14346,8 @@ export class CampaignsRewardsApi {
         });
     }
     /**
-     * Update a reward set
      * 
+     * @summary Update a reward set
      * @param id The reward id
      * @param rewardSetResource The reward set resource object
      */
@@ -14100,7 +14406,7 @@ export enum CategoriesApiApiKeys {
 }
 
 export class CategoriesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -14126,6 +14432,18 @@ export class CategoriesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: CategoriesApiApiKeys, value: string) {
         this.authentications[CategoriesApiApiKeys[key]].apiKey = value;
     }
@@ -14134,8 +14452,8 @@ export class CategoriesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a new category
      * 
+     * @summary Create a new category
      * @param category The category to create
      */
     public createCategory (category?: CategoryResource) : Promise<{ response: http.ClientResponse; body: CategoryResource;  }> {
@@ -14183,8 +14501,8 @@ export class CategoriesApi {
         });
     }
     /**
-     * Create a category template
      * Templates define a type of category and the properties they have
+     * @summary Create a category template
      * @param template The template to create
      */
     public createCategoryTemplate (template?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -14232,8 +14550,8 @@ export class CategoriesApi {
         });
     }
     /**
-     * Delete an existing category
      * 
+     * @summary Delete an existing category
      * @param id The id of the category to be deleted
      */
     public deleteCategory (id: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -14286,8 +14604,8 @@ export class CategoriesApi {
         });
     }
     /**
-     * Delete a category template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete a category template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -14345,8 +14663,8 @@ export class CategoriesApi {
         });
     }
     /**
-     * List and search categories with optional filters
      * 
+     * @summary List and search categories with optional filters
      * @param filterSearch Filter for categories whose names begin with provided string
      * @param filterActive Filter for categories that are specifically active or inactive
      * @param size The number of objects returned per page
@@ -14415,8 +14733,8 @@ export class CategoriesApi {
         });
     }
     /**
-     * Get a single category
      * 
+     * @summary Get a single category
      * @param id The id of the category to retrieve
      */
     public getCategory (id: string) : Promise<{ response: http.ClientResponse; body: CategoryResource;  }> {
@@ -14467,8 +14785,8 @@ export class CategoriesApi {
         });
     }
     /**
-     * Get a single category template
      * 
+     * @summary Get a single category template
      * @param id The id of the template
      */
     public getCategoryTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -14521,8 +14839,8 @@ export class CategoriesApi {
         });
     }
     /**
-     * List and search category templates
      * 
+     * @summary List and search category templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -14583,8 +14901,8 @@ export class CategoriesApi {
         });
     }
     /**
-     * List all trivia tags in the system
      * 
+     * @summary List all trivia tags in the system
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      */
@@ -14638,8 +14956,8 @@ export class CategoriesApi {
         });
     }
     /**
-     * Update an existing category
      * 
+     * @summary Update an existing category
      * @param id The id of the category
      * @param category The category to update
      */
@@ -14694,8 +15012,8 @@ export class CategoriesApi {
         });
     }
     /**
-     * Update a category template
      * 
+     * @summary Update a category template
      * @param id The id of the template
      * @param template The updated template information
      */
@@ -14754,7 +15072,7 @@ export enum ConfigsApiApiKeys {
 }
 
 export class ConfigsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -14780,6 +15098,18 @@ export class ConfigsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ConfigsApiApiKeys, value: string) {
         this.authentications[ConfigsApiApiKeys[key]].apiKey = value;
     }
@@ -14788,8 +15118,8 @@ export class ConfigsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a new config
      * 
+     * @summary Create a new config
      * @param config The config object
      */
     public createConfig (config?: Config) : Promise<{ response: http.ClientResponse; body: Config;  }> {
@@ -14837,8 +15167,8 @@ export class ConfigsApi {
         });
     }
     /**
-     * Delete an existing config
      * 
+     * @summary Delete an existing config
      * @param name The config name
      */
     public deleteConfig (name: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -14891,8 +15221,8 @@ export class ConfigsApi {
         });
     }
     /**
-     * Get a single config
      * Only configs that are public readable will be shown without admin access
+     * @summary Get a single config
      * @param name The config name
      */
     public getConfig (name: string) : Promise<{ response: http.ClientResponse; body: Config;  }> {
@@ -14945,8 +15275,8 @@ export class ConfigsApi {
         });
     }
     /**
-     * List and search configs
      * 
+     * @summary List and search configs
      * @param filterSearch Filter for configs whose name contains the given string
      * @param size The number of objects returned per page
      * @param page The number of the page returned
@@ -15012,8 +15342,8 @@ export class ConfigsApi {
         });
     }
     /**
-     * Update an existing config
      * 
+     * @summary Update an existing config
      * @param name The config name
      * @param config The config object
      */
@@ -15072,7 +15402,7 @@ export enum ContentArticlesApiApiKeys {
 }
 
 export class ContentArticlesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -15098,6 +15428,18 @@ export class ContentArticlesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ContentArticlesApiApiKeys, value: string) {
         this.authentications[ContentArticlesApiApiKeys[key]].apiKey = value;
     }
@@ -15106,8 +15448,8 @@ export class ContentArticlesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a new article
      * Articles are blobs of text with titles, a category and assets. Formatting and display of the text is in the hands of the front end.
+     * @summary Create a new article
      * @param articleResource The new article
      */
     public createArticle (articleResource?: ArticleResource) : Promise<{ response: http.ClientResponse; body: ArticleResource;  }> {
@@ -15155,8 +15497,8 @@ export class ContentArticlesApi {
         });
     }
     /**
-     * Create an article template
      * Article Templates define a type of article and the properties they have
+     * @summary Create an article template
      * @param articleTemplateResource The article template resource object
      */
     public createArticleTemplate (articleTemplateResource?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -15204,8 +15546,8 @@ export class ContentArticlesApi {
         });
     }
     /**
-     * Delete an existing article
      * 
+     * @summary Delete an existing article
      * @param id The article id
      */
     public deleteArticle (id: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -15258,8 +15600,8 @@ export class ContentArticlesApi {
         });
     }
     /**
-     * Delete an article template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete an article template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -15317,8 +15659,8 @@ export class ContentArticlesApi {
         });
     }
     /**
-     * Get a single article
      * 
+     * @summary Get a single article
      * @param id The article id
      */
     public getArticle (id: string) : Promise<{ response: http.ClientResponse; body: ArticleResource;  }> {
@@ -15369,8 +15711,8 @@ export class ContentArticlesApi {
         });
     }
     /**
-     * Get a single article template
      * 
+     * @summary Get a single article template
      * @param id The id of the template
      */
     public getArticleTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -15423,8 +15765,8 @@ export class ContentArticlesApi {
         });
     }
     /**
-     * List and search article templates
      * 
+     * @summary List and search article templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -15485,16 +15827,18 @@ export class ContentArticlesApi {
         });
     }
     /**
-     * List and search articles
-     * Get a list of articles with optional filtering. Assets will not be filled in on the resources returned. Use &#39;Get a single article&#39; to retrieve the full resource with assets for a given item as needed.
+     * Get a list of articles with optional filtering. Assets will not be filled in on the resources returned. Use 'Get a single article' to retrieve the full resource with assets for a given item as needed.
+     * @summary List and search articles
      * @param filterCategory Filter for articles from a specific category by id
-     * @param filterTagset Filter for articles with specified tags (separated by comma)
+     * @param filterTagset Filter for articles with at least one of a specified set of tags (separated by comma)
+     * @param filterTagIntersection Filter for articles with all of a specified set of tags (separated by comma)
+     * @param filterTagExclusion Filter for articles with none of a specified set of tags (separated by comma)
      * @param filterTitle Filter for articles whose title contains a string
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
      */
-    public getArticles (filterCategory?: string, filterTagset?: string, filterTitle?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceArticleResource;  }> {
+    public getArticles (filterCategory?: string, filterTagset?: string, filterTagIntersection?: string, filterTagExclusion?: string, filterTitle?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceArticleResource;  }> {
         const localVarPath = this.basePath + '/content/articles';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
@@ -15507,6 +15851,14 @@ export class ContentArticlesApi {
 
         if (filterTagset !== undefined) {
             queryParameters['filter_tagset'] = filterTagset;
+        }
+
+        if (filterTagIntersection !== undefined) {
+            queryParameters['filter_tag_intersection'] = filterTagIntersection;
+        }
+
+        if (filterTagExclusion !== undefined) {
+            queryParameters['filter_tag_exclusion'] = filterTagExclusion;
         }
 
         if (filterTitle !== undefined) {
@@ -15560,8 +15912,8 @@ export class ContentArticlesApi {
         });
     }
     /**
-     * Update an existing article
      * 
+     * @summary Update an existing article
      * @param id The article id
      * @param articleResource The article object
      */
@@ -15616,8 +15968,8 @@ export class ContentArticlesApi {
         });
     }
     /**
-     * Update an article template
      * 
+     * @summary Update an article template
      * @param id The id of the template
      * @param articleTemplateResource The article template resource object
      */
@@ -15676,7 +16028,7 @@ export enum ContentCommentsApiApiKeys {
 }
 
 export class ContentCommentsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -15702,6 +16054,18 @@ export class ContentCommentsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ContentCommentsApiApiKeys, value: string) {
         this.authentications[ContentCommentsApiApiKeys[key]].apiKey = value;
     }
@@ -15710,8 +16074,8 @@ export class ContentCommentsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add a new comment
      * 
+     * @summary Add a new comment
      * @param commentResource The comment to be added
      */
     public addComment (commentResource?: CommentResource) : Promise<{ response: http.ClientResponse; body: CommentResource;  }> {
@@ -15759,8 +16123,8 @@ export class ContentCommentsApi {
         });
     }
     /**
-     * Delete a comment
      * 
+     * @summary Delete a comment
      * @param id The comment id
      */
     public deleteComment (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -15813,8 +16177,8 @@ export class ContentCommentsApi {
         });
     }
     /**
-     * Return a comment
      * 
+     * @summary Return a comment
      * @param id The comment id
      */
     public getComment (id: number) : Promise<{ response: http.ClientResponse; body: CommentResource;  }> {
@@ -15865,8 +16229,8 @@ export class ContentCommentsApi {
         });
     }
     /**
-     * Returns a page of comments
      * 
+     * @summary Returns a page of comments
      * @param context Get comments by context type
      * @param contextId Get comments by context id
      * @param size The number of objects returned per page
@@ -15940,8 +16304,8 @@ export class ContentCommentsApi {
         });
     }
     /**
-     * Search the comment index
-     * The body is an ElasticSearch query json. Please see their &lt;a href&#x3D;&#39;https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html&#39;&gt;documentation&lt;/a&gt; for details on the format and search options
+     * The body is an ElasticSearch query json. Please see their <a href='https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html'>documentation</a> for details on the format and search options
+     * @summary Search the comment index
      * @param query The search query
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -15997,8 +16361,8 @@ export class ContentCommentsApi {
         });
     }
     /**
-     * Update a comment
      * 
+     * @summary Update a comment
      * @param id The comment id
      * @param content The comment content
      */
@@ -16057,7 +16421,7 @@ export enum ContentPollsApiApiKeys {
 }
 
 export class ContentPollsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -16083,6 +16447,18 @@ export class ContentPollsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ContentPollsApiApiKeys, value: string) {
         this.authentications[ContentPollsApiApiKeys[key]].apiKey = value;
     }
@@ -16091,8 +16467,8 @@ export class ContentPollsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add your vote to a poll
      * 
+     * @summary Add your vote to a poll
      * @param id The poll id
      * @param answerKey The answer key
      */
@@ -16147,8 +16523,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * Create a new poll
      * Polls are blobs of text with titles, a category and assets. Formatting and display of the text is in the hands of the front end.
+     * @summary Create a new poll
      * @param pollResource The poll object
      */
     public createPoll (pollResource?: PollResource) : Promise<{ response: http.ClientResponse; body: PollResource;  }> {
@@ -16196,8 +16572,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * Create a poll template
      * Poll templates define a type of poll and the properties they have
+     * @summary Create a poll template
      * @param pollTemplateResource The poll template resource object
      */
     public createPollTemplate (pollTemplateResource?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -16245,8 +16621,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * Delete an existing poll
      * 
+     * @summary Delete an existing poll
      * @param id The poll id
      */
     public deletePoll (id: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -16299,8 +16675,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * Delete a poll template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete a poll template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -16358,8 +16734,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * Get a single poll
      * 
+     * @summary Get a single poll
      * @param id The poll id
      */
     public getPoll (id: string) : Promise<{ response: http.ClientResponse; body: PollResource;  }> {
@@ -16410,8 +16786,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * Get poll answer
      * 
+     * @summary Get poll answer
      * @param id The poll id
      */
     public getPollAnswer (id: string) : Promise<{ response: http.ClientResponse; body: PollResponseResource;  }> {
@@ -16464,8 +16840,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * Get a single poll template
      * 
+     * @summary Get a single poll template
      * @param id The id of the template
      */
     public getPollTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -16518,8 +16894,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * List and search poll templates
      * 
+     * @summary List and search poll templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -16580,8 +16956,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * List and search polls
-     * Get a list of polls with optional filtering. Assets will not be filled in on the resources returned. Use &#39;Get a single poll&#39; to retrieve the full resource with assets for a given item as needed.
+     * Get a list of polls with optional filtering. Assets will not be filled in on the resources returned. Use 'Get a single poll' to retrieve the full resource with assets for a given item as needed.
+     * @summary List and search polls
      * @param filterCategory Filter for polls from a specific category by id
      * @param filterTagset Filter for polls with specified tags (separated by comma)
      * @param filterText Filter for polls whose text contains a string
@@ -16655,8 +17031,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * Update an existing poll
      * 
+     * @summary Update an existing poll
      * @param id The poll id
      * @param pollResource The poll object
      */
@@ -16711,8 +17087,8 @@ export class ContentPollsApi {
         });
     }
     /**
-     * Update a poll template
      * 
+     * @summary Update a poll template
      * @param id The id of the template
      * @param pollTemplateResource The poll template resource object
      */
@@ -16771,7 +17147,7 @@ export enum CurrenciesApiApiKeys {
 }
 
 export class CurrenciesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -16797,6 +17173,18 @@ export class CurrenciesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: CurrenciesApiApiKeys, value: string) {
         this.authentications[CurrenciesApiApiKeys[key]].apiKey = value;
     }
@@ -16805,8 +17193,8 @@ export class CurrenciesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a currency
      * 
+     * @summary Create a currency
      * @param currency The currency object
      */
     public createCurrency (currency?: CurrencyResource) : Promise<{ response: http.ClientResponse; body: CurrencyResource;  }> {
@@ -16854,8 +17242,8 @@ export class CurrenciesApi {
         });
     }
     /**
-     * Delete a currency
      * 
+     * @summary Delete a currency
      * @param code The currency code
      */
     public deleteCurrency (code: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -16908,8 +17296,8 @@ export class CurrenciesApi {
         });
     }
     /**
-     * List and search currencies
      * 
+     * @summary List and search currencies
      * @param filterEnabledCurrencies Filter for alternate currencies setup explicitely in system config
      * @param filterType Filter currencies by type.  Allowable values: (&#39;virtual&#39;, &#39;real&#39;)
      * @param size The number of objects returned per page
@@ -16978,8 +17366,8 @@ export class CurrenciesApi {
         });
     }
     /**
-     * Get a single currency
      * 
+     * @summary Get a single currency
      * @param code The currency code
      */
     public getCurrency (code: string) : Promise<{ response: http.ClientResponse; body: CurrencyResource;  }> {
@@ -17030,8 +17418,8 @@ export class CurrenciesApi {
         });
     }
     /**
-     * Update a currency
      * 
+     * @summary Update a currency
      * @param code The currency code
      * @param currency The currency object
      */
@@ -17090,7 +17478,7 @@ export enum DevicesApiApiKeys {
 }
 
 export class DevicesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -17116,6 +17504,18 @@ export class DevicesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: DevicesApiApiKeys, value: string) {
         this.authentications[DevicesApiApiKeys[key]].apiKey = value;
     }
@@ -17124,8 +17524,8 @@ export class DevicesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add device users
      * 
+     * @summary Add device users
      * @param userResources userResources
      * @param id id
      */
@@ -17185,8 +17585,8 @@ export class DevicesApi {
         });
     }
     /**
-     * Create a device
      * 
+     * @summary Create a device
      * @param device device
      */
     public createDevice (device: DeviceResource) : Promise<{ response: http.ClientResponse; body: DeviceResource;  }> {
@@ -17239,8 +17639,8 @@ export class DevicesApi {
         });
     }
     /**
-     * Delete a device
      * 
+     * @summary Delete a device
      * @param id id
      */
     public deleteDevice (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -17293,8 +17693,8 @@ export class DevicesApi {
         });
     }
     /**
-     * Delete a device user
      * 
+     * @summary Delete a device user
      * @param id The id of the device
      * @param userId The user id of the device user
      */
@@ -17354,8 +17754,8 @@ export class DevicesApi {
         });
     }
     /**
-     * Delete all device users
      * 
+     * @summary Delete all device users
      * @param id The id of the device
      * @param filterId Filter for device users to delete with a user id in a given comma separated list of ids
      */
@@ -17413,8 +17813,8 @@ export class DevicesApi {
         });
     }
     /**
-     * Get a single device
      * 
+     * @summary Get a single device
      * @param id id
      */
     public getDevice (id: number) : Promise<{ response: http.ClientResponse; body: DeviceResource;  }> {
@@ -17467,8 +17867,8 @@ export class DevicesApi {
         });
     }
     /**
-     * List and search devices
      * Get a list of devices with optional filtering
+     * @summary List and search devices
      * @param filterMake Filter for devices with specified make
      * @param filterModel Filter for devices with specified model
      * @param size The number of objects returned per page
@@ -17539,8 +17939,8 @@ export class DevicesApi {
         });
     }
     /**
-     * Update a device
      * 
+     * @summary Update a device
      * @param device device
      * @param id id
      */
@@ -17604,7 +18004,7 @@ export enum DispositionsApiApiKeys {
 }
 
 export class DispositionsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -17630,6 +18030,18 @@ export class DispositionsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: DispositionsApiApiKeys, value: string) {
         this.authentications[DispositionsApiApiKeys[key]].apiKey = value;
     }
@@ -17638,8 +18050,8 @@ export class DispositionsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add a new disposition
      * 
+     * @summary Add a new disposition
      * @param disposition The new disposition record
      */
     public addDisposition (disposition?: DispositionResource) : Promise<{ response: http.ClientResponse; body: DispositionResource;  }> {
@@ -17687,8 +18099,8 @@ export class DispositionsApi {
         });
     }
     /**
-     * Delete a disposition
      * 
+     * @summary Delete a disposition
      * @param id The id of the disposition record
      */
     public deleteDisposition (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -17741,8 +18153,8 @@ export class DispositionsApi {
         });
     }
     /**
-     * Returns a disposition
      * 
+     * @summary Returns a disposition
      * @param id The id of the disposition record
      */
     public getDisposition (id: number) : Promise<{ response: http.ClientResponse; body: DispositionResource;  }> {
@@ -17793,8 +18205,8 @@ export class DispositionsApi {
         });
     }
     /**
-     * Returns a list of disposition counts
      * 
+     * @summary Returns a list of disposition counts
      * @param filterContext Filter for dispositions within a context type (games, articles, polls, etc). Optionally with a specific id like filter_context&#x3D;video:47
      * @param filterOwner Filter for dispositions from a specific user by id or &#39;me&#39;
      */
@@ -17848,8 +18260,8 @@ export class DispositionsApi {
         });
     }
     /**
-     * Returns a page of dispositions
      * 
+     * @summary Returns a page of dispositions
      * @param filterContext Filter for dispositions within a context type (games, articles, polls, etc). Optionally with a specific id like filter_context&#x3D;video:47
      * @param filterOwner Filter for dispositions from a specific user by id or &#39;me&#39;
      * @param size The number of objects returned per page
@@ -17922,7 +18334,7 @@ export enum FulfillmentApiApiKeys {
 }
 
 export class FulfillmentApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -17948,6 +18360,18 @@ export class FulfillmentApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: FulfillmentApiApiKeys, value: string) {
         this.authentications[FulfillmentApiApiKeys[key]].apiKey = value;
     }
@@ -17956,8 +18380,8 @@ export class FulfillmentApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a fulfillment type
      * 
+     * @summary Create a fulfillment type
      * @param type The fulfillment type
      */
     public createFulfillmentType (type?: FulfillmentType) : Promise<{ response: http.ClientResponse; body: FulfillmentType;  }> {
@@ -18005,8 +18429,8 @@ export class FulfillmentApi {
         });
     }
     /**
-     * Delete a fulfillment type
      * 
+     * @summary Delete a fulfillment type
      * @param id The id
      */
     public deleteFulfillmentType (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -18059,8 +18483,8 @@ export class FulfillmentApi {
         });
     }
     /**
-     * Get a single fulfillment type
      * 
+     * @summary Get a single fulfillment type
      * @param id The id
      */
     public getFulfillmentType (id: number) : Promise<{ response: http.ClientResponse; body: FulfillmentType;  }> {
@@ -18111,8 +18535,8 @@ export class FulfillmentApi {
         });
     }
     /**
-     * List and search fulfillment types
      * 
+     * @summary List and search fulfillment types
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -18171,8 +18595,8 @@ export class FulfillmentApi {
         });
     }
     /**
-     * Update a fulfillment type
      * 
+     * @summary Update a fulfillment type
      * @param id The id
      * @param fulfillmentType The fulfillment type
      */
@@ -18231,7 +18655,7 @@ export enum GamificationAchievementsApiApiKeys {
 }
 
 export class GamificationAchievementsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -18257,6 +18681,18 @@ export class GamificationAchievementsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: GamificationAchievementsApiApiKeys, value: string) {
         this.authentications[GamificationAchievementsApiApiKeys[key]].apiKey = value;
     }
@@ -18265,8 +18701,8 @@ export class GamificationAchievementsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a new achievement definition
-     * If the definition contains a trigger event name, a BRE rule is created, so that tracking logic is executed when the triggering event occurs. If no trigger event name is specified, the user&#39;s achievement status must manually be updated via the API.
+     * If the definition contains a trigger event name, a BRE rule is created, so that tracking logic is executed when the triggering event occurs. If no trigger event name is specified, the user's achievement status must manually be updated via the API.
+     * @summary Create a new achievement definition
      * @param achievement The achievement definition
      */
     public createAchievement (achievement?: AchievementDefinitionResource) : Promise<{ response: http.ClientResponse; body: AchievementDefinitionResource;  }> {
@@ -18314,8 +18750,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Create an achievement template
      * Achievement templates define a type of achievement and the properties they have
+     * @summary Create an achievement template
      * @param template The achievement template to be created
      */
     public createAchievementTemplate (template?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -18363,8 +18799,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Delete an achievement definition
      * Will also disable the associated generated rule, if any.
+     * @summary Delete an achievement definition
      * @param name The name of the achievement
      */
     public deleteAchievement (name: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -18417,8 +18853,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Delete an achievement template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete an achievement template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -18476,8 +18912,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Get a single achievement definition
      * 
+     * @summary Get a single achievement definition
      * @param name The name of the achievement
      */
     public getAchievement (name: string) : Promise<{ response: http.ClientResponse; body: AchievementDefinitionResource;  }> {
@@ -18530,8 +18966,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Get a single achievement template
      * 
+     * @summary Get a single achievement template
      * @param id The id of the template
      */
     public getAchievementTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -18584,8 +19020,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * List and search achievement templates
      * 
+     * @summary List and search achievement templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -18646,8 +19082,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Get the list of triggers that can be used to trigger an achievement progress update
      * 
+     * @summary Get the list of triggers that can be used to trigger an achievement progress update
      */
     public getAchievementTriggers () : Promise<{ response: http.ClientResponse; body: Array<BreTriggerResource>;  }> {
         const localVarPath = this.basePath + '/achievements/triggers';
@@ -18693,8 +19129,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Get all achievement definitions in the system
      * 
+     * @summary Get all achievement definitions in the system
      * @param filterTagset Filter for achievements with specified tags (separated by comma)
      * @param filterName Filter for achievements whose name contains a string
      * @param filterHidden Filter for achievements that are hidden or not
@@ -18775,8 +19211,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Get a list of derived achievements
      * Used by other services that depend on achievements
+     * @summary Get a list of derived achievements
      * @param name The name of the derived achievement
      */
     public getDerivedAchievements (name: string) : Promise<{ response: http.ClientResponse; body: Array<AchievementDefinitionResource>;  }> {
@@ -18829,8 +19265,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Retrieve progress on a given achievement for a given user
-     * Assets will not be filled in on the resources returned. Use &#39;Get a single poll&#39; to retrieve the full resource with assets for a given item as needed.
+     * Assets will not be filled in on the resources returned. Use 'Get a single poll' to retrieve the full resource with assets for a given item as needed.
+     * @summary Retrieve progress on a given achievement for a given user
      * @param userId The user&#39;s id
      * @param achievementName The achievement&#39;s name
      */
@@ -18890,8 +19326,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Retrieve progress on achievements for a given user
-     * Assets will not be filled in on the resources returned. Use &#39;Get a single poll&#39; to retrieve the full resource with assets for a given item as needed.
+     * Assets will not be filled in on the resources returned. Use 'Get a single poll' to retrieve the full resource with assets for a given item as needed.
+     * @summary Retrieve progress on achievements for a given user
      * @param userId The user&#39;s id
      * @param filterAchievementDerived Filter for achievements that are derived from other services
      * @param filterAchievementTagset Filter for achievements with specified tags (separated by comma)
@@ -18969,8 +19405,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Retrieve progress on a given achievement for all users
-     * Assets will not be filled in on the resources returned. Use &#39;Get single achievement progress for user&#39; to retrieve the full resource with assets for a given user as needed.
+     * Assets will not be filled in on the resources returned. Use 'Get single achievement progress for user' to retrieve the full resource with assets for a given user as needed.
+     * @summary Retrieve progress on a given achievement for all users
      * @param achievementName The achievement&#39;s name
      * @param filterAchievementDerived Filter for achievements that are derived from other services
      * @param filterAchievementTagset Filter for achievements with specified tags (separated by comma)
@@ -19048,8 +19484,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Retrieve progress on achievements for all users
-     * Assets will not be filled in on the resources returned. Use &#39;Get single achievement progress for user&#39; to retrieve the full resource with assets for a given user as needed.
+     * Assets will not be filled in on the resources returned. Use 'Get single achievement progress for user' to retrieve the full resource with assets for a given user as needed.
+     * @summary Retrieve progress on achievements for all users
      * @param filterAchievementDerived Filter for achievements that are derived from other services
      * @param filterAchievementTagset Filter for achievements with specified tags (separated by comma)
      * @param filterAchievementName Filter for achievements whose name contains a string
@@ -19120,8 +19556,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Increment an achievement progress record for a user
-     * If no progress record yet exists for the user, it will be created. Otherwise it will be updated and the provided value added to the existing progress. May be negative. If progress meets or exceeds the achievement&#39;s max_value it will be marked as earned and a BRE event will be triggered for the &lt;code&gt;BreAchievementEarnedTrigger&lt;/code&gt;.
+     * If no progress record yet exists for the user, it will be created. Otherwise it will be updated and the provided value added to the existing progress. May be negative. If progress meets or exceeds the achievement's max_value it will be marked as earned and a BRE event will be triggered for the <code>BreAchievementEarnedTrigger</code>.
+     * @summary Increment an achievement progress record for a user
      * @param userId The user&#39;s id
      * @param achievementName The achievement&#39;s name
      * @param progress The amount to add to the progress value
@@ -19183,8 +19619,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Set an achievement progress record for a user
-     * If no progress record yet exists for the user, it will be created. Otherwise it will be updated and progress set to the provided value. If progress meets or exceeds the achievement&#39;s max_value it will be marked as earned and a BRE event will be triggered for the &lt;code&gt;BreAchievementEarnedTrigger&lt;/code&gt;.
+     * If no progress record yet exists for the user, it will be created. Otherwise it will be updated and progress set to the provided value. If progress meets or exceeds the achievement's max_value it will be marked as earned and a BRE event will be triggered for the <code>BreAchievementEarnedTrigger</code>.
+     * @summary Set an achievement progress record for a user
      * @param userId The user&#39;s id
      * @param achievementName The achievement&#39;s name
      * @param progress The new progress value
@@ -19246,8 +19682,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Update an achievement definition
      * The existing generated rule, if any, will be deleted. A new rule will be created if a trigger event name is specified in the new version.
+     * @summary Update an achievement definition
      * @param name The name of the achievement
      * @param achievement The achievement definition
      */
@@ -19302,8 +19738,8 @@ export class GamificationAchievementsApi {
         });
     }
     /**
-     * Update an achievement template
      * 
+     * @summary Update an achievement template
      * @param id The id of the template
      * @param template The updated template
      */
@@ -19362,7 +19798,7 @@ export enum GamificationLeaderboardsApiApiKeys {
 }
 
 export class GamificationLeaderboardsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -19388,6 +19824,18 @@ export class GamificationLeaderboardsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: GamificationLeaderboardsApiApiKeys, value: string) {
         this.authentications[GamificationLeaderboardsApiApiKeys[key]].apiKey = value;
     }
@@ -19396,8 +19844,8 @@ export class GamificationLeaderboardsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Retrieves leaderboard details and paginated entries
-     * The context type identifies the type of entity (i.e., &#39;activity&#39;) being tracked on the leaderboard. The context ID is the unique ID of the actual entity tracked by the leaderboard. Sorting is based on the fields of LeaderboardEntryResource rather than the returned LeaderboardResource.
+     * The context type identifies the type of entity (i.e., 'activity') being tracked on the leaderboard. The context ID is the unique ID of the actual entity tracked by the leaderboard. Sorting is based on the fields of LeaderboardEntryResource rather than the returned LeaderboardResource.
+     * @summary Retrieves leaderboard details and paginated entries
      * @param contextType The context type for the leaderboard
      * @param contextId The context id for the leaderboard
      * @param size The number of objects returned per page
@@ -19470,8 +19918,8 @@ export class GamificationLeaderboardsApi {
         });
     }
     /**
-     * Retrieves a specific user entry with rank
-     * The context type identifies the type of entity (i.e., &#39;activity&#39;) being tracked on the leaderboard. The context ID is the unique ID of the actual entity tracked by the leaderboard
+     * The context type identifies the type of entity (i.e., 'activity') being tracked on the leaderboard. The context ID is the unique ID of the actual entity tracked by the leaderboard
+     * @summary Retrieves a specific user entry with rank
      * @param contextType The context type for the leaderboard
      * @param contextId The context id for the leaderboard
      * @param id The id of a user
@@ -19538,8 +19986,8 @@ export class GamificationLeaderboardsApi {
         });
     }
     /**
-     * Get a list of available leaderboard strategy names
      * 
+     * @summary Get a list of available leaderboard strategy names
      */
     public getLeaderboardStrategies () : Promise<{ response: http.ClientResponse; body: Array<string>;  }> {
         const localVarPath = this.basePath + '/leaderboards/strategies';
@@ -19587,7 +20035,7 @@ export enum GamificationLevelingApiApiKeys {
 }
 
 export class GamificationLevelingApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -19613,6 +20061,18 @@ export class GamificationLevelingApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: GamificationLevelingApiApiKeys, value: string) {
         this.authentications[GamificationLevelingApiApiKeys[key]].apiKey = value;
     }
@@ -19621,8 +20081,8 @@ export class GamificationLevelingApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a level schema
      * 
+     * @summary Create a level schema
      * @param level The level schema definition
      */
     public createLevel (level?: LevelingResource) : Promise<{ response: http.ClientResponse; body: LevelingResource;  }> {
@@ -19670,8 +20130,8 @@ export class GamificationLevelingApi {
         });
     }
     /**
-     * Delete a level
      * 
+     * @summary Delete a level
      * @param name The level schema name
      */
     public deleteLevel (name: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -19724,8 +20184,8 @@ export class GamificationLevelingApi {
         });
     }
     /**
-     * Retrieve a level
      * 
+     * @summary Retrieve a level
      * @param name The level schema name
      */
     public getLevel (name: string) : Promise<{ response: http.ClientResponse; body: LevelingResource;  }> {
@@ -19778,8 +20238,8 @@ export class GamificationLevelingApi {
         });
     }
     /**
-     * Get the list of triggers that can be used to trigger a leveling progress update
      * 
+     * @summary Get the list of triggers that can be used to trigger a leveling progress update
      */
     public getLevelTriggers () : Promise<{ response: http.ClientResponse; body: Array<BreTriggerResource>;  }> {
         const localVarPath = this.basePath + '/leveling/triggers';
@@ -19825,8 +20285,8 @@ export class GamificationLevelingApi {
         });
     }
     /**
-     * List and search levels
      * Get a list of levels schemas with optional filtering
+     * @summary List and search levels
      * @param filterName Filter for level schemas whose name contains a given string
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -19892,8 +20352,8 @@ export class GamificationLevelingApi {
         });
     }
     /**
-     * Get a user&#39;s progress for a given level schema
      * 
+     * @summary Get a user's progress for a given level schema
      * @param userId The id of the user
      * @param name The level schema name
      */
@@ -19953,8 +20413,8 @@ export class GamificationLevelingApi {
         });
     }
     /**
-     * Get a user&#39;s progress for all level schemas
      * Filtering and sorting is based on the LevelingResource object, not the UserLevelingResource that is returned here.
+     * @summary Get a user's progress for all level schemas
      * @param userId The id of the user
      * @param filterName Filter for level schemas whose name contains a given string
      * @param size The number of objects returned per page
@@ -20027,8 +20487,8 @@ export class GamificationLevelingApi {
         });
     }
     /**
-     * Update or create a leveling progress record for a user
-     * If no progress record yet exists for the user, it will be created. Otherwise the provided value will be added to it. May be negative. If progress meets or exceeds the level&#39;s max_value it will be marked as earned and a BRE event will be triggered for the &lt;code&gt;BreAchievementEarnedTrigger&lt;/code&gt;.
+     * If no progress record yet exists for the user, it will be created. Otherwise the provided value will be added to it. May be negative. If progress meets or exceeds the level's max_value it will be marked as earned and a BRE event will be triggered for the <code>BreAchievementEarnedTrigger</code>.
+     * @summary Update or create a leveling progress record for a user
      * @param userId The id of the user
      * @param name The level schema name
      * @param progress The amount of progress to add
@@ -20090,8 +20550,8 @@ export class GamificationLevelingApi {
         });
     }
     /**
-     * Set leveling progress for a user
-     * If no progress record yet exists for the user, it will be created. Otherwise it will be updated to the provided value. If progress meets or exceeds the level&#39;s max_value it will be marked as earned and a BRE event will be triggered for the &lt;code&gt;BreAchievementEarnedTrigger&lt;/code&gt;.
+     * If no progress record yet exists for the user, it will be created. Otherwise it will be updated to the provided value. If progress meets or exceeds the level's max_value it will be marked as earned and a BRE event will be triggered for the <code>BreAchievementEarnedTrigger</code>.
+     * @summary Set leveling progress for a user
      * @param userId The id of the user
      * @param name The level schema name
      * @param progress The new progress amount
@@ -20153,8 +20613,8 @@ export class GamificationLevelingApi {
         });
     }
     /**
-     * Update a level
      * 
+     * @summary Update a level
      * @param name The level schema name
      * @param newLevel The level schema definition
      */
@@ -20213,7 +20673,7 @@ export enum GamificationMetricsApiApiKeys {
 }
 
 export class GamificationMetricsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -20239,6 +20699,18 @@ export class GamificationMetricsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: GamificationMetricsApiApiKeys, value: string) {
         this.authentications[GamificationMetricsApiApiKeys[key]].apiKey = value;
     }
@@ -20247,8 +20719,8 @@ export class GamificationMetricsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add a metric
      * Post a new score/stat for an activity occurrence without ending the occurrence itself
+     * @summary Add a metric
      * @param metric The new metric
      */
     public addMetric (metric?: MetricResource) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -20300,7 +20772,7 @@ export enum GamificationTriviaApiApiKeys {
 }
 
 export class GamificationTriviaApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -20326,6 +20798,18 @@ export class GamificationTriviaApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: GamificationTriviaApiApiKeys, value: string) {
         this.authentications[GamificationTriviaApiApiKeys[key]].apiKey = value;
     }
@@ -20334,8 +20818,8 @@ export class GamificationTriviaApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add an answer to a question
      * 
+     * @summary Add an answer to a question
      * @param questionId The id of the question
      * @param answer The new answer
      */
@@ -20390,8 +20874,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Add a tag to a question
      * 
+     * @summary Add a tag to a question
      * @param id The id of the question
      * @param tag The new tag
      */
@@ -20446,8 +20930,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Add a tag to a batch of questions
-     * All questions that dont&#39;t have the tag and match filters will have it added. The returned number is the number of questions updated.
+     * All questions that dont't have the tag and match filters will have it added. The returned number is the number of questions updated.
+     * @summary Add a tag to a batch of questions
      * @param tag The tag to add
      * @param filterSearch Filter for documents whose question, answers or tags contains provided string
      * @param filterIdset Filter for documents whose id is in the comma separated list provided
@@ -20535,8 +21019,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Create an import job
      * Set up a job to import a set of trivia questions from a cvs file at a remote url. the file will be validated asynchronously but will not be processed until started manually with the process endpoint.
+     * @summary Create an import job
      * @param request The new import job
      */
     public createImportJob (request?: ImportJobResource) : Promise<{ response: http.ClientResponse; body: ImportJobResource;  }> {
@@ -20584,8 +21068,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Create a question
      * 
+     * @summary Create a question
      * @param question The new question
      */
     public createQuestion (question?: QuestionResource) : Promise<{ response: http.ClientResponse; body: QuestionResource;  }> {
@@ -20633,8 +21117,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Create a question template
      * Question templates define a type of question and the properties they have
+     * @summary Create a question template
      * @param questionTemplateResource The question template resource object
      */
     public createQuestionTemplate (questionTemplateResource?: QuestionTemplateResource) : Promise<{ response: http.ClientResponse; body: QuestionTemplateResource;  }> {
@@ -20682,8 +21166,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Delete an import job
      * Also deletes all questions that were imported by it
+     * @summary Delete an import job
      * @param id The id of the job
      */
     public deleteImportJob (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -20736,8 +21220,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Delete a question
      * 
+     * @summary Delete a question
      * @param id The id of the question
      */
     public deleteQuestion (id: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -20790,8 +21274,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Remove an answer from a question
      * 
+     * @summary Remove an answer from a question
      * @param questionId The id of the question
      * @param id The id of the answer
      */
@@ -20851,8 +21335,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Delete a question template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete a question template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -20910,8 +21394,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Get an import job
      * 
+     * @summary Get an import job
      * @param id The id of the job
      */
     public getImportJob (id: number) : Promise<{ response: http.ClientResponse; body: ImportJobResource;  }> {
@@ -20964,8 +21448,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Get a list of import job
      * 
+     * @summary Get a list of import job
      * @param filterVendor Filter for jobs by vendor id
      * @param filterCategory Filter for jobs by category id
      * @param filterName Filter for jobs which name *STARTS* with the given string
@@ -21046,8 +21530,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Get a single question
      * 
+     * @summary Get a single question
      * @param id The id of the question
      */
     public getQuestion (id: string) : Promise<{ response: http.ClientResponse; body: QuestionResource;  }> {
@@ -21100,8 +21584,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Get an answer for a question
      * 
+     * @summary Get an answer for a question
      * @param questionId The id of the question
      * @param id The id of the answer
      */
@@ -21161,8 +21645,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * List the answers available for a question
      * 
+     * @summary List the answers available for a question
      * @param questionId The id of the question
      */
     public getQuestionAnswers (questionId: string) : Promise<{ response: http.ClientResponse; body: Array<AnswerResource>;  }> {
@@ -21215,8 +21699,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * List question deltas in ascending order of updated date
-     * The &#39;since&#39; parameter is important to avoid getting a full list of all questions. Implementors should make sure they pass the updated date of the last resource loaded, not the date of the last request, in order to avoid gaps
+     * The 'since' parameter is important to avoid getting a full list of all questions. Implementors should make sure they pass the updated date of the last resource loaded, not the date of the last request, in order to avoid gaps
+     * @summary List question deltas in ascending order of updated date
      * @param since Timestamp in seconds
      */
     public getQuestionDeltas (since?: number) : Promise<{ response: http.ClientResponse; body: Array<DeltaResource>;  }> {
@@ -21267,8 +21751,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * List the tags for a question
      * 
+     * @summary List the tags for a question
      * @param id The id of the question
      */
     public getQuestionTags (id: string) : Promise<{ response: http.ClientResponse; body: Array<string>;  }> {
@@ -21321,8 +21805,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Get a single question template
      * 
+     * @summary Get a single question template
      * @param id The id of the template
      */
     public getQuestionTemplate (id: string) : Promise<{ response: http.ClientResponse; body: QuestionTemplateResource;  }> {
@@ -21375,8 +21859,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * List and search question templates
      * 
+     * @summary List and search question templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -21437,8 +21921,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * List and search questions
      * 
+     * @summary List and search questions
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -21539,8 +22023,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Count questions based on filters
-     * This is also provided by the list endpoint so you don&#39;t need to call this for pagination purposes
+     * This is also provided by the list endpoint so you don't need to call this for pagination purposes
+     * @summary Count questions based on filters
      * @param filterSearch Filter for documents whose question, answers or tags contains provided string
      * @param filterIdset Filter for documents whose id is in the comma separated list provided
      * @param filterCategory Filter for questions with specified category, by id
@@ -21621,8 +22105,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Start processing an import job
-     * Will process the CSV file and add new questions asynchronously. The status of the job must be &#39;VALID&#39;.
+     * Will process the CSV file and add new questions asynchronously. The status of the job must be 'VALID'.
+     * @summary Start processing an import job
      * @param id The id of the job
      * @param publishNow Whether the new questions should be published live immediately
      */
@@ -21685,8 +22169,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Remove a tag from a question
      * 
+     * @summary Remove a tag from a question
      * @param id The id of the question
      * @param tag The tag to remove
      */
@@ -21746,8 +22230,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Remove a tag from a batch of questions
      * ll questions that have the tag and match filters will have it removed. The returned number is the number of questions updated.
+     * @summary Remove a tag from a batch of questions
      * @param tag The tag to remove
      * @param filterSearch Filter for documents whose question, answers or tags contains provided string
      * @param filterIdset Filter for documents whose id is in the comma separated list provided
@@ -21840,8 +22324,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * List and search tags by the beginning of the string
-     * For performance reasons, search &amp; category filters are mutually exclusive. If category is specified, search filter will be ignored in order to do fast matches for typeahead.
+     * For performance reasons, search & category filters are mutually exclusive. If category is specified, search filter will be ignored in order to do fast matches for typeahead.
+     * @summary List and search tags by the beginning of the string
      * @param filterSearch Filter for tags starting with the given text
      * @param filterCategory Filter for tags on questions from a specific category
      * @param filterImportId Filter for tags on questions from a specific import job
@@ -21902,8 +22386,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Update an import job
      * Changes should be made before process is started for there to be any effect.
+     * @summary Update an import job
      * @param id The id of the job
      * @param request The updated job
      */
@@ -21958,8 +22442,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Update a question
      * 
+     * @summary Update a question
      * @param id The id of the question
      * @param question The updated question
      */
@@ -22014,8 +22498,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Update an answer for a question
      * 
+     * @summary Update an answer for a question
      * @param questionId The id of the question
      * @param id The id of the answer
      * @param answer The updated answer
@@ -22077,8 +22561,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Update a question template
      * 
+     * @summary Update a question template
      * @param id The id of the template
      * @param questionTemplateResource The question template resource object
      */
@@ -22133,8 +22617,8 @@ export class GamificationTriviaApi {
         });
     }
     /**
-     * Bulk update questions
      * Will update all questions that match filters used (or all questions in system if no filters used). Body should match a question resource with only those properties you wish to set. Null values will be ignored. Returned number is how many were updated.
+     * @summary Bulk update questions
      * @param question New values for a set of question fields
      * @param filterSearch Filter for documents whose question, answers or tags contains provided string
      * @param filterIdset Filter for documents whose id is in the comma separated list provided
@@ -22221,7 +22705,7 @@ export enum InvoicesApiApiKeys {
 }
 
 export class InvoicesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -22247,6 +22731,18 @@ export class InvoicesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: InvoicesApiApiKeys, value: string) {
         this.authentications[InvoicesApiApiKeys[key]].apiKey = value;
     }
@@ -22255,8 +22751,8 @@ export class InvoicesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create an invoice
      * Create an invoice(s) by providing a cart GUID. Note that there may be multiple invoices created, one per vendor.
+     * @summary Create an invoice
      * @param req Invoice to be created
      */
     public createInvoice (req?: InvoiceCreateRequest) : Promise<{ response: http.ClientResponse; body: Array<InvoiceResource>;  }> {
@@ -22304,8 +22800,8 @@ export class InvoicesApi {
         });
     }
     /**
-     * Lists available fulfillment statuses
      * 
+     * @summary Lists available fulfillment statuses
      */
     public getFulFillmentStatuses () : Promise<{ response: http.ClientResponse; body: Array<string>;  }> {
         const localVarPath = this.basePath + '/invoices/fulfillment-statuses';
@@ -22349,8 +22845,8 @@ export class InvoicesApi {
         });
     }
     /**
-     * Retrieve an invoice
      * 
+     * @summary Retrieve an invoice
      * @param id The id of the invoice
      */
     public getInvoice (id: number) : Promise<{ response: http.ClientResponse; body: InvoiceResource;  }> {
@@ -22403,8 +22899,8 @@ export class InvoicesApi {
         });
     }
     /**
-     * List invoice logs
      * 
+     * @summary List invoice logs
      * @param id The id of the invoice
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -22467,8 +22963,8 @@ export class InvoicesApi {
         });
     }
     /**
-     * Retrieve invoices
-     * Without INVOICES_ADMIN permission the results are automatically filtered for only the logged in user&#39;s invoices. It is recomended however that filter_user be added to avoid issues for admin users accidentally getting additional invoices.
+     * Without INVOICES_ADMIN permission the results are automatically filtered for only the logged in user's invoices. It is recomended however that filter_user be added to avoid issues for admin users accidentally getting additional invoices.
+     * @summary Retrieve invoices
      * @param filterUser The id of a user to get invoices for. Automtically added if not being called with admin permissions.
      * @param filterEmail Filters invoices by customer&#39;s email. Admins only.
      * @param filterFulfillmentStatus Filters invoices by fulfillment status type. Can be a comma separated list of statuses
@@ -22487,7 +22983,7 @@ export class InvoicesApi {
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
      */
-    public getInvoices (filterUser?: number, filterEmail?: string, filterFulfillmentStatus?: string, filterPaymentStatus?: string, filterItemName?: string, filterExternalRef?: string, filterCreatedDate?: string, filterVendorIds?: ModelObject, filterCurrency?: string, filterShippingStateName?: string, filterShippingCountryName?: string, filterShipping?: string, filterVendorName?: string, filterSku?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceInvoiceResource;  }> {
+    public getInvoices (filterUser?: number, filterEmail?: string, filterFulfillmentStatus?: string, filterPaymentStatus?: string, filterItemName?: string, filterExternalRef?: string, filterCreatedDate?: string, filterVendorIds?: string, filterCurrency?: string, filterShippingStateName?: string, filterShippingCountryName?: string, filterShipping?: string, filterVendorName?: string, filterSku?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceInvoiceResource;  }> {
         const localVarPath = this.basePath + '/invoices';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
@@ -22599,8 +23095,8 @@ export class InvoicesApi {
         });
     }
     /**
-     * Lists available payment statuses
      * 
+     * @summary Lists available payment statuses
      */
     public getPaymentStatuses () : Promise<{ response: http.ClientResponse; body: Array<string>;  }> {
         const localVarPath = this.basePath + '/invoices/payment-statuses';
@@ -22644,8 +23140,8 @@ export class InvoicesApi {
         });
     }
     /**
-     * Trigger payment of an invoice
      * 
+     * @summary Trigger payment of an invoice
      * @param id The id of the invoice
      * @param request Payment info
      */
@@ -22700,8 +23196,83 @@ export class InvoicesApi {
         });
     }
     /**
-     * Set the external reference of an invoice
+     * This allows external fulfillment systems to report success or failure. Fulfillment status changes are restricted by a specific flow determining which status can lead to which.
+     * @summary Set the fulfillment status of a bundled invoice item
+     * @param id The id of the invoice
+     * @param bundleSku The sku of the bundle in the invoice that contains the given target
+     * @param sku The sku of an item in the bundle in the invoice
+     * @param status The new fulfillment status for the item. Additional options may be available based on configuration.  Allowable values:  &#39;unfulfilled&#39;, &#39;fulfilled&#39;, &#39;not fulfillable&#39;, &#39;failed&#39;, &#39;processing&#39;, &#39;failed_permanent&#39;, &#39;delayed&#39;
+     */
+    public setBundledInvoiceItemFulfillmentStatus (id: number, bundleSku: string, sku: string, status: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/invoices/{id}/items/{bundleSku}/bundled-skus/{sku}/fulfillment-status'
+            .replace('{' + 'id' + '}', String(id))
+            .replace('{' + 'bundleSku' + '}', String(bundleSku))
+            .replace('{' + 'sku' + '}', String(sku));
+        let queryParameters: any = {};
+        let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is not null or undefined
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling setBundledInvoiceItemFulfillmentStatus.');
+        }
+
+        // verify required parameter 'bundleSku' is not null or undefined
+        if (bundleSku === null || bundleSku === undefined) {
+            throw new Error('Required parameter bundleSku was null or undefined when calling setBundledInvoiceItemFulfillmentStatus.');
+        }
+
+        // verify required parameter 'sku' is not null or undefined
+        if (sku === null || sku === undefined) {
+            throw new Error('Required parameter sku was null or undefined when calling setBundledInvoiceItemFulfillmentStatus.');
+        }
+
+        // verify required parameter 'status' is not null or undefined
+        if (status === null || status === undefined) {
+            throw new Error('Required parameter status was null or undefined when calling setBundledInvoiceItemFulfillmentStatus.');
+        }
+
+        let useFormData = false;
+
+        let requestOptions: request.Options = {
+            method: 'PUT',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: status,
+        };
+
+        this.authentications.OAuth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
+            request(requestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
      * 
+     * @summary Set the external reference of an invoice
      * @param id The id of the invoice
      * @param externalRef External reference info
      */
@@ -22756,8 +23327,8 @@ export class InvoicesApi {
         });
     }
     /**
-     * Set the fulfillment status of an invoice item
      * This allows external fulfillment systems to report success or failure. Fulfillment status changes are restricted by a specific flow determining which status can lead to which.
+     * @summary Set the fulfillment status of an invoice item
      * @param id The id of the invoice
      * @param sku The sku of an item in the invoice
      * @param status The new fulfillment status for the item. Additional options may be available based on configuration.  Allowable values:  &#39;unfulfilled&#39;, &#39;fulfilled&#39;, &#39;not fulfillable&#39;, &#39;failed&#39;, &#39;processing&#39;, &#39;failed_permanent&#39;, &#39;delayed&#39;
@@ -22824,8 +23395,8 @@ export class InvoicesApi {
         });
     }
     /**
-     * Set the order notes of an invoice
      * 
+     * @summary Set the order notes of an invoice
      * @param id The id of the invoice
      * @param orderNotes Payment status info
      */
@@ -22880,8 +23451,8 @@ export class InvoicesApi {
         });
     }
     /**
-     * Set the payment status of an invoice
-     * This may trigger fulfillment if setting the status to &#39;paid&#39;. This is mainly intended to support external payment systems that cannot be incorporated into the payment method system. Payment status changes are restricted by a specific flow determining which status can lead to which.
+     * This may trigger fulfillment if setting the status to 'paid'. This is mainly intended to support external payment systems that cannot be incorporated into the payment method system. Payment status changes are restricted by a specific flow determining which status can lead to which.
+     * @summary Set the payment status of an invoice
      * @param id The id of the invoice
      * @param request Payment status info
      */
@@ -22936,8 +23507,8 @@ export class InvoicesApi {
         });
     }
     /**
-     * Set or update billing info
      * 
+     * @summary Set or update billing info
      * @param id The id of the invoice
      * @param billingInfoRequest Address info
      */
@@ -22996,7 +23567,7 @@ export enum LocationsApiApiKeys {
 }
 
 export class LocationsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -23022,6 +23593,18 @@ export class LocationsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: LocationsApiApiKeys, value: string) {
         this.authentications[LocationsApiApiKeys[key]].apiKey = value;
     }
@@ -23030,8 +23613,8 @@ export class LocationsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get a list of countries
      * 
+     * @summary Get a list of countries
      */
     public getCountries () : Promise<{ response: http.ClientResponse; body: Array<CountryResource>;  }> {
         const localVarPath = this.basePath + '/location/countries';
@@ -23075,8 +23658,8 @@ export class LocationsApi {
         });
     }
     /**
-     * Get the iso3 code of your country
      * Determined by geo ip location
+     * @summary Get the iso3 code of your country
      */
     public getCountryByGeoLocation () : Promise<{ response: http.ClientResponse; body: string;  }> {
         const localVarPath = this.basePath + '/location/geolocation/country';
@@ -23120,8 +23703,8 @@ export class LocationsApi {
         });
     }
     /**
-     * Get a list of a country&#39;s states
      * 
+     * @summary Get a list of a country's states
      * @param countryCodeIso3 The iso3 code of the country
      */
     public getCountryStates (countryCodeIso3: string) : Promise<{ response: http.ClientResponse; body: Array<StateResource>;  }> {
@@ -23172,8 +23755,8 @@ export class LocationsApi {
         });
     }
     /**
-     * Get the currency information of your country
      * Determined by geo ip location, currency to country mapping and a fallback setting
+     * @summary Get the currency information of your country
      */
     public getCurrencyByGeoLocation () : Promise<{ response: http.ClientResponse; body: CurrencyResource;  }> {
         const localVarPath = this.basePath + '/location/geolocation/currency';
@@ -23221,7 +23804,7 @@ export enum LogsApiApiKeys {
 }
 
 export class LogsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -23247,6 +23830,18 @@ export class LogsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: LogsApiApiKeys, value: string) {
         this.authentications[LogsApiApiKeys[key]].apiKey = value;
     }
@@ -23255,8 +23850,8 @@ export class LogsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add a user log entry
      * 
+     * @summary Add a user log entry
      * @param logEntry The user log entry to be added
      */
     public addUserLog (logEntry?: UserActionLog) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -23304,8 +23899,8 @@ export class LogsApi {
         });
     }
     /**
-     * Get an existing BRE event log entry by id
      * 
+     * @summary Get an existing BRE event log entry by id
      * @param id The BRE event log entry id
      */
     public getBREEventLog (id: string) : Promise<{ response: http.ClientResponse; body: BreEventLog;  }> {
@@ -23358,8 +23953,8 @@ export class LogsApi {
         });
     }
     /**
-     * Returns a list of BRE event log entries
      * 
+     * @summary Returns a list of BRE event log entries
      * @param filterStartDate A comma separated string without spaces.  First value is the operator to search on, second value is the event log start date, a unix timestamp in seconds.  Allowed operators: (GT, LT, EQ, GOE, LOE).
      * @param filterEventName Filter event logs by event name
      * @param filterEventId Filter event logs by request id
@@ -23435,8 +24030,8 @@ export class LogsApi {
         });
     }
     /**
-     * Get an existing forward log entry by id
      * 
+     * @summary Get an existing forward log entry by id
      * @param id The forward log entry id
      */
     public getBREForwardLog (id: string) : Promise<{ response: http.ClientResponse; body: ForwardLog;  }> {
@@ -23489,8 +24084,8 @@ export class LogsApi {
         });
     }
     /**
-     * Returns a list of forward log entries
      * 
+     * @summary Returns a list of forward log entries
      * @param filterStartDate A comma separated string without spaces.  First value is the operator to search on, second value is the log start date, a unix timestamp in seconds.  Allowed operators: (GT, LT, EQ, GOE, LOE).
      * @param filterEndDate A comma separated string without spaces.  First value is the operator to search on, second value is the log end date, a unix timestamp in seconds.  Allowed operators: (GT, LT, EQ, GOE, LOE).
      * @param filterStatusCode Filter forward logs by http status code
@@ -23566,8 +24161,8 @@ export class LogsApi {
         });
     }
     /**
-     * Returns a user log entry by id
      * 
+     * @summary Returns a user log entry by id
      * @param id The user log entry id
      */
     public getUserLog (id: string) : Promise<{ response: http.ClientResponse; body: UserActionLog;  }> {
@@ -23620,8 +24215,8 @@ export class LogsApi {
         });
     }
     /**
-     * Returns a page of user logs entries
      * 
+     * @summary Returns a page of user logs entries
      * @param filterUser Filter for actions taken by a specific user by id
      * @param filterActionName Filter for actions of a specific name
      * @param size The number of objects returned per page
@@ -23696,7 +24291,7 @@ export enum MediaArtistsApiApiKeys {
 }
 
 export class MediaArtistsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -23722,6 +24317,18 @@ export class MediaArtistsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: MediaArtistsApiApiKeys, value: string) {
         this.authentications[MediaArtistsApiApiKeys[key]].apiKey = value;
     }
@@ -23730,8 +24337,8 @@ export class MediaArtistsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Adds a new artist in the system
      * Adds a new artist in the system. Use specific media contributions endpoint to add contributions
+     * @summary Adds a new artist in the system
      * @param artistResource The new artist
      */
     public addArtist (artistResource?: ArtistResource) : Promise<{ response: http.ClientResponse; body: ArtistResource;  }> {
@@ -23779,8 +24386,8 @@ export class MediaArtistsApi {
         });
     }
     /**
-     * Create an artist template
      * Artist Templates define a type of artist and the properties they have
+     * @summary Create an artist template
      * @param artistTemplateResource The artist template resource object
      */
     public createArtistTemplate (artistTemplateResource?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -23828,8 +24435,8 @@ export class MediaArtistsApi {
         });
     }
     /**
-     * Removes an artist from the system IF no resources are attached to it
      * 
+     * @summary Removes an artist from the system IF no resources are attached to it
      * @param id The artist id
      */
     public deleteArtist (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -23882,8 +24489,8 @@ export class MediaArtistsApi {
         });
     }
     /**
-     * Delete an artist template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete an artist template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -23941,8 +24548,8 @@ export class MediaArtistsApi {
         });
     }
     /**
-     * Loads a specific artist details
      * 
+     * @summary Loads a specific artist details
      * @param id The artist id
      * @param showContributions The number of contributions to show fetch
      */
@@ -23998,8 +24605,8 @@ export class MediaArtistsApi {
         });
     }
     /**
-     * Get a single artist template
      * 
+     * @summary Get a single artist template
      * @param id The id of the template
      */
     public getArtistTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -24052,8 +24659,8 @@ export class MediaArtistsApi {
         });
     }
     /**
-     * List and search artist templates
      * 
+     * @summary List and search artist templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -24114,8 +24721,8 @@ export class MediaArtistsApi {
         });
     }
     /**
-     * Search for artists
      * 
+     * @summary Search for artists
      * @param filterArtistsByName Filter for artists which name *STARTS* with the given string
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -24179,8 +24786,8 @@ export class MediaArtistsApi {
         });
     }
     /**
-     * Modifies an artist details
      * 
+     * @summary Modifies an artist details
      * @param id The artist id
      * @param artistResource The new artist
      */
@@ -24235,8 +24842,8 @@ export class MediaArtistsApi {
         });
     }
     /**
-     * Update an artist template
      * 
+     * @summary Update an artist template
      * @param id The id of the template
      * @param artistTemplateResource The artist template resource object
      */
@@ -24295,7 +24902,7 @@ export enum MediaModerationApiApiKeys {
 }
 
 export class MediaModerationApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -24321,6 +24928,18 @@ export class MediaModerationApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: MediaModerationApiApiKeys, value: string) {
         this.authentications[MediaModerationApiApiKeys[key]].apiKey = value;
     }
@@ -24329,8 +24948,8 @@ export class MediaModerationApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get a flag report
      * 
+     * @summary Get a flag report
      * @param id The flag report id
      */
     public getModerationReport (id: number) : Promise<{ response: http.ClientResponse; body: FlagReportResource;  }> {
@@ -24383,8 +25002,8 @@ export class MediaModerationApi {
         });
     }
     /**
-     * Returns a page of flag reports
      * Context can be either a free-form string or a pre-defined context name
+     * @summary Returns a page of flag reports
      * @param excludeResolved Ignore resolved context
      * @param filterContext Filter by moderation context
      * @param size The number of objects returned per page
@@ -24450,8 +25069,8 @@ export class MediaModerationApi {
         });
     }
     /**
-     * Update a flag report
-     * Lets you set the resolution of a report. Resolution types is {banned,ignore} in case of &#39;banned&#39; you will need to pass the reason.
+     * Lets you set the resolution of a report. Resolution types is {banned,ignore} in case of 'banned' you will need to pass the reason.
+     * @summary Update a flag report
      * @param id The flag report id
      * @param flagReportResource The new flag report
      */
@@ -24510,7 +25129,7 @@ export enum MediaVideosApiApiKeys {
 }
 
 export class MediaVideosApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -24536,6 +25155,18 @@ export class MediaVideosApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: MediaVideosApiApiKeys, value: string) {
         this.authentications[MediaVideosApiApiKeys[key]].apiKey = value;
     }
@@ -24544,8 +25175,8 @@ export class MediaVideosApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Adds a user to a video&#39;s whitelist
      * Whitelisted users can view video regardless of privacy setting.
+     * @summary Adds a user to a video's whitelist
      * @param id The video id
      * @param userId The user id
      */
@@ -24600,8 +25231,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Adds a new video in the system
      * 
+     * @summary Adds a new video in the system
      * @param videoResource The video object
      */
     public addVideo (videoResource?: VideoResource) : Promise<{ response: http.ClientResponse; body: VideoResource;  }> {
@@ -24649,8 +25280,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Add a new video comment
      * 
+     * @summary Add a new video comment
      * @param videoId The video id 
      * @param commentResource The comment object
      */
@@ -24705,8 +25336,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Adds a contributor to a video
      * 
+     * @summary Adds a contributor to a video
      * @param videoId The video id
      * @param contributionResource The contribution object
      */
@@ -24761,8 +25392,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Add a new flag
      * 
+     * @summary Add a new flag
      * @param videoId The video id
      * @param reason The flag reason
      */
@@ -24817,8 +25448,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Adds one or more existing videos as related to this one
      * 
+     * @summary Adds one or more existing videos as related to this one
      * @param videoId The video id
      * @param videoRelationshipResource The video relationship object 
      */
@@ -24873,8 +25504,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Create a video disposition
      * 
+     * @summary Create a video disposition
      * @param videoId The video id
      * @param dispositionResource The disposition object
      */
@@ -24929,8 +25560,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Deletes a video from the system if no resources are attached to it
      * 
+     * @summary Deletes a video from the system if no resources are attached to it
      * @param id The video id
      */
     public deleteVideo (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -24983,8 +25614,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Delete a video comment
      * 
+     * @summary Delete a video comment
      * @param videoId The video id
      * @param id The comment id
      */
@@ -25044,8 +25675,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Delete a video disposition
      * 
+     * @summary Delete a video disposition
      * @param dispositionId The disposition id
      */
     public deleteVideoDisposition (dispositionId: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -25098,8 +25729,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Delete a flag
      * 
+     * @summary Delete a flag
      * @param videoId The video id
      */
     public deleteVideoFlag (videoId: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -25152,8 +25783,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Delete a video&#39;s relationship
      * 
+     * @summary Delete a video's relationship
      * @param videoId The video id
      * @param id The relationship id
      */
@@ -25213,8 +25844,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Get user videos
      * 
+     * @summary Get user videos
      * @param userId The user id
      * @param excludeFlagged Skip videos that have been flagged by the current user
      * @param size The number of objects returned per page
@@ -25282,8 +25913,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Loads a specific video details
      * 
+     * @summary Loads a specific video details
      * @param id The video id
      */
     public getVideo (id: number) : Promise<{ response: http.ClientResponse; body: VideoResource;  }> {
@@ -25336,8 +25967,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Returns a page of comments for a video
      * 
+     * @summary Returns a page of comments for a video
      * @param videoId The video id
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -25398,8 +26029,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Returns a page of dispositions for a video
      * 
+     * @summary Returns a page of dispositions for a video
      * @param videoId The video id
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -25460,8 +26091,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Returns a page of video relationships
      * 
+     * @summary Returns a page of video relationships
      * @param videoId The video id
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -25522,8 +26153,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Search videos using the documented filters
      * 
+     * @summary Search videos using the documented filters
      * @param excludeFlagged Skip videos that have been flagged by the current user
      * @param filterVideosByUploader Filter for videos by uploader id
      * @param filterCategory Filter for videos from a specific category by id
@@ -25540,7 +26171,7 @@ export class MediaVideosApi {
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
      */
-    public getVideos (excludeFlagged?: boolean, filterVideosByUploader?: ModelObject, filterCategory?: string, filterTagset?: string, filterVideosByName?: string, filterVideosByContributor?: ModelObject, filterVideosByAuthor?: ModelObject, filterHasAuthor?: boolean, filterHasUploader?: boolean, filterRelatedTo?: string, filterFriends?: boolean, filterDisposition?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceVideoResource;  }> {
+    public getVideos (excludeFlagged?: boolean, filterVideosByUploader?: number, filterCategory?: string, filterTagset?: string, filterVideosByName?: string, filterVideosByContributor?: number, filterVideosByAuthor?: number, filterHasAuthor?: boolean, filterHasUploader?: boolean, filterRelatedTo?: string, filterFriends?: boolean, filterDisposition?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceVideoResource;  }> {
         const localVarPath = this.basePath + '/media/videos';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
@@ -25642,8 +26273,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Removes a user from a video&#39;s whitelist
      * Remove the user with the id given in the path from the whitelist of users that can view this video regardless of privacy setting.
+     * @summary Removes a user from a video's whitelist
      * @param videoId The video id
      * @param id The user id
      */
@@ -25703,8 +26334,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Removes a contributor from a video
      * 
+     * @summary Removes a contributor from a video
      * @param videoId The video id
      * @param id The contributor id
      */
@@ -25764,8 +26395,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Modifies a video&#39;s details
      * 
+     * @summary Modifies a video's details
      * @param id The video id
      * @param videoResource The video object
      */
@@ -25820,8 +26451,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Update a video comment
      * 
+     * @summary Update a video comment
      * @param videoId The video id
      * @param id The comment id
      * @param content The comment content
@@ -25883,8 +26514,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Update a video&#39;s relationship details
      * 
+     * @summary Update a video's relationship details
      * @param videoId The video id
      * @param relationshipId The relationship id
      * @param details The video relationship details
@@ -25946,8 +26577,8 @@ export class MediaVideosApi {
         });
     }
     /**
-     * Increment a video&#39;s view count
      * 
+     * @summary Increment a video's view count
      * @param id The video id
      */
     public viewVideo (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -26002,7 +26633,7 @@ export enum MessagingApiApiKeys {
 }
 
 export class MessagingApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -26028,6 +26659,18 @@ export class MessagingApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: MessagingApiApiKeys, value: string) {
         this.authentications[MessagingApiApiKeys[key]].apiKey = value;
     }
@@ -26036,8 +26679,8 @@ export class MessagingApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Send a raw email to one or more users
      * 
+     * @summary Send a raw email to one or more users
      * @param rawEmailResource The new raw email to be sent
      */
     public sendRawEmail (rawEmailResource?: RawEmailResource) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -26085,8 +26728,8 @@ export class MessagingApi {
         });
     }
     /**
-     * Send a raw SMS
-     * Sends a raw SMS text message to one or more users. User&#39;s without registered mobile numbers will be skipped.
+     * Sends a raw SMS text message to one or more users. User's without registered mobile numbers will be skipped.
+     * @summary Send a raw SMS
      * @param rawSMSResource The new raw SMS to be sent
      */
     public sendRawSMS (rawSMSResource?: RawSMSResource) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -26134,8 +26777,8 @@ export class MessagingApi {
         });
     }
     /**
-     * Send a templated email to one or more users
      * 
+     * @summary Send a templated email to one or more users
      * @param messageResource The new template email to be sent
      */
     public sendTemplatedEmail (messageResource?: TemplateEmailResource) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -26183,8 +26826,8 @@ export class MessagingApi {
         });
     }
     /**
-     * Send a new templated SMS
-     * Sends a templated SMS text message to one or more users. User&#39;s without registered mobile numbers will be skipped.
+     * Sends a templated SMS text message to one or more users. User's without registered mobile numbers will be skipped.
+     * @summary Send a new templated SMS
      * @param templateSMSResource The new template SMS to be sent
      */
     public sendTemplatedSMS (templateSMSResource?: TemplateSMSResource) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -26236,7 +26879,7 @@ export enum PaymentsApiApiKeys {
 }
 
 export class PaymentsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -26262,6 +26905,18 @@ export class PaymentsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: PaymentsApiApiKeys, value: string) {
         this.authentications[PaymentsApiApiKeys[key]].apiKey = value;
     }
@@ -26270,8 +26925,8 @@ export class PaymentsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a new payment method for a user
      * 
+     * @summary Create a new payment method for a user
      * @param userId ID of the user for whom the payment method is being created
      * @param paymentMethod Payment method being created
      */
@@ -26326,8 +26981,8 @@ export class PaymentsApi {
         });
     }
     /**
-     * Delete an existing payment method for a user
      * 
+     * @summary Delete an existing payment method for a user
      * @param userId ID of the user for whom the payment method is being updated
      * @param id ID of the payment method being deleted
      */
@@ -26387,8 +27042,8 @@ export class PaymentsApi {
         });
     }
     /**
-     * Get a single payment method for a user
      * 
+     * @summary Get a single payment method for a user
      * @param userId ID of the user for whom the payment method is being retrieved
      * @param id ID of the payment method being retrieved
      */
@@ -26448,14 +27103,18 @@ export class PaymentsApi {
         });
     }
     /**
-     * Get all payment methods for a user
      * 
+     * @summary Get all payment methods for a user
      * @param userId ID of the user for whom the payment methods are being retrieved
+     * @param filterName Filter for payment methods whose name starts with a given string
+     * @param filterPaymentType Filter for payment methods with a specific payment type
+     * @param filterPaymentMethodTypeId Filter for payment methods with a specific payment method type by id
+     * @param filterPaymentMethodTypeName Filter for payment methods whose payment method type name starts with a given string
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order a comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
      */
-    public getPaymentMethods (userId: number, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: Array<PaymentMethodResource>;  }> {
+    public getPaymentMethods (userId: number, filterName?: string, filterPaymentType?: string, filterPaymentMethodTypeId?: number, filterPaymentMethodTypeName?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: Array<PaymentMethodResource>;  }> {
         const localVarPath = this.basePath + '/users/{user_id}/payment-methods'
             .replace('{' + 'user_id' + '}', String(userId));
         let queryParameters: any = {};
@@ -26466,6 +27125,22 @@ export class PaymentsApi {
         // verify required parameter 'userId' is not null or undefined
         if (userId === null || userId === undefined) {
             throw new Error('Required parameter userId was null or undefined when calling getPaymentMethods.');
+        }
+
+        if (filterName !== undefined) {
+            queryParameters['filter_name'] = filterName;
+        }
+
+        if (filterPaymentType !== undefined) {
+            queryParameters['filter_payment_type'] = filterPaymentType;
+        }
+
+        if (filterPaymentMethodTypeId !== undefined) {
+            queryParameters['filter_payment_method_type_id'] = filterPaymentMethodTypeId;
+        }
+
+        if (filterPaymentMethodTypeName !== undefined) {
+            queryParameters['filter_payment_method_type_name'] = filterPaymentMethodTypeName;
         }
 
         if (size !== undefined) {
@@ -26517,8 +27192,8 @@ export class PaymentsApi {
         });
     }
     /**
-     * Authorize payment of an invoice for later capture
      * 
+     * @summary Authorize payment of an invoice for later capture
      * @param request Payment authorization request
      */
     public paymentAuthorization (request?: PaymentAuthorizationResource) : Promise<{ response: http.ClientResponse; body: PaymentAuthorizationResource;  }> {
@@ -26566,8 +27241,8 @@ export class PaymentsApi {
         });
     }
     /**
-     * Capture an existing invoice payment authorization
      * 
+     * @summary Capture an existing invoice payment authorization
      * @param id ID of the payment authorization to capture
      */
     public paymentCapture (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -26620,8 +27295,8 @@ export class PaymentsApi {
         });
     }
     /**
-     * Update an existing payment method for a user
      * 
+     * @summary Update an existing payment method for a user
      * @param userId ID of the user for whom the payment method is being updated
      * @param id ID of the payment method being updated
      * @param paymentMethod The updated payment method data
@@ -26687,7 +27362,7 @@ export enum PaymentsAppleApiApiKeys {
 }
 
 export class PaymentsAppleApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -26713,6 +27388,18 @@ export class PaymentsAppleApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: PaymentsAppleApiApiKeys, value: string) {
         this.authentications[PaymentsAppleApiApiKeys[key]].apiKey = value;
     }
@@ -26721,8 +27408,8 @@ export class PaymentsAppleApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Pay invoice with Apple receipt
      * Mark an invoice paid using Apple payment receipt. A receipt will only be accepted once and the details of the transaction must match the invoice, including the product_id matching the sku text of the item in the invoice. Returns the transaction ID if successful.
+     * @summary Pay invoice with Apple receipt
      * @param request The request for paying an invoice through an Apple receipt
      */
     public verifyAppleReceipt (request?: ApplyPaymentRequest) : Promise<{ response: http.ClientResponse; body: string;  }> {
@@ -26772,7 +27459,7 @@ export enum PaymentsGoogleApiApiKeys {
 }
 
 export class PaymentsGoogleApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -26798,6 +27485,18 @@ export class PaymentsGoogleApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: PaymentsGoogleApiApiKeys, value: string) {
         this.authentications[PaymentsGoogleApiApiKeys[key]].apiKey = value;
     }
@@ -26806,8 +27505,8 @@ export class PaymentsGoogleApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Mark an invoice paid with Google
      * Mark an invoice paid with Google. Verifies signature from Google and treats the developerPayload field inside the json payload as the id of the invoice to pay. Returns the transaction ID if successful.
+     * @summary Mark an invoice paid with Google
      * @param request The request for paying an invoice through a Google in-app payment
      */
     public handleGooglePayment (request?: GooglePaymentRequest) : Promise<{ response: http.ClientResponse; body: number;  }> {
@@ -26857,7 +27556,7 @@ export enum PaymentsOptimalApiApiKeys {
 }
 
 export class PaymentsOptimalApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -26883,6 +27582,18 @@ export class PaymentsOptimalApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: PaymentsOptimalApiApiKeys, value: string) {
         this.authentications[PaymentsOptimalApiApiKeys[key]].apiKey = value;
     }
@@ -26891,8 +27602,8 @@ export class PaymentsOptimalApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Initiate silent post with Optimal
      * Will return the url for a hosted payment endpoint to post to. See Optimal documentation for details.
+     * @summary Initiate silent post with Optimal
      * @param request The payment request to initiate
      */
     public silentPostOptimal (request?: OptimalPaymentRequest) : Promise<{ response: http.ClientResponse; body: string;  }> {
@@ -26944,7 +27655,7 @@ export enum PaymentsPayPalClassicApiApiKeys {
 }
 
 export class PaymentsPayPalClassicApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -26970,6 +27681,18 @@ export class PaymentsPayPalClassicApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: PaymentsPayPalClassicApiApiKeys, value: string) {
         this.authentications[PaymentsPayPalClassicApiApiKeys[key]].apiKey = value;
     }
@@ -26978,8 +27701,8 @@ export class PaymentsPayPalClassicApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a PayPal Classic billing agreement for the user
      * Returns the token that should be used to forward the user to PayPal so they can accept the agreement.
+     * @summary Create a PayPal Classic billing agreement for the user
      * @param request The request to create a PayPal billing agreement
      */
     public createPayPalBillingAgreementUrl (request?: CreateBillingAgreementRequest) : Promise<{ response: http.ClientResponse; body: string;  }> {
@@ -27027,8 +27750,8 @@ export class PaymentsPayPalClassicApi {
         });
     }
     /**
-     * Create a payment token for PayPal express checkout
      * Returns the token that should be used to forward the user to PayPal so they can complete the checkout.
+     * @summary Create a payment token for PayPal express checkout
      * @param request The request to create a PayPal payment token
      */
     public createPayPalExpressCheckout (request?: CreatePayPalPaymentRequest) : Promise<{ response: http.ClientResponse; body: string;  }> {
@@ -27076,8 +27799,8 @@ export class PaymentsPayPalClassicApi {
         });
     }
     /**
-     * Finalizes a billing agreement after the user has accepted through PayPal
      * Returns the ID of the new payment method created for the user for the billing agreement.
+     * @summary Finalizes a billing agreement after the user has accepted through PayPal
      * @param request The request to finalize a PayPal billing agreement
      */
     public finalizePayPalBillingAgreement (request?: FinalizeBillingAgreementRequest) : Promise<{ response: http.ClientResponse; body: number;  }> {
@@ -27125,8 +27848,8 @@ export class PaymentsPayPalClassicApi {
         });
     }
     /**
-     * Finalizes a payment after the user has completed checkout with PayPal
      * The invoice will be marked paid/failed by asynchronous IPN callback.
+     * @summary Finalizes a payment after the user has completed checkout with PayPal
      * @param request The request to finalize the payment
      */
     public finalizePayPalCheckout (request?: FinalizePayPalPaymentRequest) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -27178,7 +27901,7 @@ export enum PaymentsStripeApiApiKeys {
 }
 
 export class PaymentsStripeApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -27204,6 +27927,18 @@ export class PaymentsStripeApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: PaymentsStripeApiApiKeys, value: string) {
         this.authentications[PaymentsStripeApiApiKeys[key]].apiKey = value;
     }
@@ -27212,8 +27947,8 @@ export class PaymentsStripeApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a Stripe payment method for a user
      * Stores customer information and creates a payment method that can be used to pay invoices through the payments endpoints.
+     * @summary Create a Stripe payment method for a user
      * @param request The request to create a Stripe customer with payment info
      */
     public createStripePaymentMethod (request?: StripeCreatePaymentMethod) : Promise<{ response: http.ClientResponse; body: PaymentMethodResource;  }> {
@@ -27261,8 +27996,8 @@ export class PaymentsStripeApi {
         });
     }
     /**
-     * Pay with a single use token
      * 
+     * @summary Pay with a single use token
      * @param request The request to pay an invoice
      */
     public payStripeInvoice (request?: StripePaymentRequest) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -27312,7 +28047,7 @@ export enum PaymentsTransactionsApiApiKeys {
 }
 
 export class PaymentsTransactionsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -27338,6 +28073,18 @@ export class PaymentsTransactionsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: PaymentsTransactionsApiApiKeys, value: string) {
         this.authentications[PaymentsTransactionsApiApiKeys[key]].apiKey = value;
     }
@@ -27346,8 +28093,8 @@ export class PaymentsTransactionsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get the details for a single transaction
      * 
+     * @summary Get the details for a single transaction
      * @param id id
      */
     public getTransaction (id: number) : Promise<{ response: http.ClientResponse; body: TransactionResource;  }> {
@@ -27400,8 +28147,8 @@ export class PaymentsTransactionsApi {
         });
     }
     /**
-     * List and search transactions
      * 
+     * @summary List and search transactions
      * @param filterInvoice Filter for transactions from a specific invoice
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -27467,8 +28214,8 @@ export class PaymentsTransactionsApi {
         });
     }
     /**
-     * Refund a payment transaction, in full or in part
      * Will not allow for refunding more than the full amount even with multiple partial refunds. Money is refunded to the payment method used to make the original payment. Payment method must support refunds.
+     * @summary Refund a payment transaction, in full or in part
      * @param id The id of the transaction to refund
      * @param request Request containing refund details
      */
@@ -27527,7 +28274,7 @@ export enum PaymentsWalletsApiApiKeys {
 }
 
 export class PaymentsWalletsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -27553,6 +28300,18 @@ export class PaymentsWalletsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: PaymentsWalletsApiApiKeys, value: string) {
         this.authentications[PaymentsWalletsApiApiKeys[key]].apiKey = value;
     }
@@ -27561,8 +28320,8 @@ export class PaymentsWalletsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Returns the user&#39;s wallet for the given currency code
      * 
+     * @summary Returns the user's wallet for the given currency code
      * @param userId The ID of the user for whom wallet is being retrieved
      * @param currencyCode Currency code of the user&#39;s wallet
      */
@@ -27622,8 +28381,8 @@ export class PaymentsWalletsApi {
         });
     }
     /**
-     * Retrieve a user&#39;s wallet transactions
      * 
+     * @summary Retrieve a user's wallet transactions
      * @param userId The ID of the user for whom wallet transactions are being retrieved
      * @param currencyCode Currency code of the user&#39;s wallet
      * @param filterType Filter for transactions with specified type
@@ -27718,8 +28477,8 @@ export class PaymentsWalletsApi {
         });
     }
     /**
-     * List all of a user&#39;s wallets
      * 
+     * @summary List all of a user's wallets
      * @param userId The ID of the user for whom wallets are being retrieved
      */
     public getUserWallets (userId: number) : Promise<{ response: http.ClientResponse; body: Array<SimpleWallet>;  }> {
@@ -27772,8 +28531,8 @@ export class PaymentsWalletsApi {
         });
     }
     /**
-     * Retrieves a summation of wallet balances by currency code
      * 
+     * @summary Retrieves a summation of wallet balances by currency code
      */
     public getWalletBalances () : Promise<{ response: http.ClientResponse; body: PageResourceWalletTotalResponse;  }> {
         const localVarPath = this.basePath + '/wallets/totals';
@@ -27819,8 +28578,8 @@ export class PaymentsWalletsApi {
         });
     }
     /**
-     * Retrieve wallet transactions across the system
      * 
+     * @summary Retrieve wallet transactions across the system
      * @param filterInvoice Filter for transactions from a specific invoice
      * @param filterType Filter for transactions with specified type
      * @param filterDate A comma separated string without spaces.  First value is the operator to search on, second value is the log start date, a unix timestamp in seconds. Can be repeated for a range, eg: GT,123,LT,456  Allowed operators: (GT, LT, EQ, GOE, LOE).
@@ -27921,8 +28680,8 @@ export class PaymentsWalletsApi {
         });
     }
     /**
-     * Retrieve a list of wallets across the system
      * 
+     * @summary Retrieve a list of wallets across the system
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -27983,8 +28742,8 @@ export class PaymentsWalletsApi {
         });
     }
     /**
-     * Updates the balance for a user&#39;s wallet
      * 
+     * @summary Updates the balance for a user's wallet
      * @param userId The ID of the user for whom wallet is being modified
      * @param currencyCode Currency code of the user&#39;s wallet
      * @param request The requested balance modification to be made to the user&#39;s wallet
@@ -28050,7 +28809,7 @@ export enum PaymentsXsollaApiApiKeys {
 }
 
 export class PaymentsXsollaApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -28076,6 +28835,18 @@ export class PaymentsXsollaApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: PaymentsXsollaApiApiKeys, value: string) {
         this.authentications[PaymentsXsollaApiApiKeys[key]].apiKey = value;
     }
@@ -28084,8 +28855,8 @@ export class PaymentsXsollaApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a payment token that should be used to forward the user to Xsolla so they can complete payment
      * 
+     * @summary Create a payment token that should be used to forward the user to Xsolla so they can complete payment
      * @param request The payment request to be sent to XSolla
      */
     public createXsollaTokenUrl (request?: XsollaPaymentRequest) : Promise<{ response: http.ClientResponse; body: string;  }> {
@@ -28133,8 +28904,8 @@ export class PaymentsXsollaApi {
         });
     }
     /**
-     * Receives payment response from Xsolla
      * Only used by Xsolla to call back to JSAPI after processing user payment action
+     * @summary Receives payment response from Xsolla
      */
     public receiveXsollaNotification () : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/payment/provider/xsolla/notifications';
@@ -28182,7 +28953,7 @@ export enum ReportingChallengesApiApiKeys {
 }
 
 export class ReportingChallengesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -28208,6 +28979,18 @@ export class ReportingChallengesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ReportingChallengesApiApiKeys, value: string) {
         this.authentications[ReportingChallengesApiApiKeys[key]].apiKey = value;
     }
@@ -28216,8 +28999,8 @@ export class ReportingChallengesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Retrieve a challenge event leaderboard details
      * Lists all leaderboard entries with additional user details
+     * @summary Retrieve a challenge event leaderboard details
      * @param filterEvent A sepecific challenge event id
      * @param size The number of objects returned per page
      * @param page The number of the page returned
@@ -28283,8 +29066,8 @@ export class ReportingChallengesApi {
         });
     }
     /**
-     * Retrieve a challenge event participant details
      * Lists all user submitted scores sorted by value, including those that do not apear in the leaderboard due to value or aggregation
+     * @summary Retrieve a challenge event participant details
      * @param filterEvent A sepecific challenge event id
      * @param size The number of objects returned per page
      * @param page The number of the page returned
@@ -28354,7 +29137,7 @@ export enum ReportingOrdersApiApiKeys {
 }
 
 export class ReportingOrdersApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -28380,6 +29163,18 @@ export class ReportingOrdersApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ReportingOrdersApiApiKeys, value: string) {
         this.authentications[ReportingOrdersApiApiKeys[key]].apiKey = value;
     }
@@ -28388,8 +29183,8 @@ export class ReportingOrdersApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Retrieve invoice counts aggregated by time ranges
      * 
+     * @summary Retrieve invoice counts aggregated by time ranges
      * @param currencyCode The code for a currency to get sales data for
      * @param granularity The time duration to aggregate by
      * @param filterPaymentStatus A payment status to filter results by, can be a comma separated list
@@ -28481,7 +29276,7 @@ export enum ReportingRevenueApiApiKeys {
 }
 
 export class ReportingRevenueApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -28507,6 +29302,18 @@ export class ReportingRevenueApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ReportingRevenueApiApiKeys, value: string) {
         this.authentications[ReportingRevenueApiApiKeys[key]].apiKey = value;
     }
@@ -28515,8 +29322,8 @@ export class ReportingRevenueApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get item revenue info
      * Get basic info about revenue from sales of items and bundles (not subscriptions, shipping, etc), summed up within a time range
+     * @summary Get item revenue info
      * @param currencyCode The code for a currency to get sales data for
      * @param startDate The start of the time range to aggregate, unix timestamp in seconds. Default is beginning of time
      * @param endDate The end of the time range to aggregate, unix timestamp in seconds. Default is end of time
@@ -28579,8 +29386,8 @@ export class ReportingRevenueApi {
         });
     }
     /**
-     * Get refund revenue info
      * Get basic info about revenue loss from refunds (for all item types), summed up within a time range.
+     * @summary Get refund revenue info
      * @param currencyCode The code for a currency to get refund data for
      * @param startDate The start of the time range to aggregate, unix timestamp in seconds. Default is beginning of time
      * @param endDate The end of the time range to aggregate, unix timestamp in seconds. Default is end of time
@@ -28643,8 +29450,8 @@ export class ReportingRevenueApi {
         });
     }
     /**
-     * Get revenue info by country
      * Get basic info about revenue from sales of all types, summed up within a time range and split out by country. Sorted for largest revenue at the top
+     * @summary Get revenue info by country
      * @param currencyCode The code for a currency to get sales data for
      * @param startDate The start of the time range to aggregate, unix timestamp in seconds. Default is beginning of time
      * @param endDate The end of the time range to aggregate, unix timestamp in seconds. Default is end of time
@@ -28717,8 +29524,8 @@ export class ReportingRevenueApi {
         });
     }
     /**
-     * Get revenue info by item
      * Get basic info about revenue from sales of all types, summed up within a time range and split out by specific item. Sorted for largest revenue at the top
+     * @summary Get revenue info by item
      * @param currencyCode The code for a currency to get sales data for
      * @param startDate The start of the time range to aggregate, unix timestamp in seconds. Default is beginning of time
      * @param endDate The end of the time range to aggregate, unix timestamp in seconds. Default is end of time
@@ -28791,8 +29598,8 @@ export class ReportingRevenueApi {
         });
     }
     /**
-     * Get subscription revenue info
      * Get basic info about revenue from sales of new subscriptions as well as recurring payemnts, summed up within a time range
+     * @summary Get subscription revenue info
      * @param currencyCode The code for a currency to get sales data for
      * @param startDate The start of the time range to aggregate, unix timestamp in seconds. Default is beginning of time
      * @param endDate The end of the time range to aggregate, unix timestamp in seconds. Default is end of time
@@ -28859,7 +29666,7 @@ export enum ReportingSubscriptionsApiApiKeys {
 }
 
 export class ReportingSubscriptionsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -28885,6 +29692,18 @@ export class ReportingSubscriptionsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ReportingSubscriptionsApiApiKeys, value: string) {
         this.authentications[ReportingSubscriptionsApiApiKeys[key]].apiKey = value;
     }
@@ -28893,8 +29712,8 @@ export class ReportingSubscriptionsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get a list of available subscription reports in most recent first order
      * 
+     * @summary Get a list of available subscription reports in most recent first order
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      */
@@ -28954,7 +29773,7 @@ export enum ReportingUsageApiApiKeys {
 }
 
 export class ReportingUsageApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -28980,6 +29799,18 @@ export class ReportingUsageApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ReportingUsageApiApiKeys, value: string) {
         this.authentications[ReportingUsageApiApiKeys[key]].apiKey = value;
     }
@@ -28988,8 +29819,8 @@ export class ReportingUsageApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Returns aggregated endpoint usage information by day
      * 
+     * @summary Returns aggregated endpoint usage information by day
      * @param startDate The beginning of the range being requested, unix timestamp in seconds
      * @param endDate The ending of the range being requested, unix timestamp in seconds
      * @param combineEndpoints Whether to combine counts from different endpoint. Removes the url and method from the result object
@@ -29080,8 +29911,8 @@ export class ReportingUsageApi {
         });
     }
     /**
-     * Returns aggregated endpoint usage information by hour
      * 
+     * @summary Returns aggregated endpoint usage information by hour
      * @param startDate The beginning of the range being requested, unix timestamp in seconds
      * @param endDate The ending of the range being requested, unix timestamp in seconds
      * @param combineEndpoints Whether to combine counts from different endpoint. Removes the url and method from the result object
@@ -29172,8 +30003,8 @@ export class ReportingUsageApi {
         });
     }
     /**
-     * Returns aggregated endpoint usage information by minute
      * 
+     * @summary Returns aggregated endpoint usage information by minute
      * @param startDate The beginning of the range being requested, unix timestamp in seconds
      * @param endDate The ending of the range being requested, unix timestamp in seconds
      * @param combineEndpoints Whether to combine counts from different endpoint. Removes the url and method from the result object
@@ -29264,8 +30095,8 @@ export class ReportingUsageApi {
         });
     }
     /**
-     * Returns aggregated endpoint usage information by month
      * 
+     * @summary Returns aggregated endpoint usage information by month
      * @param startDate The beginning of the range being requested, unix timestamp in seconds
      * @param endDate The ending of the range being requested, unix timestamp in seconds
      * @param combineEndpoints Whether to combine counts from different endpoint. Removes the url and method from the result object
@@ -29356,8 +30187,8 @@ export class ReportingUsageApi {
         });
     }
     /**
-     * Returns aggregated endpoint usage information by year
      * 
+     * @summary Returns aggregated endpoint usage information by year
      * @param startDate The beginning of the range being requested, unix timestamp in seconds
      * @param endDate The ending of the range being requested, unix timestamp in seconds
      * @param combineEndpoints Whether to combine counts from different endpoints. Removes the url and method from the result object
@@ -29448,8 +30279,8 @@ export class ReportingUsageApi {
         });
     }
     /**
-     * Returns list of endpoints called (method and url)
      * 
+     * @summary Returns list of endpoints called (method and url)
      * @param startDate The beginning of the range being requested, unix timestamp in seconds
      * @param endDate The ending of the range being requested, unix timestamp in seconds
      */
@@ -29519,7 +30350,7 @@ export enum ReportingUsersApiApiKeys {
 }
 
 export class ReportingUsersApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -29545,6 +30376,18 @@ export class ReportingUsersApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: ReportingUsersApiApiKeys, value: string) {
         this.authentications[ReportingUsersApiApiKeys[key]].apiKey = value;
     }
@@ -29553,8 +30396,8 @@ export class ReportingUsersApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get user registration info
      * Get user registration counts grouped by time range
+     * @summary Get user registration info
      * @param granularity The time duration to aggregate by
      * @param startDate The start of the time range to aggregate, unix timestamp in seconds. Default is beginning of time
      * @param endDate The end of the time range to aggregate, unix timestamp in seconds. Default is end of time
@@ -29629,7 +30472,7 @@ export enum SearchApiApiKeys {
 }
 
 export class SearchApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -29655,6 +30498,18 @@ export class SearchApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: SearchApiApiKeys, value: string) {
         this.authentications[SearchApiApiKeys[key]].apiKey = value;
     }
@@ -29663,8 +30518,8 @@ export class SearchApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add a new object to an index
      * Mainly intended for internal use.
+     * @summary Add a new object to an index
      * @param type The index type
      * @param id The ID of the object
      * @param object The object to add
@@ -29726,8 +30581,8 @@ export class SearchApi {
         });
     }
     /**
-     * Register reference mappings
      * Add a new type mapping to connect data from one index to another, or discover an exsting one. Mainly intended for internal use.
+     * @summary Register reference mappings
      * @param mappings The mappings to add
      */
     public addSearchMappings (mappings?: Array<SearchReferenceMapping>) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -29775,8 +30630,8 @@ export class SearchApi {
         });
     }
     /**
-     * Delete an object
      * Mainly intended for internal use. Requires SEARCH_ADMIN.
+     * @summary Delete an object
      * @param type The index type
      * @param id The ID of the object to delete
      */
@@ -29836,8 +30691,8 @@ export class SearchApi {
         });
     }
     /**
-     * Delete all objects in an index
      * Mainly intended for internal use
+     * @summary Delete all objects in an index
      * @param type The index type
      */
     public deleteSearchIndexes (type: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -29890,8 +30745,8 @@ export class SearchApi {
         });
     }
     /**
-     * Search an index
-     * The body is an ElasticSearch query in JSON format. Please see their &lt;a href&#x3D;&#39;https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html&#39;&gt;documentation&lt;/a&gt; for details on the format and search options. The searchable object&#39;s format depends on on the type. See individual search endpoints on other resources for details on their format.
+     * The body is an ElasticSearch query in JSON format. Please see their <a href='https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html'>documentation</a> for details on the format and search options. The searchable object's format depends on on the type. See individual search endpoints on other resources for details on their format.
+     * @summary Search an index
      * @param type The index type
      * @param query The query to be used for the search
      * @param size The number of objects returned per page
@@ -29958,7 +30813,7 @@ export enum SocialFacebookApiApiKeys {
 }
 
 export class SocialFacebookApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -29984,6 +30839,18 @@ export class SocialFacebookApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: SocialFacebookApiApiKeys, value: string) {
         this.authentications[SocialFacebookApiApiKeys[key]].apiKey = value;
     }
@@ -29992,8 +30859,8 @@ export class SocialFacebookApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Link facebook account
      * Links the current user account to a facebook account, using the acccess token from facebook. Can also be used to update the access token after it has expired.
+     * @summary Link facebook account
      * @param facebookToken The token from facebook
      */
     public linkAccounts (facebookToken?: FacebookToken) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -30045,7 +30912,7 @@ export enum SocialGoogleApiApiKeys {
 }
 
 export class SocialGoogleApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -30071,6 +30938,18 @@ export class SocialGoogleApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: SocialGoogleApiApiKeys, value: string) {
         this.authentications[SocialGoogleApiApiKeys[key]].apiKey = value;
     }
@@ -30079,11 +30958,11 @@ export class SocialGoogleApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Link facebook account
-     * Links the current user account to a facebook account, using the acccess token from facebook. Can also be used to update the access token after it has expired.
-     * @param facebookToken The token from facebook
+     * Links the current user account to a google account, using the acccess token from google. Can also be used to update the access token after it has expired.
+     * @summary Link google account
+     * @param googleToken The token from google
      */
-    public linkAccounts1 (facebookToken?: GoogleToken) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public linkAccounts1 (googleToken?: GoogleToken) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/social/google/users';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
@@ -30099,7 +30978,7 @@ export class SocialGoogleApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: facebookToken,
+            body: googleToken,
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -30132,7 +31011,7 @@ export enum StoreApiApiKeys {
 }
 
 export class StoreApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -30158,6 +31037,18 @@ export class StoreApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: StoreApiApiKeys, value: string) {
         this.authentications[StoreApiApiKeys[key]].apiKey = value;
     }
@@ -30166,8 +31057,8 @@ export class StoreApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create an item template
      * Item Templates define a type of item and the properties they have.
+     * @summary Create an item template
      * @param itemTemplateResource The new item template
      */
     public createItemTemplate (itemTemplateResource?: StoreItemTemplateResource) : Promise<{ response: http.ClientResponse; body: StoreItemTemplateResource;  }> {
@@ -30215,8 +31106,8 @@ export class StoreApi {
         });
     }
     /**
-     * Create a store item
-     * SKUs have to be unique in the entire store. If a duplicate SKU is found, a 400 error is generated and the response will have a \&quot;parameters\&quot; field that is a list of duplicates. A duplicate is an object like {item_id, offending_sku_list}. Ex:&lt;br /&gt; {..., parameters: [[{item: 1, skus: [\&quot;SKU-1\&quot;]}]]}&lt;br /&gt; If an item is brand new and has duplicate SKUs within itself, the item ID will be 0.  Item subclasses are not allowed here, you will have to use their respective endpoints.
+     * SKUs have to be unique in the entire store. If a duplicate SKU is found, a 400 error is generated and the response will have a \"parameters\" field that is a list of duplicates. A duplicate is an object like {item_id, offending_sku_list}. Ex:<br /> {..., parameters: [[{item: 1, skus: [\"SKU-1\"]}]]}<br /> If an item is brand new and has duplicate SKUs within itself, the item ID will be 0.  Item subclasses are not allowed here, you will have to use their respective endpoints.
+     * @summary Create a store item
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param storeItem The store item object
      */
@@ -30269,8 +31160,8 @@ export class StoreApi {
         });
     }
     /**
-     * Delete an item template
      * 
+     * @summary Delete an item template
      * @param id The id of the template
      * @param cascade force deleting the template if it&#39;s attached to other objects, cascade &#x3D; detach
      */
@@ -30328,8 +31219,8 @@ export class StoreApi {
         });
     }
     /**
-     * Delete a store item
      * 
+     * @summary Delete a store item
      * @param id The id of the item
      */
     public deleteStoreItem (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -30382,8 +31273,8 @@ export class StoreApi {
         });
     }
     /**
-     * List available item behaviors
      * 
+     * @summary List available item behaviors
      */
     public getBehaviors () : Promise<{ response: http.ClientResponse; body: Array<BehaviorDefinitionResource>;  }> {
         const localVarPath = this.basePath + '/store/items/behaviors';
@@ -30429,8 +31320,8 @@ export class StoreApi {
         });
     }
     /**
-     * Get a single item template
      * Item Templates define a type of item and the properties they have.
+     * @summary Get a single item template
      * @param id The id of the template
      */
     public getItemTemplate (id: string) : Promise<{ response: http.ClientResponse; body: StoreItemTemplateResource;  }> {
@@ -30483,8 +31374,8 @@ export class StoreApi {
         });
     }
     /**
-     * List and search item templates
      * 
+     * @summary List and search item templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -30545,8 +31436,8 @@ export class StoreApi {
         });
     }
     /**
-     * Get a listing of store items
      * The exact structure of each items may differ to include fields specific to the type. The same is true for behaviors.
+     * @summary Get a listing of store items
      * @param limit The amount of items returned
      * @param page The page of the request
      * @param useCatalog Whether to remove items that are not intended for display or not in date
@@ -30615,8 +31506,8 @@ export class StoreApi {
         });
     }
     /**
-     * Get a single store item
      * 
+     * @summary Get a single store item
      * @param id The id of the item
      */
     public getStoreItem (id: number) : Promise<{ response: http.ClientResponse; body: StoreItem;  }> {
@@ -30667,8 +31558,8 @@ export class StoreApi {
         });
     }
     /**
-     * List and search store items
      * 
+     * @summary List and search store items
      * @param filterNameSearch Filter for items whose name starts with a given string.
      * @param filterUniqueKey Filter for items whose unique_key is a given string.
      * @param filterPublished Filter for skus that have been published.
@@ -30797,8 +31688,8 @@ export class StoreApi {
         });
     }
     /**
-     * Update an item template
      * 
+     * @summary Update an item template
      * @param id The id of the template
      * @param itemTemplateResource The item template resource object
      */
@@ -30853,8 +31744,8 @@ export class StoreApi {
         });
     }
     /**
-     * Update a store item
      * 
+     * @summary Update a store item
      * @param id The id of the item
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param storeItem The store item object
@@ -30918,7 +31809,7 @@ export enum StoreBundlesApiApiKeys {
 }
 
 export class StoreBundlesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -30944,6 +31835,18 @@ export class StoreBundlesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: StoreBundlesApiApiKeys, value: string) {
         this.authentications[StoreBundlesApiApiKeys[key]].apiKey = value;
     }
@@ -30952,8 +31855,8 @@ export class StoreBundlesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a bundle item
      * The SKU for the bundle itself must be unique and there can only be one SKU.  Extra notes for price_override:  The price of all the items (multiplied by the quantity) must equal the price of the bundle.  With individual prices set, items will be processed individually and can be refunded as such.  However, if all prices are set to null, the price of the bundle will be used and will be treated as one item.
+     * @summary Create a bundle item
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param bundleItem The bundle item object
      */
@@ -31006,8 +31909,8 @@ export class StoreBundlesApi {
         });
     }
     /**
-     * Create a bundle template
      * Bundle Templates define a type of bundle and the properties they have.
+     * @summary Create a bundle template
      * @param bundleTemplateResource The new bundle template
      */
     public createBundleTemplate (bundleTemplateResource?: ItemTemplateResource) : Promise<{ response: http.ClientResponse; body: ItemTemplateResource;  }> {
@@ -31055,8 +31958,8 @@ export class StoreBundlesApi {
         });
     }
     /**
-     * Delete a bundle item
      * 
+     * @summary Delete a bundle item
      * @param id The id of the bundle
      */
     public deleteBundleItem (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -31109,8 +32012,8 @@ export class StoreBundlesApi {
         });
     }
     /**
-     * Delete a bundle template
      * 
+     * @summary Delete a bundle template
      * @param id The id of the template
      * @param cascade force deleting the template if it&#39;s attached to other objects, cascade &#x3D; detach
      */
@@ -31168,8 +32071,8 @@ export class StoreBundlesApi {
         });
     }
     /**
-     * Get a single bundle item
      * 
+     * @summary Get a single bundle item
      * @param id The id of the bundle
      */
     public getBundleItem (id: number) : Promise<{ response: http.ClientResponse; body: BundleItem;  }> {
@@ -31220,8 +32123,8 @@ export class StoreBundlesApi {
         });
     }
     /**
-     * Get a single bundle template
      * Bundle Templates define a type of bundle and the properties they have.
+     * @summary Get a single bundle template
      * @param id The id of the template
      */
     public getBundleTemplate (id: string) : Promise<{ response: http.ClientResponse; body: ItemTemplateResource;  }> {
@@ -31272,8 +32175,8 @@ export class StoreBundlesApi {
         });
     }
     /**
-     * List and search bundle templates
      * 
+     * @summary List and search bundle templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -31332,8 +32235,8 @@ export class StoreBundlesApi {
         });
     }
     /**
-     * Update a bundle item
      * 
+     * @summary Update a bundle item
      * @param id The id of the bundle
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param bundleItem The bundle item object
@@ -31393,8 +32296,8 @@ export class StoreBundlesApi {
         });
     }
     /**
-     * Update a bundle template
      * 
+     * @summary Update a bundle template
      * @param id The id of the template
      * @param bundleTemplateResource The bundle template resource object
      */
@@ -31453,7 +32356,7 @@ export enum StoreCouponsApiApiKeys {
 }
 
 export class StoreCouponsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -31479,6 +32382,18 @@ export class StoreCouponsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: StoreCouponsApiApiKeys, value: string) {
         this.authentications[StoreCouponsApiApiKeys[key]].apiKey = value;
     }
@@ -31487,8 +32402,8 @@ export class StoreCouponsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a coupon item
      * SKUs have to be unique in the entire store.
+     * @summary Create a coupon item
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param couponItem The coupon item object
      */
@@ -31541,8 +32456,8 @@ export class StoreCouponsApi {
         });
     }
     /**
-     * Create a coupon template
      * Coupon Templates define a type of coupon and the properties they have.
+     * @summary Create a coupon template
      * @param couponTemplateResource The new coupon template
      */
     public createCouponTemplate (couponTemplateResource?: ItemTemplateResource) : Promise<{ response: http.ClientResponse; body: ItemTemplateResource;  }> {
@@ -31590,8 +32505,8 @@ export class StoreCouponsApi {
         });
     }
     /**
-     * Delete a coupon item
      * 
+     * @summary Delete a coupon item
      * @param id The id of the coupon
      */
     public deleteCouponItem (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -31644,8 +32559,8 @@ export class StoreCouponsApi {
         });
     }
     /**
-     * Delete a coupon template
      * 
+     * @summary Delete a coupon template
      * @param id The id of the template
      * @param cascade force deleting the template if it&#39;s attached to other objects, cascade &#x3D; detach
      */
@@ -31703,8 +32618,8 @@ export class StoreCouponsApi {
         });
     }
     /**
-     * Get a single coupon item
      * 
+     * @summary Get a single coupon item
      * @param id The id of the coupon
      */
     public getCouponItem (id: number) : Promise<{ response: http.ClientResponse; body: CouponItem;  }> {
@@ -31757,8 +32672,8 @@ export class StoreCouponsApi {
         });
     }
     /**
-     * Get a single coupon template
      * Coupon Templates define a type of coupon and the properties they have.
+     * @summary Get a single coupon template
      * @param id The id of the template
      */
     public getCouponTemplate (id: string) : Promise<{ response: http.ClientResponse; body: ItemTemplateResource;  }> {
@@ -31811,8 +32726,8 @@ export class StoreCouponsApi {
         });
     }
     /**
-     * List and search coupon templates
      * 
+     * @summary List and search coupon templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -31873,8 +32788,8 @@ export class StoreCouponsApi {
         });
     }
     /**
-     * Update a coupon item
      * 
+     * @summary Update a coupon item
      * @param id The id of the coupon
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param couponItem The coupon item object
@@ -31934,8 +32849,8 @@ export class StoreCouponsApi {
         });
     }
     /**
-     * Update a coupon template
      * 
+     * @summary Update a coupon template
      * @param id The id of the template
      * @param couponTemplateResource The coupon template resource object
      */
@@ -31994,7 +32909,7 @@ export enum StoreSalesApiApiKeys {
 }
 
 export class StoreSalesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -32020,6 +32935,18 @@ export class StoreSalesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: StoreSalesApiApiKeys, value: string) {
         this.authentications[StoreSalesApiApiKeys[key]].apiKey = value;
     }
@@ -32028,8 +32955,8 @@ export class StoreSalesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a sale
      * 
+     * @summary Create a sale
      * @param catalogSale The catalog sale object
      */
     public createCatalogSale (catalogSale?: CatalogSale) : Promise<{ response: http.ClientResponse; body: CatalogSale;  }> {
@@ -32077,8 +33004,8 @@ export class StoreSalesApi {
         });
     }
     /**
-     * Delete a sale
      * 
+     * @summary Delete a sale
      * @param id The id of the sale
      */
     public deleteCatalogSale (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -32131,8 +33058,8 @@ export class StoreSalesApi {
         });
     }
     /**
-     * Get a single sale
      * 
+     * @summary Get a single sale
      * @param id The id of the sale
      */
     public getCatalogSale (id: number) : Promise<{ response: http.ClientResponse; body: CatalogSale;  }> {
@@ -32185,8 +33112,8 @@ export class StoreSalesApi {
         });
     }
     /**
-     * List and search sales
      * 
+     * @summary List and search sales
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -32247,8 +33174,8 @@ export class StoreSalesApi {
         });
     }
     /**
-     * Update a sale
      * 
+     * @summary Update a sale
      * @param id The id of the sale
      * @param catalogSale The catalog sale object
      */
@@ -32307,7 +33234,7 @@ export enum StoreShippingApiApiKeys {
 }
 
 export class StoreShippingApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -32333,6 +33260,18 @@ export class StoreShippingApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: StoreShippingApiApiKeys, value: string) {
         this.authentications[StoreShippingApiApiKeys[key]].apiKey = value;
     }
@@ -32341,8 +33280,8 @@ export class StoreShippingApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a shipping item
      * A shipping item represents a shipping option and cost. SKUs have to be unique in the entire store.
+     * @summary Create a shipping item
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param shippingItem The shipping item object
      */
@@ -32395,8 +33334,8 @@ export class StoreShippingApi {
         });
     }
     /**
-     * Create a shipping template
      * Shipping Templates define a type of shipping and the properties they have.
+     * @summary Create a shipping template
      * @param shippingTemplateResource The new shipping template
      */
     public createShippingTemplate (shippingTemplateResource?: ItemTemplateResource) : Promise<{ response: http.ClientResponse; body: ItemTemplateResource;  }> {
@@ -32444,8 +33383,8 @@ export class StoreShippingApi {
         });
     }
     /**
-     * Delete a shipping item
      * 
+     * @summary Delete a shipping item
      * @param id The id of the shipping item
      */
     public deleteShippingItem (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -32498,8 +33437,8 @@ export class StoreShippingApi {
         });
     }
     /**
-     * Delete a shipping template
      * 
+     * @summary Delete a shipping template
      * @param id The id of the template
      * @param cascade force deleting the template if it&#39;s attached to other objects, cascade &#x3D; detach
      */
@@ -32557,8 +33496,8 @@ export class StoreShippingApi {
         });
     }
     /**
-     * Get a single shipping item
      * 
+     * @summary Get a single shipping item
      * @param id The id of the shipping item
      */
     public getShippingItem (id: number) : Promise<{ response: http.ClientResponse; body: ShippingItem;  }> {
@@ -32609,8 +33548,8 @@ export class StoreShippingApi {
         });
     }
     /**
-     * Get a single shipping template
      * Shipping Templates define a type of shipping and the properties they have.
+     * @summary Get a single shipping template
      * @param id The id of the template
      */
     public getShippingTemplate (id: string) : Promise<{ response: http.ClientResponse; body: ItemTemplateResource;  }> {
@@ -32663,8 +33602,8 @@ export class StoreShippingApi {
         });
     }
     /**
-     * List and search shipping templates
      * 
+     * @summary List and search shipping templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -32725,8 +33664,8 @@ export class StoreShippingApi {
         });
     }
     /**
-     * Update a shipping item
      * 
+     * @summary Update a shipping item
      * @param id The id of the shipping item
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param shippingItem The shipping item object
@@ -32786,8 +33725,8 @@ export class StoreShippingApi {
         });
     }
     /**
-     * Update a shipping template
      * 
+     * @summary Update a shipping template
      * @param id The id of the template
      * @param shippingTemplateResource The shipping template resource object
      */
@@ -32846,7 +33785,7 @@ export enum StoreShoppingCartsApiApiKeys {
 }
 
 export class StoreShoppingCartsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -32872,6 +33811,18 @@ export class StoreShoppingCartsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: StoreShoppingCartsApiApiKeys, value: string) {
         this.authentications[StoreShoppingCartsApiApiKeys[key]].apiKey = value;
     }
@@ -32880,8 +33831,8 @@ export class StoreShoppingCartsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Adds a custom discount to the cart
      * 
+     * @summary Adds a custom discount to the cart
      * @param id The id of the cart
      * @param customDiscount The details of the discount to add
      */
@@ -32936,8 +33887,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Adds a discount coupon to the cart
      * 
+     * @summary Adds a discount coupon to the cart
      * @param id The id of the cart
      * @param skuRequest The request of the sku
      */
@@ -32992,8 +33943,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Add an item to the cart
      * Currently, carts cannot contain virtual and real currency items at the same time. Furthermore, the API only support a single virtual item at the moment
+     * @summary Add an item to the cart
      * @param id The id of the cart
      * @param cartItemRequest The cart item request object
      */
@@ -33048,8 +33999,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Create a cart
-     * You don&#39;t have to have a user to create a cart but the API requires authentication to checkout
+     * You don't have to have a user to create a cart but the API requires authentication to checkout
+     * @summary Create a cart
      * @param owner Set the owner of a cart. If not specified, defaults to the calling user&#39;s id. If specified and is not the calling user&#39;s id, SHOPPING_CARTS_ADMIN permission is required
      * @param currencyCode Set the currency for the cart, by currency code. May be disallowed by site settings.
      */
@@ -33105,8 +34056,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Returns the cart with the given GUID
      * 
+     * @summary Returns the cart with the given GUID
      * @param id The id of the cart
      */
     public getCart (id: string) : Promise<{ response: http.ClientResponse; body: Cart;  }> {
@@ -33159,8 +34110,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Get a list of carts
      * 
+     * @summary Get a list of carts
      * @param filterOwnerId Filter by the id of the owner
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -33226,8 +34177,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Returns whether a cart requires shipping
      * 
+     * @summary Returns whether a cart requires shipping
      * @param id The id of the cart
      */
     public getShippable (id: string) : Promise<{ response: http.ClientResponse; body: CartShippableResponse;  }> {
@@ -33280,8 +34231,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Get the list of available shipping countries per vendor
      * Since a cart can have multiple vendors with different shipping options, the countries are broken down by vendors. Please see notes about the response object as the fields are variable.
+     * @summary Get the list of available shipping countries per vendor
      * @param id The id of the cart
      */
     public getShippingCountries (id: string) : Promise<{ response: http.ClientResponse; body: SampleCountriesResponse;  }> {
@@ -33334,8 +34285,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Removes a discount coupon from the cart
      * 
+     * @summary Removes a discount coupon from the cart
      * @param id The id of the cart
      * @param code The SKU code of the coupon to remove
      */
@@ -33395,8 +34346,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Sets the currency to use for the cart
      * May be disallowed by site settings.
+     * @summary Sets the currency to use for the cart
      * @param id The id of the cart
      * @param currencyCode The code of the currency
      */
@@ -33451,8 +34402,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Sets the owner of a cart if none is set already
      * 
+     * @summary Sets the owner of a cart if none is set already
      * @param id The id of the cart
      * @param userId The id of the user
      */
@@ -33507,8 +34458,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Changes the quantity of an item already in the cart
      * A quantity of zero will remove the item from the cart altogether.
+     * @summary Changes the quantity of an item already in the cart
      * @param id The id of the cart
      * @param cartItemRequest The cart item request object
      */
@@ -33563,8 +34514,8 @@ export class StoreShoppingCartsApi {
         });
     }
     /**
-     * Modifies or sets the order shipping address
      * 
+     * @summary Modifies or sets the order shipping address
      * @param id The id of the cart
      * @param cartShippingAddressRequest The cart shipping address request object
      */
@@ -33623,7 +34574,7 @@ export enum StoreSubscriptionsApiApiKeys {
 }
 
 export class StoreSubscriptionsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -33649,6 +34600,18 @@ export class StoreSubscriptionsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: StoreSubscriptionsApiApiKeys, value: string) {
         this.authentications[StoreSubscriptionsApiApiKeys[key]].apiKey = value;
     }
@@ -33657,8 +34620,8 @@ export class StoreSubscriptionsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Creates a subscription item and associated plans
      * 
+     * @summary Creates a subscription item and associated plans
      * @param subscriptionResource The subscription to be created
      */
     public createSubscription (subscriptionResource?: SubscriptionResource) : Promise<{ response: http.ClientResponse; body: SubscriptionResource;  }> {
@@ -33706,8 +34669,8 @@ export class StoreSubscriptionsApi {
         });
     }
     /**
-     * Create a subscription template
      * Subscription Templates define a type of subscription and the properties they have.
+     * @summary Create a subscription template
      * @param subscriptionTemplateResource The new subscription template
      */
     public createSubscriptionTemplate (subscriptionTemplateResource?: SubscriptionTemplateResource) : Promise<{ response: http.ClientResponse; body: SubscriptionTemplateResource;  }> {
@@ -33755,8 +34718,8 @@ export class StoreSubscriptionsApi {
         });
     }
     /**
-     * Delete a subscription plan
      * Must not be locked or a migration target
+     * @summary Delete a subscription plan
      * @param id The id of the subscription
      * @param planId The id of the plan
      */
@@ -33816,8 +34779,8 @@ export class StoreSubscriptionsApi {
         });
     }
     /**
-     * Delete a subscription template
      * 
+     * @summary Delete a subscription template
      * @param id The id of the template
      * @param cascade force deleting the template if it&#39;s attached to other objects, cascade &#x3D; detach
      */
@@ -33875,8 +34838,8 @@ export class StoreSubscriptionsApi {
         });
     }
     /**
-     * Retrieve a single subscription item and associated plans
      * 
+     * @summary Retrieve a single subscription item and associated plans
      * @param id The id of the subscription
      */
     public getSubscription (id: number) : Promise<{ response: http.ClientResponse; body: SubscriptionResource;  }> {
@@ -33927,8 +34890,8 @@ export class StoreSubscriptionsApi {
         });
     }
     /**
-     * Get a single subscription template
      * Subscription Templates define a type of subscription and the properties they have.
+     * @summary Get a single subscription template
      * @param id The id of the template
      */
     public getSubscriptionTemplate (id: string) : Promise<{ response: http.ClientResponse; body: SubscriptionTemplateResource;  }> {
@@ -33981,8 +34944,8 @@ export class StoreSubscriptionsApi {
         });
     }
     /**
-     * List and search subscription templates
      * 
+     * @summary List and search subscription templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -34043,8 +35006,8 @@ export class StoreSubscriptionsApi {
         });
     }
     /**
-     * List available subscription items and associated plans
      * 
+     * @summary List available subscription items and associated plans
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -34103,8 +35066,8 @@ export class StoreSubscriptionsApi {
         });
     }
     /**
-     * Processes subscriptions and charge dues
      * 
+     * @summary Processes subscriptions and charge dues
      */
     public processSubscriptions () : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/subscriptions/process';
@@ -34150,8 +35113,8 @@ export class StoreSubscriptionsApi {
         });
     }
     /**
-     * Updates a subscription item and associated plans
      * Will not remove plans left out
+     * @summary Updates a subscription item and associated plans
      * @param id The id of the subscription
      * @param subscriptionResource The subscription resource object
      */
@@ -34206,8 +35169,8 @@ export class StoreSubscriptionsApi {
         });
     }
     /**
-     * Update a subscription template
      * 
+     * @summary Update a subscription template
      * @param id The id of the template
      * @param subscriptionTemplateResource The subscription template resource object
      */
@@ -34266,7 +35229,7 @@ export enum StoreVendorsApiApiKeys {
 }
 
 export class StoreVendorsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -34292,6 +35255,18 @@ export class StoreVendorsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: StoreVendorsApiApiKeys, value: string) {
         this.authentications[StoreVendorsApiApiKeys[key]].apiKey = value;
     }
@@ -34300,8 +35275,8 @@ export class StoreVendorsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a vendor
      * 
+     * @summary Create a vendor
      * @param vendor The vendor
      */
     public createVendor (vendor?: VendorResource) : Promise<{ response: http.ClientResponse; body: VendorResource;  }> {
@@ -34349,8 +35324,8 @@ export class StoreVendorsApi {
         });
     }
     /**
-     * Create a vendor template
      * Vendor Templates define a type of vendor and the properties they have.
+     * @summary Create a vendor template
      * @param vendorTemplateResource The new vendor template
      */
     public createVendorTemplate (vendorTemplateResource?: ItemTemplateResource) : Promise<{ response: http.ClientResponse; body: ItemTemplateResource;  }> {
@@ -34398,8 +35373,8 @@ export class StoreVendorsApi {
         });
     }
     /**
-     * Delete a vendor
      * 
+     * @summary Delete a vendor
      * @param id The id of the vendor
      */
     public deleteVendor (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -34452,8 +35427,8 @@ export class StoreVendorsApi {
         });
     }
     /**
-     * Delete a vendor template
      * 
+     * @summary Delete a vendor template
      * @param id The id of the template
      * @param cascade force deleting the template if it&#39;s attached to other objects, cascade &#x3D; detach
      */
@@ -34511,8 +35486,8 @@ export class StoreVendorsApi {
         });
     }
     /**
-     * Get a single vendor
      * 
+     * @summary Get a single vendor
      * @param id The id of the vendor
      */
     public getVendor (id: number) : Promise<{ response: http.ClientResponse; body: VendorResource;  }> {
@@ -34563,8 +35538,8 @@ export class StoreVendorsApi {
         });
     }
     /**
-     * Get a single vendor template
      * Vendor Templates define a type of vendor and the properties they have.
+     * @summary Get a single vendor template
      * @param id The id of the template
      */
     public getVendorTemplate (id: string) : Promise<{ response: http.ClientResponse; body: ItemTemplateResource;  }> {
@@ -34617,8 +35592,8 @@ export class StoreVendorsApi {
         });
     }
     /**
-     * List and search vendor templates
      * 
+     * @summary List and search vendor templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -34679,8 +35654,8 @@ export class StoreVendorsApi {
         });
     }
     /**
-     * List and search vendors
      * 
+     * @summary List and search vendors
      * @param filterName Filters vendors by name starting with the text provided in the filter
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -34744,8 +35719,8 @@ export class StoreVendorsApi {
         });
     }
     /**
-     * Update a vendor
      * 
+     * @summary Update a vendor
      * @param id The id of the vendor
      * @param vendor The vendor
      */
@@ -34800,8 +35775,8 @@ export class StoreVendorsApi {
         });
     }
     /**
-     * Update a vendor template
      * 
+     * @summary Update a vendor template
      * @param id The id of the template
      * @param vendorTemplateResource The vendor template resource object
      */
@@ -34860,7 +35835,7 @@ export enum TaxesApiApiKeys {
 }
 
 export class TaxesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -34886,6 +35861,18 @@ export class TaxesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: TaxesApiApiKeys, value: string) {
         this.authentications[TaxesApiApiKeys[key]].apiKey = value;
     }
@@ -34894,8 +35881,8 @@ export class TaxesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a country tax
      * 
+     * @summary Create a country tax
      * @param taxResource The tax object
      */
     public createCountryTax (taxResource?: CountryTaxResource) : Promise<{ response: http.ClientResponse; body: CountryTaxResource;  }> {
@@ -34943,8 +35930,8 @@ export class TaxesApi {
         });
     }
     /**
-     * Create a state tax
      * 
+     * @summary Create a state tax
      * @param countryCodeIso3 The iso3 code of the country
      * @param taxResource The tax object
      */
@@ -34999,8 +35986,8 @@ export class TaxesApi {
         });
     }
     /**
-     * Delete an existing tax
      * 
+     * @summary Delete an existing tax
      * @param countryCodeIso3 The iso3 code of the country
      */
     public deleteCountryTax (countryCodeIso3: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -35053,8 +36040,8 @@ export class TaxesApi {
         });
     }
     /**
-     * Delete an existing state tax
      * 
+     * @summary Delete an existing state tax
      * @param countryCodeIso3 The iso3 code of the country
      * @param stateCode The code of the state
      */
@@ -35114,8 +36101,8 @@ export class TaxesApi {
         });
     }
     /**
-     * Get a single tax
      * 
+     * @summary Get a single tax
      * @param countryCodeIso3 The iso3 code of the country
      */
     public getCountryTax (countryCodeIso3: string) : Promise<{ response: http.ClientResponse; body: CountryTaxResource;  }> {
@@ -35166,8 +36153,8 @@ export class TaxesApi {
         });
     }
     /**
-     * List and search taxes
      * Get a list of taxes
+     * @summary List and search taxes
      * @param size The number of objects returned per page
      * @param page The number of the page returned
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -35226,8 +36213,8 @@ export class TaxesApi {
         });
     }
     /**
-     * Get a single state tax
      * 
+     * @summary Get a single state tax
      * @param countryCodeIso3 The iso3 code of the country
      * @param stateCode The code of the state
      */
@@ -35285,8 +36272,8 @@ export class TaxesApi {
         });
     }
     /**
-     * List and search taxes across all countries
      * Get a list of taxes
+     * @summary List and search taxes across all countries
      * @param size The number of objects returned per page
      * @param page The number of the page returned
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -35345,8 +36332,8 @@ export class TaxesApi {
         });
     }
     /**
-     * List and search taxes within a country
      * Get a list of taxes
+     * @summary List and search taxes within a country
      * @param countryCodeIso3 The iso3 code of the country
      * @param size The number of objects returned per page
      * @param page The number of the page returned
@@ -35412,8 +36399,8 @@ export class TaxesApi {
         });
     }
     /**
-     * Create or update a tax
      * 
+     * @summary Create or update a tax
      * @param countryCodeIso3 The iso3 code of the country
      * @param taxResource The tax object
      */
@@ -35468,8 +36455,8 @@ export class TaxesApi {
         });
     }
     /**
-     * Create or update a state tax
      * 
+     * @summary Create or update a state tax
      * @param countryCodeIso3 The iso3 code of the country
      * @param stateCode The code of the state
      * @param taxResource The tax object
@@ -35535,7 +36522,7 @@ export enum TemplatesPropertiesApiApiKeys {
 }
 
 export class TemplatesPropertiesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -35561,6 +36548,18 @@ export class TemplatesPropertiesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: TemplatesPropertiesApiApiKeys, value: string) {
         this.authentications[TemplatesPropertiesApiApiKeys[key]].apiKey = value;
     }
@@ -35569,8 +36568,8 @@ export class TemplatesPropertiesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get details for a template property type
      * 
+     * @summary Get details for a template property type
      * @param type type
      */
     public getTemplatePropertyType (type: string) : Promise<{ response: http.ClientResponse; body: PropertyFieldListResource;  }> {
@@ -35621,8 +36620,8 @@ export class TemplatesPropertiesApi {
         });
     }
     /**
-     * List template property types
      * 
+     * @summary List template property types
      */
     public getTemplatePropertyTypes () : Promise<{ response: http.ClientResponse; body: Array<PropertyFieldListResource>;  }> {
         const localVarPath = this.basePath + '/templates/properties';
@@ -35670,7 +36669,7 @@ export enum UsersApiApiKeys {
 }
 
 export class UsersApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -35696,6 +36695,18 @@ export class UsersApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UsersApiApiKeys, value: string) {
         this.authentications[UsersApiApiKeys[key]].apiKey = value;
     }
@@ -35704,8 +36715,8 @@ export class UsersApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add a tag to a user
      * 
+     * @summary Add a tag to a user
      * @param userId The id of the user
      * @param tag tag
      */
@@ -35765,8 +36776,8 @@ export class UsersApi {
         });
     }
     /**
-     * Create a user template
      * User Templates define a type of user and the properties they have
+     * @summary Create a user template
      * @param userTemplateResource The user template resource object
      */
     public createUserTemplate (userTemplateResource?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -35814,8 +36825,8 @@ export class UsersApi {
         });
     }
     /**
-     * Delete a user template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete a user template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -35873,8 +36884,8 @@ export class UsersApi {
         });
     }
     /**
-     * Get a single user
      * Additional private info is included as USERS_ADMIN
+     * @summary Get a single user
      * @param id The id of the user or &#39;me&#39;
      */
     public getUser (id: string) : Promise<{ response: http.ClientResponse; body: UserResource;  }> {
@@ -35927,8 +36938,8 @@ export class UsersApi {
         });
     }
     /**
-     * List tags for a user
      * 
+     * @summary List tags for a user
      * @param userId The id of the user
      */
     public getUserTags (userId: number) : Promise<{ response: http.ClientResponse; body: Array<string>;  }> {
@@ -35981,8 +36992,8 @@ export class UsersApi {
         });
     }
     /**
-     * Get a single user template
      * 
+     * @summary Get a single user template
      * @param id The id of the template
      */
     public getUserTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -36035,8 +37046,8 @@ export class UsersApi {
         });
     }
     /**
-     * List and search user templates
      * 
+     * @summary List and search user templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -36097,8 +37108,8 @@ export class UsersApi {
         });
     }
     /**
-     * List and search users
      * Additional private info is included as USERS_ADMIN
+     * @summary List and search users
      * @param filterDisplayname Filter for users whose display name starts with provided string.
      * @param filterEmail Filter for users whose email starts with provided string. Requires USERS_ADMIN permission
      * @param filterFirstname Filter for users whose first name starts with provided string. Requires USERS_ADMIN permission
@@ -36209,8 +37220,8 @@ export class UsersApi {
         });
     }
     /**
-     * Choose a new password after a reset
-     * Finish resetting a user&#39;s password using the secret provided from the password-reset endpoint.  Password should be in plain text and will be encrypted on receipt. Use SSL for security.
+     * Finish resetting a user's password using the secret provided from the password-reset endpoint.  Password should be in plain text and will be encrypted on receipt. Use SSL for security.
+     * @summary Choose a new password after a reset
      * @param id The id of the user
      * @param newPasswordRequest The new password request object
      */
@@ -36263,8 +37274,8 @@ export class UsersApi {
         });
     }
     /**
-     * Register a new user
      * Password should be in plain text and will be encrypted on receipt. Use SSL for security
+     * @summary Register a new user
      * @param userResource The user resource object
      */
     public registerUser (userResource?: UserResource) : Promise<{ response: http.ClientResponse; body: UserResource;  }> {
@@ -36310,8 +37321,8 @@ export class UsersApi {
         });
     }
     /**
-     * Remove a tag from a user
      * 
+     * @summary Remove a tag from a user
      * @param userId The id of the user
      * @param tag The tag to remove
      */
@@ -36371,8 +37382,8 @@ export class UsersApi {
         });
     }
     /**
-     * Set a user&#39;s password
      * Password should be in plain text and will be encrypted on receipt. Use SSL for security.
+     * @summary Set a user's password
      * @param id The id of the user
      * @param password The new plain text password
      */
@@ -36427,8 +37438,8 @@ export class UsersApi {
         });
     }
     /**
-     * Reset a user&#39;s password
-     * A reset code will be generated and a &#39;forgot_password&#39; BRE event will be fired with that code.  The default system rule will send an email to the selected user if an email service has been setup. You can modify that rule in BRE to send an SMS instead or any other type of notification as you see fit
+     * A reset code will be generated and a 'forgot_password' BRE event will be fired with that code.  The default system rule will send an email to the selected user if an email service has been setup. You can modify that rule in BRE to send an SMS instead or any other type of notification as you see fit
+     * @summary Reset a user's password
      * @param id The id of the user
      */
     public startPasswordReset (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -36479,11 +37490,11 @@ export class UsersApi {
         });
     }
     /**
-     * Reset a user&#39;s password without user id
-     * A reset code will be generated and a &#39;forgot_password&#39; BRE event will be fired with that code.  The default system rule will send an email to the selected user if an email service has been setup. You can modify that rule in BRE to send an SMS instead or any other type of notification as you see fit.  Must submit their email, username, or mobile phone number
+     * A reset code will be generated and a 'forgot_password' BRE event will be fired with that code.  The default system rule will send an email to the selected user if an email service has been setup. You can modify that rule in BRE to send an SMS instead or any other type of notification as you see fit.  Must submit their email, username, or mobile phone number
+     * @summary Reset a user's password without user id
      * @param passwordReset An object containing one of three methods to look up a user
      */
-    public submitPasswordReset (passwordReset?: ARequestToResetAUsersPasswordByUsingAKnownUserProperty) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public submitPasswordReset (passwordReset?: PasswordResetRequest) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/users/password-reset';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
@@ -36526,8 +37537,8 @@ export class UsersApi {
         });
     }
     /**
-     * Update a user
      * Password will not be edited on this endpoint, use password specific endpoints.
+     * @summary Update a user
      * @param id The id of the user or &#39;me&#39;
      * @param userResource The user resource object
      */
@@ -36582,8 +37593,8 @@ export class UsersApi {
         });
     }
     /**
-     * Update a user template
      * 
+     * @summary Update a user template
      * @param id The id of the template
      * @param userTemplateResource The user template resource object
      */
@@ -36642,7 +37653,7 @@ export enum UsersAddressesApiApiKeys {
 }
 
 export class UsersAddressesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -36668,6 +37679,18 @@ export class UsersAddressesApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UsersAddressesApiApiKeys, value: string) {
         this.authentications[UsersAddressesApiApiKeys[key]].apiKey = value;
     }
@@ -36676,8 +37699,8 @@ export class UsersAddressesApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a new address
      * 
+     * @summary Create a new address
      * @param userId The id of the user
      * @param savedAddressResource The new address
      */
@@ -36732,8 +37755,8 @@ export class UsersAddressesApi {
         });
     }
     /**
-     * Delete an address
      * 
+     * @summary Delete an address
      * @param userId The id of the user
      * @param id The id of the address
      */
@@ -36793,8 +37816,8 @@ export class UsersAddressesApi {
         });
     }
     /**
-     * Get a single address
      * 
+     * @summary Get a single address
      * @param userId The id of the user
      * @param id The id of the address
      */
@@ -36854,8 +37877,8 @@ export class UsersAddressesApi {
         });
     }
     /**
-     * List and search addresses
      * 
+     * @summary List and search addresses
      * @param userId The id of the user
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -36923,8 +37946,8 @@ export class UsersAddressesApi {
         });
     }
     /**
-     * Update an address
      * 
+     * @summary Update an address
      * @param userId The id of the user
      * @param id The id of the address
      * @param savedAddressResource The saved address resource object
@@ -36990,7 +38013,7 @@ export enum UsersFriendshipsApiApiKeys {
 }
 
 export class UsersFriendshipsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -37016,6 +38039,18 @@ export class UsersFriendshipsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UsersFriendshipsApiApiKeys, value: string) {
         this.authentications[UsersFriendshipsApiApiKeys[key]].apiKey = value;
     }
@@ -37024,8 +38059,8 @@ export class UsersFriendshipsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Add a friend
      * As a user, either creates or confirm a pending request. As an admin, call this endpoint twice while inverting the IDs to create a confirmed friendship.
+     * @summary Add a friend
      * @param userId The id of the user or &#39;me&#39; if logged in
      * @param id The id of the user to befriend
      */
@@ -37085,8 +38120,8 @@ export class UsersFriendshipsApi {
         });
     }
     /**
-     * Get friends list
      * 
+     * @summary Get friends list
      * @param userId The id of the user or &#39;me&#39;
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -37149,8 +38184,8 @@ export class UsersFriendshipsApi {
         });
     }
     /**
-     * Returns the invite token
      * This is a unique invite token that allows direct connection to the request user.  Exposing that token presents privacy issues if the token is leaked. Use friend request flow instead if confirmation is required
+     * @summary Returns the invite token
      * @param userId The id of the user or &#39;me&#39; if logged in
      */
     public getInviteToken (userId: string) : Promise<{ response: http.ClientResponse; body: string;  }> {
@@ -37203,8 +38238,8 @@ export class UsersFriendshipsApi {
         });
     }
     /**
-     * Get pending invites
      * Invites that the specified user received
+     * @summary Get pending invites
      * @param userId The id of the user or &#39;me&#39;
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -37267,8 +38302,8 @@ export class UsersFriendshipsApi {
         });
     }
     /**
-     * Redeem friendship token
      * Immediately connects the requested user with the user mapped by the provided invite token
+     * @summary Redeem friendship token
      * @param userId The id of the user or &#39;me&#39; if logged in
      * @param token The invite token
      */
@@ -37323,8 +38358,8 @@ export class UsersFriendshipsApi {
         });
     }
     /**
-     * Remove or decline a friend
      * 
+     * @summary Remove or decline a friend
      * @param userId The id of the user or &#39;me&#39; if logged in
      * @param id The id of the user to befriend
      */
@@ -37388,7 +38423,7 @@ export enum UsersGroupsApiApiKeys {
 }
 
 export class UsersGroupsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -37414,6 +38449,18 @@ export class UsersGroupsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UsersGroupsApiApiKeys, value: string) {
         this.authentications[UsersGroupsApiApiKeys[key]].apiKey = value;
     }
@@ -37422,8 +38469,8 @@ export class UsersGroupsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Adds a new member to the group
      * 
+     * @summary Adds a new member to the group
      * @param uniqueName The group unique name
      * @param user The id and status for a user to add to the group
      */
@@ -37483,8 +38530,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Adds multiple members to the group
      * 
+     * @summary Adds multiple members to the group
      * @param uniqueName The group unique name
      * @param users The id and status for a list of users to add to the group
      */
@@ -37544,8 +38591,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Create a group
      * 
+     * @summary Create a group
      * @param groupResource The new group
      */
     public createGroup (groupResource?: GroupResource) : Promise<{ response: http.ClientResponse; body: GroupResource;  }> {
@@ -37593,8 +38640,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Create a group template
      * Group Templates define a type of group and the properties they have
+     * @summary Create a group template
      * @param groupTemplateResource The group template resource object
      */
     public createGroupTemplate (groupTemplateResource?: TemplateResource) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -37642,8 +38689,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Removes a group from the system IF no resources are attached to it
      * 
+     * @summary Removes a group from the system IF no resources are attached to it
      * @param uniqueName The group unique name
      */
     public deleteGroup (uniqueName: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -37696,8 +38743,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Delete a group template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete a group template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -37755,8 +38802,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Loads a specific group&#39;s details
      * 
+     * @summary Loads a specific group's details
      * @param uniqueName The group unique name
      */
     public getGroup (uniqueName: string) : Promise<{ response: http.ClientResponse; body: GroupResource;  }> {
@@ -37807,8 +38854,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Get a user from a group
      * 
+     * @summary Get a user from a group
      * @param uniqueName The group unique name
      * @param userId The id of the user
      */
@@ -37866,8 +38913,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Lists members of the group
      * 
+     * @summary Lists members of the group
      * @param uniqueName The group unique name
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -37933,8 +38980,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Get a single group template
      * 
+     * @summary Get a single group template
      * @param id The id of the template
      */
     public getGroupTemplate (id: string) : Promise<{ response: http.ClientResponse; body: TemplateResource;  }> {
@@ -37987,8 +39034,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * List and search group templates
      * 
+     * @summary List and search group templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order a comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -38049,8 +39096,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * List groups a user is in
      * 
+     * @summary List groups a user is in
      * @param userId The id of the user
      */
     public getGroupsForUser (userId: number) : Promise<{ response: http.ClientResponse; body: Array<string>;  }> {
@@ -38101,8 +39148,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Removes a user from a group
      * 
+     * @summary Removes a user from a group
      * @param uniqueName The group unique name
      * @param userId The id of the user to remove
      */
@@ -38162,8 +39209,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Update a group
      * 
+     * @summary Update a group
      * @param uniqueName The group unique name
      * @param groupResource The updated group
      */
@@ -38218,8 +39265,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Change a user&#39;s status
      * 
+     * @summary Change a user's status
      * @param uniqueName The group unique name
      * @param userId The user id of the member to modify
      * @param status The new status for the user
@@ -38286,8 +39333,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * Update a group template
      * 
+     * @summary Update a group template
      * @param id The id of the template
      * @param groupTemplateResource The group template resource object
      */
@@ -38342,8 +39389,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * List and search groups
      * 
+     * @summary List and search groups
      * @param filterTemplate Filter for groups using a specific template, by id
      * @param filterMemberCount Filters groups by member count. Multiple values possible for range search. Format: filter_member_count&#x3D;OP,ts&amp;... where OP in (GT, LT, GOE, LOE, EQ). Ex: filter_member_count&#x3D;GT,14,LT,17
      * @param filterName Filter for groups with names starting with the given string
@@ -38436,7 +39483,7 @@ export enum UsersInventoryApiApiKeys {
 }
 
 export class UsersInventoryApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -38462,6 +39509,18 @@ export class UsersInventoryApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UsersInventoryApiApiKeys, value: string) {
         this.authentications[UsersInventoryApiApiKeys[key]].apiKey = value;
     }
@@ -38470,8 +39529,8 @@ export class UsersInventoryApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Adds an item to the user inventory
      * The inventory is fulfilled asynchronously UNLESS the invoice is explicitely skipped. Depending on the use case, it might require the client to verify that the entitlement was added after the fact or configure a BRE rule to get a notification in real time
+     * @summary Adds an item to the user inventory
      * @param id The id of the user
      * @param userInventoryAddRequest The user inventory add request object
      */
@@ -38526,8 +39585,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Check for access to an item without consuming
      * Useful for pre-check and accounts for all various buisness rules
+     * @summary Check for access to an item without consuming
      * @param userId The id of the user to check for or &#39;me&#39; for logged in user
      * @param itemId The id of the item
      * @param sku The specific sku of an entitlement list addition to check entitlement for. This is of very limited and specific use and should generally be left out
@@ -38592,8 +39651,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Create an entitlement item
      * 
+     * @summary Create an entitlement item
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param entitlementItem The entitlement item object
      */
@@ -38646,8 +39705,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Create an entitlement template
      * Entitlement templates define a type of entitlement and the properties they have
+     * @summary Create an entitlement template
      * @param template The entitlement template to be created
      */
     public createEntitlementTemplate (template?: ItemTemplateResource) : Promise<{ response: http.ClientResponse; body: ItemTemplateResource;  }> {
@@ -38695,8 +39754,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Delete an entitlement item
      * 
+     * @summary Delete an entitlement item
      * @param entitlementId The id of the entitlement
      */
     public deleteEntitlementItem (entitlementId: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -38749,8 +39808,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Delete an entitlement template
-     * If cascade &#x3D; &#39;detach&#39;, it will force delete the template even if it&#39;s attached to other objects
+     * If cascade = 'detach', it will force delete the template even if it's attached to other objects
+     * @summary Delete an entitlement template
      * @param id The id of the template
      * @param cascade The value needed to delete used templates
      */
@@ -38808,8 +39867,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Get a single entitlement item
      * 
+     * @summary Get a single entitlement item
      * @param entitlementId The id of the entitlement
      */
     public getEntitlementItem (entitlementId: number) : Promise<{ response: http.ClientResponse; body: EntitlementItem;  }> {
@@ -38860,8 +39919,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * List and search entitlement items
      * 
+     * @summary List and search entitlement items
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -38920,8 +39979,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Get a single entitlement template
      * 
+     * @summary Get a single entitlement template
      * @param id The id of the template
      */
     public getEntitlementTemplate (id: string) : Promise<{ response: http.ClientResponse; body: ItemTemplateResource;  }> {
@@ -38974,8 +40033,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * List and search entitlement templates
      * 
+     * @summary List and search entitlement templates
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -39036,8 +40095,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * List the user inventory entries for a given user
      * 
+     * @summary List the user inventory entries for a given user
      * @param id The id of the user
      * @param inactive If true, accepts inactive user inventories
      * @param size The number of objects returned per page
@@ -39130,8 +40189,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Get an inventory entry
      * 
+     * @summary Get an inventory entry
      * @param userId The id of the inventory owner or &#39;me&#39; for the logged in user
      * @param id The id of the user inventory
      */
@@ -39191,8 +40250,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * List the log entries for this inventory entry
      * 
+     * @summary List the log entries for this inventory entry
      * @param userId The id of the inventory owner or &#39;me&#39; for the logged in user
      * @param id The id of the user inventory
      * @param size The number of objects returned per page
@@ -39262,8 +40321,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * List the user inventory entries for all users
      * 
+     * @summary List the user inventory entries for all users
      * @param inactive If true, accepts inactive user inventories
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -39349,8 +40408,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Grant an entitlement
      * 
+     * @summary Grant an entitlement
      * @param userId The id of the user to grant the entitlement to
      * @param grantRequest grantRequest
      */
@@ -39410,8 +40469,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Update an entitlement item
      * 
+     * @summary Update an entitlement item
      * @param entitlementId The id of the entitlement
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param entitlementItem The entitlement item object
@@ -39471,8 +40530,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Update an entitlement template
      * 
+     * @summary Update an entitlement template
      * @param id The id of the template
      * @param template The updated template
      */
@@ -39527,8 +40586,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Set the behavior data for an inventory entry
      * 
+     * @summary Set the behavior data for an inventory entry
      * @param userId The id of the user
      * @param id The id of the user inventory
      * @param data The data map
@@ -39590,8 +40649,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Set the expiration date
      * Will change the current grace period for a subscription but not the bill date (possibly even ending before having the chance to re-bill)
+     * @summary Set the expiration date
      * @param userId user_id
      * @param id The id of the user inventory
      * @param timestamp The new expiration date as a unix timestamp in seconds. May be null (no body).
@@ -39653,8 +40712,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Set the status for an inventory entry
      * 
+     * @summary Set the status for an inventory entry
      * @param userId The id of the user
      * @param id The id of the user inventory
      * @param inventoryStatus The inventory status object
@@ -39716,8 +40775,8 @@ export class UsersInventoryApi {
         });
     }
     /**
-     * Use an item
      * 
+     * @summary Use an item
      * @param userId The id of the user to check for or &#39;me&#39; for logged in user
      * @param itemId The id of the item
      * @param sku The specific sku of an entitlement_list addition to check entitlement for. This is of very limited and specific use and should generally be left out
@@ -39791,7 +40850,7 @@ export enum UsersRelationshipsApiApiKeys {
 }
 
 export class UsersRelationshipsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -39817,6 +40876,18 @@ export class UsersRelationshipsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UsersRelationshipsApiApiKeys, value: string) {
         this.authentications[UsersRelationshipsApiApiKeys[key]].apiKey = value;
     }
@@ -39825,8 +40896,8 @@ export class UsersRelationshipsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Create a user relationship
      * 
+     * @summary Create a user relationship
      * @param relationship The new relationship
      */
     public createUserRelationship (relationship?: UserRelationshipResource) : Promise<{ response: http.ClientResponse; body: UserRelationshipResource;  }> {
@@ -39874,8 +40945,8 @@ export class UsersRelationshipsApi {
         });
     }
     /**
-     * Delete a user relationship
      * 
+     * @summary Delete a user relationship
      * @param id The id of the relationship
      */
     public deleteUserRelationship (id: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -39928,8 +40999,8 @@ export class UsersRelationshipsApi {
         });
     }
     /**
-     * Get a user relationship
      * 
+     * @summary Get a user relationship
      * @param id The id of the relationship
      */
     public getUserRelationship (id: number) : Promise<{ response: http.ClientResponse; body: UserRelationshipResource;  }> {
@@ -39982,8 +41053,8 @@ export class UsersRelationshipsApi {
         });
     }
     /**
-     * Get a list of user relationships
      * 
+     * @summary Get a list of user relationships
      * @param size The number of objects returned per page
      * @param page The number of the page returned
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
@@ -40044,8 +41115,8 @@ export class UsersRelationshipsApi {
         });
     }
     /**
-     * Update a user relationship
      * 
+     * @summary Update a user relationship
      * @param id The id of the relationship
      * @param relationship The new relationship
      */
@@ -40104,7 +41175,7 @@ export enum UsersSubscriptionsApiApiKeys {
 }
 
 export class UsersSubscriptionsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -40130,6 +41201,18 @@ export class UsersSubscriptionsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UsersSubscriptionsApiApiKeys, value: string) {
         this.authentications[UsersSubscriptionsApiApiKeys[key]].apiKey = value;
     }
@@ -40138,8 +41221,8 @@ export class UsersSubscriptionsApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get details about a user&#39;s subscription
      * 
+     * @summary Get details about a user's subscription
      * @param userId The id of the user
      * @param inventoryId The id of the user&#39;s inventory
      */
@@ -40199,8 +41282,8 @@ export class UsersSubscriptionsApi {
         });
     }
     /**
-     * Get details about a user&#39;s subscriptions
      * 
+     * @summary Get details about a user's subscriptions
      * @param userId The id of the user
      */
     public getUsersSubscriptionDetails (userId: number) : Promise<{ response: http.ClientResponse; body: Array<InventorySubscriptionResource>;  }> {
@@ -40253,8 +41336,8 @@ export class UsersSubscriptionsApi {
         });
     }
     /**
-     * Reactivate a subscription and charge fee
      * 
+     * @summary Reactivate a subscription and charge fee
      * @param userId The id of the user
      * @param inventoryId The id of the user&#39;s inventory
      * @param reactivateSubscriptionRequest The reactivate subscription request object inventory
@@ -40316,8 +41399,8 @@ export class UsersSubscriptionsApi {
         });
     }
     /**
-     * Set a new date to bill a subscription on
      * 
+     * @summary Set a new date to bill a subscription on
      * @param userId The id of the user
      * @param inventoryId The id of the user&#39;s inventory
      * @param billDate The new bill date. Unix timestamp in seconds
@@ -40384,8 +41467,8 @@ export class UsersSubscriptionsApi {
         });
     }
     /**
-     * Set the payment method to use for a subscription
      * May send null to use floating default
+     * @summary Set the payment method to use for a subscription
      * @param userId The id of the user
      * @param inventoryId The id of the user&#39;s inventory
      * @param paymentMethodId The id of the payment method
@@ -40447,8 +41530,8 @@ export class UsersSubscriptionsApi {
         });
     }
     /**
-     * Set the status of a subscription
      * The body is a json string (put in quotes) that should match a desired invoice status type. Note that the new status may be blocked if the system is not configured to allow the current status to be changed to the new, to enforce proper flow. The default options for statuses are shown below but may be altered for special use cases
+     * @summary Set the status of a subscription
      * @param userId The id of the user
      * @param inventoryId The id of the user&#39;s inventory
      * @param status The new status for the subscription. Actual options may differ from the indicated set if the invoice status type data has been altered.  Allowable values: (&#39;current&#39;, &#39;canceled&#39;, &#39;stopped&#39;, &#39;payment_failed&#39;, &#39;suspended&#39;)
@@ -40515,8 +41598,8 @@ export class UsersSubscriptionsApi {
         });
     }
     /**
-     * Set a new subscription plan for a user
      * 
+     * @summary Set a new subscription plan for a user
      * @param userId The id of the user
      * @param inventoryId The id of the user&#39;s inventory
      * @param planId The id of the new plan. Must be from the same subscription
@@ -40577,12 +41660,75 @@ export class UsersSubscriptionsApi {
             });
         });
     }
+    /**
+     * This new price will be what the user is charged at the begining of each new period. This override is specific to the current subscription and will not carry over if they end and later re-subscribe. It will persist if the plan is changed using the setUserSubscriptionPlan endpoint.
+     * @summary Set a new subscription price for a user
+     * @param userId The id of the user
+     * @param inventoryId The id of the user&#39;s inventory
+     * @param the override details override
+     */
+    public setUserSubscriptionPrice (userId: number, inventoryId: number, the override details?: SubscriptionPriceOverrideRequest) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/users/{user_id}/subscriptions/{inventory_id}/price-override'
+            .replace('{' + 'user_id' + '}', String(userId))
+            .replace('{' + 'inventory_id' + '}', String(inventoryId));
+        let queryParameters: any = {};
+        let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'userId' is not null or undefined
+        if (userId === null || userId === undefined) {
+            throw new Error('Required parameter userId was null or undefined when calling setUserSubscriptionPrice.');
+        }
+
+        // verify required parameter 'inventoryId' is not null or undefined
+        if (inventoryId === null || inventoryId === undefined) {
+            throw new Error('Required parameter inventoryId was null or undefined when calling setUserSubscriptionPrice.');
+        }
+
+        let useFormData = false;
+
+        let requestOptions: request.Options = {
+            method: 'PUT',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: the override details,
+        };
+
+        this.authentications.OAuth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
+            request(requestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
 }
 export enum UtilBatchApiApiKeys {
 }
 
 export class UtilBatchApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -40608,6 +41754,18 @@ export class UtilBatchApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UtilBatchApiApiKeys, value: string) {
         this.authentications[UtilBatchApiApiKeys[key]].apiKey = value;
     }
@@ -40616,8 +41774,8 @@ export class UtilBatchApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get batch result with token
      * Tokens expire in 24 hours
+     * @summary Get batch result with token
      * @param token token
      */
     public getBatch (token: string) : Promise<{ response: http.ClientResponse; body: Array<BatchReturn>;  }> {
@@ -40668,8 +41826,8 @@ export class UtilBatchApi {
         });
     }
     /**
-     * Request to run API call given the method, content type, path url, and body of request
      * Should the request take longer than one of the alloted timeout parameters, a token will be returned instead, which can be used on the token endpoint in this service
+     * @summary Request to run API call given the method, content type, path url, and body of request
      * @param batch The batch object
      */
     public sendBatch (batch?: Batch) : Promise<{ response: http.ClientResponse; body: Array<BatchReturn>;  }> {
@@ -40719,7 +41877,7 @@ export enum UtilHealthApiApiKeys {
 }
 
 export class UtilHealthApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -40745,6 +41903,18 @@ export class UtilHealthApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UtilHealthApiApiKeys, value: string) {
         this.authentications[UtilHealthApiApiKeys[key]].apiKey = value;
     }
@@ -40753,8 +41923,8 @@ export class UtilHealthApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get health info
      * 
+     * @summary Get health info
      */
     public getHealth () : Promise<{ response: http.ClientResponse; body: any;  }> {
         const localVarPath = this.basePath + '/health';
@@ -40802,7 +41972,7 @@ export enum UtilMaintenanceApiApiKeys {
 }
 
 export class UtilMaintenanceApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -40828,6 +41998,18 @@ export class UtilMaintenanceApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UtilMaintenanceApiApiKeys, value: string) {
         this.authentications[UtilMaintenanceApiApiKeys[key]].apiKey = value;
     }
@@ -40836,8 +42018,8 @@ export class UtilMaintenanceApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Delete maintenance info
      * 
+     * @summary Delete maintenance info
      */
     public deleteMaintenance () : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/maintenance';
@@ -40883,8 +42065,8 @@ export class UtilMaintenanceApi {
         });
     }
     /**
-     * Get current maintenance info
      * Get current maintenance info. 404 if no maintenance.
+     * @summary Get current maintenance info
      */
     public getMaintenance () : Promise<{ response: http.ClientResponse; body: Maintenance;  }> {
         const localVarPath = this.basePath + '/maintenance';
@@ -40928,8 +42110,8 @@ export class UtilMaintenanceApi {
         });
     }
     /**
-     * Set current maintenance info
      * 
+     * @summary Set current maintenance info
      * @param maintenance The maintenance object
      */
     public setMaintenance (maintenance?: Maintenance) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -40977,8 +42159,8 @@ export class UtilMaintenanceApi {
         });
     }
     /**
-     * Update current maintenance info
      * 
+     * @summary Update current maintenance info
      * @param maintenance The maintenance object
      */
     public updateMaintenance (maintenance?: Maintenance) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -41030,7 +42212,7 @@ export enum UtilSecurityApiApiKeys {
 }
 
 export class UtilSecurityApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -41056,6 +42238,18 @@ export class UtilSecurityApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UtilSecurityApiApiKeys, value: string) {
         this.authentications[UtilSecurityApiApiKeys[key]].apiKey = value;
     }
@@ -41064,8 +42258,8 @@ export class UtilSecurityApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Returns the authentication log for a user
      * A log entry is recorded everytime a user requests a new token. Standard pagination available
+     * @summary Returns the authentication log for a user
      * @param userId The user id
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
@@ -41131,8 +42325,8 @@ export class UtilSecurityApi {
         });
     }
     /**
-     * Returns the authentication token details. Use /users endpoint for detailed user&#39;s info
      * 
+     * @summary Returns the authentication token details. Use /users endpoint for detailed user's info
      */
     public getUserTokenDetails () : Promise<{ response: http.ClientResponse; body: TokenDetailsResource;  }> {
         const localVarPath = this.basePath + '/me';
@@ -41182,7 +42376,7 @@ export enum UtilVersionApiApiKeys {
 }
 
 export class UtilVersionApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
@@ -41208,6 +42402,18 @@ export class UtilVersionApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UtilVersionApiApiKeys, value: string) {
         this.authentications[UtilVersionApiApiKeys[key]].apiKey = value;
     }
@@ -41216,8 +42422,8 @@ export class UtilVersionApi {
         this.authentications.OAuth2.accessToken = token;
     }
     /**
-     * Get current version info
      * 
+     * @summary Get current version info
      */
     public getVersion () : Promise<{ response: http.ClientResponse; body: Version;  }> {
         const localVarPath = this.basePath + '/version';
