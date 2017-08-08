@@ -21,6 +21,120 @@ let defaultBasePath = 'https://sandbox.knetikcloud.com';
 // ===============================================
 
 /* tslint:disable:no-unused-variable */
+let primitives = [
+                    "string",
+                    "boolean",
+                    "double",
+                    "integer",
+                    "long",
+                    "float",
+                    "number",
+                    "any"
+                 ];
+
+class ObjectSerializer {
+
+    public static findCorrectType(data: any, expectedType: string) {
+        if (data == undefined) {
+            return expectedType;
+        } else if (primitives.indexOf(expectedType.toLowerCase()) !== -1) {
+            return expectedType;
+        } else if (expectedType === "Date") {
+            return expectedType;
+        } else {
+            if (enumsMap[expectedType]) {
+                return expectedType;
+            }
+
+            if (!typeMap[expectedType]) {
+                return expectedType; // w/e we don't know the type
+            }
+
+            // Check the discriminator
+            let discriminatorProperty = typeMap[expectedType].discriminator;
+            if (discriminatorProperty == null) {
+                return expectedType; // the type does not have a discriminator. use it.
+            } else {
+                if (data[discriminatorProperty]) {
+                    return data[discriminatorProperty]; // use the type given in the discriminator
+                } else {
+                    return expectedType; // discriminator was not present (or an empty string)
+                }
+            }
+        }
+    }
+
+    public static serialize(data: any, type: string) {
+        if (data == undefined) {
+            return data;
+        } else if (primitives.indexOf(type.toLowerCase()) !== -1) {
+            return data;
+        } else if (type.lastIndexOf("Array<", 0) === 0) { // string.startsWith pre es6
+            let subType: string = type.replace("Array<", ""); // Array<Type> => Type>
+            subType = subType.substring(0, subType.length - 1); // Type> => Type
+            let transformedData = [];
+            for (let index in data) {
+                let date = data[index];
+                transformedData.push(ObjectSerializer.serialize(date, subType));
+            }
+            return transformedData;
+        } else if (type === "Date") {
+            return data.toString();
+        } else {
+            if (enumsMap[type]) {
+                return data;
+            }
+            if (!typeMap[type]) { // in case we dont know the type
+                return data;
+            }
+
+            // get the map for the correct type.
+            let attributeTypes = typeMap[type].getAttributeTypeMap();
+            let instance = {};
+            for (let index in attributeTypes) {
+                let attributeType = attributeTypes[index];
+                instance[attributeType.baseName] = ObjectSerializer.serialize(data[attributeType.name], attributeType.type);
+            }
+            return instance;
+        }
+    }
+
+    public static deserialize(data: any, type: string) {
+        // polymorphism may change the actual type.
+        type = ObjectSerializer.findCorrectType(data, type);
+        if (data == undefined) {
+            return data;
+        } else if (primitives.indexOf(type.toLowerCase()) !== -1) {
+            return data;
+        } else if (type.lastIndexOf("Array<", 0) === 0) { // string.startsWith pre es6
+            let subType: string = type.replace("Array<", ""); // Array<Type> => Type>
+            subType = subType.substring(0, subType.length - 1); // Type> => Type
+            let transformedData = [];
+            for (let index in data) {
+                let date = data[index];
+                transformedData.push(ObjectSerializer.deserialize(date, subType));
+            }
+            return transformedData;
+        } else if (type === "Date") {
+            return new Date(data);
+        } else {
+            if (enumsMap[type]) {// is Enum
+                return data;
+            }
+
+            if (!typeMap[type]) { // dont know the type
+                return data;
+            }
+            let instance = new typeMap[type]();
+            let attributeTypes = typeMap[type].getAttributeTypeMap();
+            for (let index in attributeTypes) {
+                let attributeType = attributeTypes[index];
+                instance[attributeType.name] = ObjectSerializer.deserialize(data[attributeType.baseName], attributeType.type);
+            }
+            return instance;
+        }
+    }
+}
 
 export class AchievementDefinitionResource {
     /**
@@ -67,6 +181,69 @@ export class AchievementDefinitionResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "hidden",
+            "baseName": "hidden",
+            "type": "boolean"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "requiredProgress",
+            "baseName": "required_progress",
+            "type": "number"
+        },
+        {
+            "name": "ruleId",
+            "baseName": "rule_id",
+            "type": "string"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "triggerEventName",
+            "baseName": "trigger_event_name",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return AchievementDefinitionResource.attributeTypeMap;
+    }
 }
 
 export class ActionResource {
@@ -90,6 +267,39 @@ export class ActionResource {
     * The variables required for the action
     */
     'variables': Array<ActionVariableResource>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "category",
+            "baseName": "category",
+            "type": "ActionResource.CategoryEnum"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "variables",
+            "baseName": "variables",
+            "type": "Array<ActionVariableResource>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ActionResource.attributeTypeMap;
+    }
 }
 
 export namespace ActionResource {
@@ -131,6 +341,29 @@ export class ActionVariableResource {
     * The type of the variable (see variable type endpoint for list)
     */
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "optional",
+            "baseName": "optional",
+            "type": "boolean"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ActionVariableResource.attributeTypeMap;
+    }
 }
 
 export class ActivityEntitlementResource {
@@ -154,6 +387,39 @@ export class ActivityEntitlementResource {
     * The sku id, if available. If multiple are available, then first one is returned
     */
     'sku': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "itemId",
+            "baseName": "item_id",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "price",
+            "baseName": "price",
+            "type": "number"
+        },
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ActivityEntitlementResource.attributeTypeMap;
+    }
 }
 
 export class ActivityOccurrenceCreationFailure {
@@ -161,6 +427,19 @@ export class ActivityOccurrenceCreationFailure {
     * The details of each user's entry, or just the current user's if not run with ACTIVITIES_ADMIN permission
     */
     'userResults': Array<ActivityOccurrenceJoinResult>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "userResults",
+            "baseName": "user_results",
+            "type": "Array<ActivityOccurrenceJoinResult>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ActivityOccurrenceCreationFailure.attributeTypeMap;
+    }
 }
 
 export class ActivityOccurrenceJoinResult {
@@ -180,6 +459,34 @@ export class ActivityOccurrenceJoinResult {
     * The user's id
     */
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "entitlement",
+            "baseName": "entitlement",
+            "type": "ActivityEntitlementResource"
+        },
+        {
+            "name": "errorCode",
+            "baseName": "error_code",
+            "type": "number"
+        },
+        {
+            "name": "message",
+            "baseName": "message",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ActivityOccurrenceJoinResult.attributeTypeMap;
+    }
 }
 
 /**
@@ -238,6 +545,79 @@ export class ActivityOccurrenceResource {
     * The list of users participating in this occurrence. Can only be set directly with ACTIVITIES_ADMIN permission
     */
     'users': Array<ActivityUserResource>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "activityId",
+            "baseName": "activity_id",
+            "type": "number"
+        },
+        {
+            "name": "challengeActivityId",
+            "baseName": "challenge_activity_id",
+            "type": "number"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "entitlement",
+            "baseName": "entitlement",
+            "type": "ActivityEntitlementResource"
+        },
+        {
+            "name": "eventId",
+            "baseName": "event_id",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "rewardStatus",
+            "baseName": "reward_status",
+            "type": "ActivityOccurrenceResource.RewardStatusEnum"
+        },
+        {
+            "name": "settings",
+            "baseName": "settings",
+            "type": "Array<SelectedSettingResource>"
+        },
+        {
+            "name": "simulated",
+            "baseName": "simulated",
+            "type": "boolean"
+        },
+        {
+            "name": "startDate",
+            "baseName": "start_date",
+            "type": "number"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "ActivityOccurrenceResource.StatusEnum"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "users",
+            "baseName": "users",
+            "type": "Array<ActivityUserResource>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ActivityOccurrenceResource.attributeTypeMap;
+    }
 }
 
 export namespace ActivityOccurrenceResource {
@@ -260,6 +640,19 @@ export class ActivityOccurrenceResults {
     * The game results for each user. Include all users that played (paid to get in) even if they were eliminated without a result. A null metric is allowed
     */
     'users': Array<UserActivityResults>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "users",
+            "baseName": "users",
+            "type": "Array<UserActivityResults>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ActivityOccurrenceResults.attributeTypeMap;
+    }
 }
 
 export class ActivityOccurrenceResultsResource {
@@ -267,6 +660,19 @@ export class ActivityOccurrenceResultsResource {
     * The game results for each user. Include all users that played (paid to get in) even if they were eliminated without a result. A null metric is allowed
     */
     'users': Array<UserActivityResultsResource>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "users",
+            "baseName": "users",
+            "type": "Array<UserActivityResultsResource>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ActivityOccurrenceResultsResource.attributeTypeMap;
+    }
 }
 
 /**
@@ -333,6 +739,89 @@ export class ActivityResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "entitlements",
+            "baseName": "entitlements",
+            "type": "Array<ActivityEntitlementResource>"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "launch",
+            "baseName": "launch",
+            "type": "string"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "long_description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "rewardSet",
+            "baseName": "reward_set",
+            "type": "RewardSetResource"
+        },
+        {
+            "name": "settings",
+            "baseName": "settings",
+            "type": "Array<AvailableSettingResource>"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "short_description",
+            "type": "string"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "boolean"
+        },
+        {
+            "name": "templateId",
+            "baseName": "template_id",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "uniqueKey",
+            "baseName": "unique_key",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ActivityResource.attributeTypeMap;
+    }
 }
 
 export class ActivityUserResource {
@@ -364,6 +853,49 @@ export class ActivityUserResource {
     * The user
     */
     'user': SimpleUserResource;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "host",
+            "baseName": "host",
+            "type": "boolean"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "joinedDate",
+            "baseName": "joined_date",
+            "type": "number"
+        },
+        {
+            "name": "leftDate",
+            "baseName": "left_date",
+            "type": "number"
+        },
+        {
+            "name": "metric",
+            "baseName": "metric",
+            "type": "MetricResource"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "ActivityUserResource.StatusEnum"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ActivityUserResource.attributeTypeMap;
+    }
 }
 
 export namespace ActivityUserResource {
@@ -400,11 +932,67 @@ export class AddressResource {
     * The code for the state. Required if the country has states/provinces/equivalent
     */
     'stateCode': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "address1",
+            "baseName": "address1",
+            "type": "string"
+        },
+        {
+            "name": "address2",
+            "baseName": "address2",
+            "type": "string"
+        },
+        {
+            "name": "city",
+            "baseName": "city",
+            "type": "string"
+        },
+        {
+            "name": "countryCode",
+            "baseName": "country_code",
+            "type": "string"
+        },
+        {
+            "name": "postalCode",
+            "baseName": "postal_code",
+            "type": "string"
+        },
+        {
+            "name": "stateCode",
+            "baseName": "state_code",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return AddressResource.attributeTypeMap;
+    }
 }
 
 export class AggregateCountResource {
     'count': number;
     'date': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "count",
+            "baseName": "count",
+            "type": "number"
+        },
+        {
+            "name": "date",
+            "baseName": "date",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return AggregateCountResource.attributeTypeMap;
+    }
 }
 
 export class AggregateInvoiceReportResource {
@@ -412,6 +1000,34 @@ export class AggregateInvoiceReportResource {
     'date': string;
     'revenue': number;
     'userCount': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "count",
+            "baseName": "count",
+            "type": "number"
+        },
+        {
+            "name": "date",
+            "baseName": "date",
+            "type": "string"
+        },
+        {
+            "name": "revenue",
+            "baseName": "revenue",
+            "type": "number"
+        },
+        {
+            "name": "userCount",
+            "baseName": "user_count",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return AggregateInvoiceReportResource.attributeTypeMap;
+    }
 }
 
 export class AmazonS3Activity {
@@ -419,6 +1035,10 @@ export class AmazonS3Activity {
     * S3 action (i.e., 'PUT') associated with the activity
     */
     'action': string;
+    /**
+    * URL for accessing the resource via CDN if configured (will default to the main url if not)
+    */
+    'cdnUrl': string;
     /**
     * Date the resource was created in S3
     */
@@ -436,13 +1056,61 @@ export class AmazonS3Activity {
     */
     'objectKey': string;
     /**
-    * URL for accessing the S3 resource
+    * URL for posting and later accessing the S3 resource
     */
     'url': string;
     /**
     * The id of the user that created this S3 activity
     */
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "action",
+            "baseName": "action",
+            "type": "string"
+        },
+        {
+            "name": "cdnUrl",
+            "baseName": "cdn_url",
+            "type": "string"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "filename",
+            "baseName": "filename",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "objectKey",
+            "baseName": "object_key",
+            "type": "string"
+        },
+        {
+            "name": "url",
+            "baseName": "url",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return AmazonS3Activity.attributeTypeMap;
+    }
 }
 
 export class AnswerResource {
@@ -458,6 +1126,29 @@ export class AnswerResource {
     * The unique ID for that resource
     */
     'id': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "answer",
+            "baseName": "answer",
+            "type": "Property"
+        },
+        {
+            "name": "correct",
+            "baseName": "correct",
+            "type": "boolean"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return AnswerResource.attributeTypeMap;
+    }
 }
 
 export class ApplyPaymentRequest {
@@ -473,6 +1164,29 @@ export class ApplyPaymentRequest {
     * The id of the specific transaction from Apple's services.
     */
     'transactionId': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "receipt",
+            "baseName": "receipt",
+            "type": "string"
+        },
+        {
+            "name": "transactionId",
+            "baseName": "transaction_id",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ApplyPaymentRequest.attributeTypeMap;
+    }
 }
 
 export class ArticleResource {
@@ -516,6 +1230,64 @@ export class ArticleResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "active",
+            "baseName": "active",
+            "type": "boolean"
+        },
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "body",
+            "baseName": "body",
+            "type": "string"
+        },
+        {
+            "name": "category",
+            "baseName": "category",
+            "type": "NestedCategory"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "title",
+            "baseName": "title",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ArticleResource.attributeTypeMap;
+    }
 }
 
 export class ArtistResource {
@@ -571,6 +1343,79 @@ export class ArtistResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "born",
+            "baseName": "born",
+            "type": "string"
+        },
+        {
+            "name": "contributionCount",
+            "baseName": "contribution_count",
+            "type": "number"
+        },
+        {
+            "name": "contributions",
+            "baseName": "contributions",
+            "type": "Array<ContributionResource>"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "died",
+            "baseName": "died",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "long_description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "priority",
+            "baseName": "priority",
+            "type": "number"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "short_description",
+            "type": "string"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ArtistResource.attributeTypeMap;
+    }
 }
 
 /**
@@ -601,6 +1446,44 @@ export class AvailableSettingResource {
     * The set of options available for this setting, Ex: easy, medium, hard
     */
     'options': Array<SettingOption>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "advancedOption",
+            "baseName": "advanced_option",
+            "type": "boolean"
+        },
+        {
+            "name": "defaultValue",
+            "baseName": "default_value",
+            "type": "string"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "key",
+            "baseName": "key",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "options",
+            "baseName": "options",
+            "type": "Array<SettingOption>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return AvailableSettingResource.attributeTypeMap;
+    }
 }
 
 export class BareActivityResource {
@@ -644,6 +1527,64 @@ export class BareActivityResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "launch",
+            "baseName": "launch",
+            "type": "string"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "long_description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "short_description",
+            "type": "string"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "boolean"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "uniqueKey",
+            "baseName": "unique_key",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BareActivityResource.attributeTypeMap;
+    }
 }
 
 export class BareChallengeActivityResource {
@@ -659,6 +1600,29 @@ export class BareChallengeActivityResource {
     * The unique ID for this resource
     */
     'id': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "activityId",
+            "baseName": "activity_id",
+            "type": "number"
+        },
+        {
+            "name": "challengeId",
+            "baseName": "challenge_id",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BareChallengeActivityResource.attributeTypeMap;
+    }
 }
 
 export class Batch {
@@ -670,6 +1634,24 @@ export class Batch {
     * The amount of time before a request token is returned instead of the batch result.  Default is 60.  Range is 0-300
     */
     'timeout': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "batch",
+            "baseName": "batch",
+            "type": "Array<BatchRequest>"
+        },
+        {
+            "name": "timeout",
+            "baseName": "timeout",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Batch.attributeTypeMap;
+    }
 }
 
 export class BatchRequest {
@@ -697,6 +1679,44 @@ export class BatchRequest {
     * Full URI of REST call
     */
     'uri': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "body",
+            "baseName": "body",
+            "type": "any"
+        },
+        {
+            "name": "contentType",
+            "baseName": "content_type",
+            "type": "string"
+        },
+        {
+            "name": "method",
+            "baseName": "method",
+            "type": "string"
+        },
+        {
+            "name": "timeout",
+            "baseName": "timeout",
+            "type": "number"
+        },
+        {
+            "name": "token",
+            "baseName": "token",
+            "type": "string"
+        },
+        {
+            "name": "uri",
+            "baseName": "uri",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BatchRequest.attributeTypeMap;
+    }
 }
 
 export class BatchResult {
@@ -716,6 +1736,34 @@ export class BatchResult {
     * The date the batch call finished processing
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "batchReturn",
+            "baseName": "batch_return",
+            "type": "Array<BatchReturn>"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BatchResult.attributeTypeMap;
+    }
 }
 
 export class BatchReturn {
@@ -731,6 +1779,29 @@ export class BatchReturn {
     * Full URI of REST call
     */
     'uri': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "body",
+            "baseName": "body",
+            "type": "any"
+        },
+        {
+            "name": "code",
+            "baseName": "code",
+            "type": "number"
+        },
+        {
+            "name": "uri",
+            "baseName": "uri",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BatchReturn.attributeTypeMap;
+    }
 }
 
 export class Behavior {
@@ -739,6 +1810,24 @@ export class Behavior {
     * Used for polymorphic type recognition and thus must match an expected type with additional properties
     */
     'typeHint': string;
+
+    static discriminator = type_hint;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "typeHint",
+            "baseName": "type_hint",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Behavior.attributeTypeMap;
+    }
 }
 
 export class BehaviorDefinitionResource {
@@ -758,6 +1847,34 @@ export class BehaviorDefinitionResource {
     * The behavior type
     */
     'typeHint': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "prerequisiteBehaviors",
+            "baseName": "prerequisite_behaviors",
+            "type": "Array<Behavior>"
+        },
+        {
+            "name": "properties",
+            "baseName": "properties",
+            "type": "Array<PropertyFieldResource>"
+        },
+        {
+            "name": "typeHint",
+            "baseName": "type_hint",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BehaviorDefinitionResource.attributeTypeMap;
+    }
 }
 
 export class BillingReport {
@@ -765,10 +1882,51 @@ export class BillingReport {
     'id': string;
     'lastKnownFailures': Array<string>;
     'statistics': { [key: string]: number; };
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "created",
+            "baseName": "created",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "lastKnownFailures",
+            "baseName": "last_known_failures",
+            "type": "Array<string>"
+        },
+        {
+            "name": "statistics",
+            "baseName": "statistics",
+            "type": "{ [key: string]: number; }"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BillingReport.attributeTypeMap;
+    }
 }
 
 export class BooleanResource {
     'value': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BooleanResource.attributeTypeMap;
+    }
 }
 
 export class BreCategoryResource {
@@ -784,6 +1942,29 @@ export class BreCategoryResource {
     * A template this BRE category is validated against (private). May be null and no validation of additional_properties will be done
     */
     'template': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BreCategoryResource.attributeTypeMap;
+    }
 }
 
 export class BreEvent {
@@ -795,6 +1976,24 @@ export class BreEvent {
     * The parameters to the event. A Map (assosiative array) with a key for each trigger parameter name and a corrosponding value.
     */
     'params': any;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "eventName",
+            "baseName": "event_name",
+            "type": "string"
+        },
+        {
+            "name": "params",
+            "baseName": "params",
+            "type": "any"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BreEvent.attributeTypeMap;
+    }
 }
 
 export class BreEventLog {
@@ -826,6 +2025,49 @@ export class BreEventLog {
     * The rules of the BRE event log
     */
     'rules': Array<BreRuleLog>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "customer",
+            "baseName": "customer",
+            "type": "string"
+        },
+        {
+            "name": "eventId",
+            "baseName": "event_id",
+            "type": "string"
+        },
+        {
+            "name": "eventName",
+            "baseName": "event_name",
+            "type": "string"
+        },
+        {
+            "name": "eventStartDate",
+            "baseName": "event_start_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "parameters",
+            "baseName": "parameters",
+            "type": "any"
+        },
+        {
+            "name": "rules",
+            "baseName": "rules",
+            "type": "Array<BreRuleLog>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BreEventLog.attributeTypeMap;
+    }
 }
 
 export class BreGlobalResource {
@@ -857,6 +2099,49 @@ export class BreGlobalResource {
     * The variable type the global stores. See the See Bre Variables enpoint for list
     */
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "key",
+            "baseName": "key",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "scopes",
+            "baseName": "scopes",
+            "type": "Array<BreGlobalScopeDefinition>"
+        },
+        {
+            "name": "systemGlobal",
+            "baseName": "system_global",
+            "type": "boolean"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BreGlobalResource.attributeTypeMap;
+    }
 }
 
 export class BreGlobalScopeDefinition {
@@ -868,6 +2153,24 @@ export class BreGlobalScopeDefinition {
     * The variable type of this scoping parameter. See Bre Variables endpoint for list
     */
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BreGlobalScopeDefinition.attributeTypeMap;
+    }
 }
 
 export class BreRule {
@@ -919,6 +2222,74 @@ export class BreRule {
     * Whether the rule is a default part of the system. System rules cannot be edited or deleted, but may be disabled
     */
     'systemRule': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "actions",
+            "baseName": "actions",
+            "type": "ActionResource"
+        },
+        {
+            "name": "condition",
+            "baseName": "condition",
+            "type": "PredicateOperation"
+        },
+        {
+            "name": "conditionText",
+            "baseName": "condition_text",
+            "type": "string"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "enabled",
+            "baseName": "enabled",
+            "type": "boolean"
+        },
+        {
+            "name": "endDate",
+            "baseName": "end_date",
+            "type": "number"
+        },
+        {
+            "name": "eventName",
+            "baseName": "event_name",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "number"
+        },
+        {
+            "name": "startDate",
+            "baseName": "start_date",
+            "type": "number"
+        },
+        {
+            "name": "systemRule",
+            "baseName": "system_rule",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BreRule.attributeTypeMap;
+    }
 }
 
 export class BreRuleLog {
@@ -946,6 +2317,44 @@ export class BreRuleLog {
     * The start date of the rule in seconds
     */
     'ruleStartDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "ran",
+            "baseName": "ran",
+            "type": "boolean"
+        },
+        {
+            "name": "reason",
+            "baseName": "reason",
+            "type": "string"
+        },
+        {
+            "name": "ruleEndDate",
+            "baseName": "rule_end_date",
+            "type": "number"
+        },
+        {
+            "name": "ruleId",
+            "baseName": "rule_id",
+            "type": "string"
+        },
+        {
+            "name": "ruleName",
+            "baseName": "rule_name",
+            "type": "string"
+        },
+        {
+            "name": "ruleStartDate",
+            "baseName": "rule_start_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BreRuleLog.attributeTypeMap;
+    }
 }
 
 export class BreTriggerParameterDefinition {
@@ -961,6 +2370,29 @@ export class BreTriggerParameterDefinition {
     * The variable type of this parameter. See Bre Variables endpoint for list
     */
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "optional",
+            "baseName": "optional",
+            "type": "boolean"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BreTriggerParameterDefinition.attributeTypeMap;
+    }
 }
 
 export class BreTriggerResource {
@@ -992,6 +2424,49 @@ export class BreTriggerResource {
     * A human readable name for this trigger
     */
     'triggerName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "category",
+            "baseName": "category",
+            "type": "BreTriggerResource.CategoryEnum"
+        },
+        {
+            "name": "eventName",
+            "baseName": "event_name",
+            "type": "string"
+        },
+        {
+            "name": "parameters",
+            "baseName": "parameters",
+            "type": "Array<BreTriggerParameterDefinition>"
+        },
+        {
+            "name": "systemTrigger",
+            "baseName": "system_trigger",
+            "type": "boolean"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "triggerDescription",
+            "baseName": "trigger_description",
+            "type": "string"
+        },
+        {
+            "name": "triggerName",
+            "baseName": "trigger_name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BreTriggerResource.attributeTypeMap;
+    }
 }
 
 export namespace BreTriggerResource {
@@ -1033,6 +2508,59 @@ export class BroadcastableEvent {
     * The type of the event. Used for polymorphic type recognition and thus must match an expected type
     */
     'type': string;
+
+    static discriminator = type;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "client",
+            "baseName": "client",
+            "type": "string"
+        },
+        {
+            "name": "customer",
+            "baseName": "customer",
+            "type": "string"
+        },
+        {
+            "name": "doNotBroadcast",
+            "baseName": "do_not_broadcast",
+            "type": "boolean"
+        },
+        {
+            "name": "section",
+            "baseName": "section",
+            "type": "string"
+        },
+        {
+            "name": "source",
+            "baseName": "source",
+            "type": "any"
+        },
+        {
+            "name": "specifics",
+            "baseName": "specifics",
+            "type": "string"
+        },
+        {
+            "name": "synchronous",
+            "baseName": "synchronous",
+            "type": "boolean"
+        },
+        {
+            "name": "timestamp",
+            "baseName": "timestamp",
+            "type": "number"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BroadcastableEvent.attributeTypeMap;
+    }
 }
 
 export class BundledSku {
@@ -1048,6 +2576,29 @@ export class BundledSku {
     * The stock keeping unit (SKU) for an item included in the bundle
     */
     'sku': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "priceOverride",
+            "baseName": "price_override",
+            "type": "number"
+        },
+        {
+            "name": "quantity",
+            "baseName": "quantity",
+            "type": "number"
+        },
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return BundledSku.attributeTypeMap;
+    }
 }
 
 export class CampaignResource {
@@ -1107,6 +2658,84 @@ export class CampaignResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "active",
+            "baseName": "active",
+            "type": "boolean"
+        },
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "leaderboardStrategy",
+            "baseName": "leaderboard_strategy",
+            "type": "string"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "long_description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "nextChallenge",
+            "baseName": "next_challenge",
+            "type": "string"
+        },
+        {
+            "name": "nextChallengeDate",
+            "baseName": "next_challenge_date",
+            "type": "number"
+        },
+        {
+            "name": "rewardSet",
+            "baseName": "reward_set",
+            "type": "RewardSetResource"
+        },
+        {
+            "name": "rewardStatus",
+            "baseName": "reward_status",
+            "type": "CampaignResource.RewardStatusEnum"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "short_description",
+            "type": "string"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CampaignResource.attributeTypeMap;
+    }
 }
 
 export namespace CampaignResource {
@@ -1139,6 +2768,119 @@ export class Cart {
     'status': Cart.StatusEnum;
     'subtotal': number;
     'updated': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "availableShippingOptions",
+            "baseName": "available_shipping_options",
+            "type": "Array<CartShippingOption>"
+        },
+        {
+            "name": "countryTax",
+            "baseName": "country_tax",
+            "type": "number"
+        },
+        {
+            "name": "coupons",
+            "baseName": "coupons",
+            "type": "Array<CouponDefinition>"
+        },
+        {
+            "name": "created",
+            "baseName": "created",
+            "type": "number"
+        },
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "discountTotal",
+            "baseName": "discount_total",
+            "type": "number"
+        },
+        {
+            "name": "errorCode",
+            "baseName": "error_code",
+            "type": "number"
+        },
+        {
+            "name": "errorMessage",
+            "baseName": "error_message",
+            "type": "string"
+        },
+        {
+            "name": "grandTotal",
+            "baseName": "grand_total",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "items",
+            "baseName": "items",
+            "type": "Array<CartLineItem>"
+        },
+        {
+            "name": "owner",
+            "baseName": "owner",
+            "type": "number"
+        },
+        {
+            "name": "selectedShippingOptions",
+            "baseName": "selected_shipping_options",
+            "type": "Array<CartShippingOption>"
+        },
+        {
+            "name": "shippable",
+            "baseName": "shippable",
+            "type": "boolean"
+        },
+        {
+            "name": "shippingAddress",
+            "baseName": "shipping_address",
+            "type": "CartShippingAddressRequest"
+        },
+        {
+            "name": "shippingCost",
+            "baseName": "shipping_cost",
+            "type": "number"
+        },
+        {
+            "name": "stateTax",
+            "baseName": "state_tax",
+            "type": "number"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "Cart.StatusEnum"
+        },
+        {
+            "name": "subtotal",
+            "baseName": "subtotal",
+            "type": "number"
+        },
+        {
+            "name": "updated",
+            "baseName": "updated",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Cart.attributeTypeMap;
+    }
 }
 
 export namespace Cart {
@@ -1166,6 +2908,34 @@ export class CartItemRequest {
     * The quantity of the item
     */
     'quantity': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "affiliateKey",
+            "baseName": "affiliate_key",
+            "type": "string"
+        },
+        {
+            "name": "catalogSku",
+            "baseName": "catalog_sku",
+            "type": "string"
+        },
+        {
+            "name": "priceOverride",
+            "baseName": "price_override",
+            "type": "number"
+        },
+        {
+            "name": "quantity",
+            "baseName": "quantity",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CartItemRequest.attributeTypeMap;
+    }
 }
 
 export class CartLineItem {
@@ -1187,6 +2957,104 @@ export class CartLineItem {
     'unitPrice': number;
     'vendorId': number;
     'vendorName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "discount",
+            "baseName": "discount",
+            "type": "Discount"
+        },
+        {
+            "name": "lineTotal",
+            "baseName": "line_total",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "originalLineTotal",
+            "baseName": "original_line_total",
+            "type": "number"
+        },
+        {
+            "name": "originalUnitPrice",
+            "baseName": "original_unit_price",
+            "type": "number"
+        },
+        {
+            "name": "qty",
+            "baseName": "qty",
+            "type": "number"
+        },
+        {
+            "name": "saleName",
+            "baseName": "sale_name",
+            "type": "string"
+        },
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        },
+        {
+            "name": "skuDescription",
+            "baseName": "sku_description",
+            "type": "string"
+        },
+        {
+            "name": "storeItemId",
+            "baseName": "store_item_id",
+            "type": "number"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "thumbUrl",
+            "baseName": "thumb_url",
+            "type": "string"
+        },
+        {
+            "name": "uniqueKey",
+            "baseName": "unique_key",
+            "type": "string"
+        },
+        {
+            "name": "unitPrice",
+            "baseName": "unit_price",
+            "type": "number"
+        },
+        {
+            "name": "vendorId",
+            "baseName": "vendor_id",
+            "type": "number"
+        },
+        {
+            "name": "vendorName",
+            "baseName": "vendor_name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CartLineItem.attributeTypeMap;
+    }
 }
 
 export class CartShippableResponse {
@@ -1198,6 +3066,24 @@ export class CartShippableResponse {
     * Whether the item is shippable
     */
     'shippable': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "cartId",
+            "baseName": "cart_id",
+            "type": "number"
+        },
+        {
+            "name": "shippable",
+            "baseName": "shippable",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CartShippableResponse.attributeTypeMap;
+    }
 }
 
 export class CartShippingAddressRequest {
@@ -1246,6 +3132,74 @@ export class CartShippingAddressRequest {
     * The zipcode of the user
     */
     'zip': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "city",
+            "baseName": "city",
+            "type": "string"
+        },
+        {
+            "name": "countryCodeIso3",
+            "baseName": "country_code_iso3",
+            "type": "string"
+        },
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "string"
+        },
+        {
+            "name": "firstName",
+            "baseName": "first_name",
+            "type": "string"
+        },
+        {
+            "name": "lastName",
+            "baseName": "last_name",
+            "type": "string"
+        },
+        {
+            "name": "namePrefix",
+            "baseName": "name_prefix",
+            "type": "string"
+        },
+        {
+            "name": "orderNotes",
+            "baseName": "order_notes",
+            "type": "string"
+        },
+        {
+            "name": "phoneNumber",
+            "baseName": "phone_number",
+            "type": "string"
+        },
+        {
+            "name": "postalStateCode",
+            "baseName": "postal_state_code",
+            "type": "string"
+        },
+        {
+            "name": "shippingAddressLine1",
+            "baseName": "shipping_address_line1",
+            "type": "string"
+        },
+        {
+            "name": "shippingAddressLine2",
+            "baseName": "shipping_address_line2",
+            "type": "string"
+        },
+        {
+            "name": "zip",
+            "baseName": "zip",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CartShippingAddressRequest.attributeTypeMap;
+    }
 }
 
 export class CartShippingOption {
@@ -1259,6 +3213,64 @@ export class CartShippingOption {
     'taxable': boolean;
     'vendorId': number;
     'vendorName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "originalPrice",
+            "baseName": "original_price",
+            "type": "number"
+        },
+        {
+            "name": "price",
+            "baseName": "price",
+            "type": "number"
+        },
+        {
+            "name": "shippingItemId",
+            "baseName": "shipping_item_id",
+            "type": "number"
+        },
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        },
+        {
+            "name": "taxable",
+            "baseName": "taxable",
+            "type": "boolean"
+        },
+        {
+            "name": "vendorId",
+            "baseName": "vendor_id",
+            "type": "number"
+        },
+        {
+            "name": "vendorName",
+            "baseName": "vendor_name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CartShippingOption.attributeTypeMap;
+    }
 }
 
 export class CartSummary {
@@ -1294,6 +3306,54 @@ export class CartSummary {
     * The subtotal of all items in the cart
     */
     'subtotal': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "grandTotal",
+            "baseName": "grand_total",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "itemsInCart",
+            "baseName": "items_in_cart",
+            "type": "number"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "CartSummary.StatusEnum"
+        },
+        {
+            "name": "subtotal",
+            "baseName": "subtotal",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CartSummary.attributeTypeMap;
+    }
 }
 
 export namespace CartSummary {
@@ -1353,6 +3413,74 @@ export class CatalogSale {
     * The id of the vendor this sale applies to.  Leave null to skip this filter (applies to all vendors)
     */
     'vendor': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "discountType",
+            "baseName": "discount_type",
+            "type": "CatalogSale.DiscountTypeEnum"
+        },
+        {
+            "name": "discountValue",
+            "baseName": "discount_value",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "item",
+            "baseName": "item",
+            "type": "number"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "long_description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "saleEndDate",
+            "baseName": "sale_end_date",
+            "type": "number"
+        },
+        {
+            "name": "saleStartDate",
+            "baseName": "sale_start_date",
+            "type": "number"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "short_description",
+            "type": "string"
+        },
+        {
+            "name": "tag",
+            "baseName": "tag",
+            "type": "string"
+        },
+        {
+            "name": "vendor",
+            "baseName": "vendor",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CatalogSale.attributeTypeMap;
+    }
 }
 
 export namespace CatalogSale {
@@ -1382,6 +3510,39 @@ export class CategoryResource {
     * A category template this category is validated against (private). May be null and no validation of additional_properties will be done
     */
     'template': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "active",
+            "baseName": "active",
+            "type": "boolean"
+        },
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CategoryResource.attributeTypeMap;
+    }
 }
 
 export class ChallengeActivityResource {
@@ -1417,6 +3578,54 @@ export class ChallengeActivityResource {
     * A challenge activity template this challenge activity is validated against (private). May be null and no validation of additional_properties will be done
     */
     'template': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "activityId",
+            "baseName": "activity_id",
+            "type": "number"
+        },
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "challengeId",
+            "baseName": "challenge_id",
+            "type": "number"
+        },
+        {
+            "name": "entitlement",
+            "baseName": "entitlement",
+            "type": "ActivityEntitlementResource"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "rewardSet",
+            "baseName": "reward_set",
+            "type": "RewardSetResource"
+        },
+        {
+            "name": "settings",
+            "baseName": "settings",
+            "type": "Array<SelectedSettingResource>"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ChallengeActivityResource.attributeTypeMap;
+    }
 }
 
 export class ChallengeEventParticipantResource {
@@ -1440,6 +3649,39 @@ export class ChallengeEventParticipantResource {
     * The username of the user
     */
     'username': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "string"
+        },
+        {
+            "name": "fullname",
+            "baseName": "fullname",
+            "type": "string"
+        },
+        {
+            "name": "score",
+            "baseName": "score",
+            "type": "number"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        },
+        {
+            "name": "username",
+            "baseName": "username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ChallengeEventParticipantResource.attributeTypeMap;
+    }
 }
 
 export class ChallengeEventResource {
@@ -1463,6 +3705,39 @@ export class ChallengeEventResource {
     * The start date in seconds
     */
     'startDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "challengeId",
+            "baseName": "challenge_id",
+            "type": "number"
+        },
+        {
+            "name": "endDate",
+            "baseName": "end_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "rewardStatus",
+            "baseName": "reward_status",
+            "type": "ChallengeEventResource.RewardStatusEnum"
+        },
+        {
+            "name": "startDate",
+            "baseName": "start_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ChallengeEventResource.attributeTypeMap;
+    }
 }
 
 export namespace ChallengeEventResource {
@@ -1546,6 +3821,104 @@ export class ChallengeResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "activities",
+            "baseName": "activities",
+            "type": "number"
+        },
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "campaignId",
+            "baseName": "campaign_id",
+            "type": "number"
+        },
+        {
+            "name": "copyOf",
+            "baseName": "copy_of",
+            "type": "number"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "endDate",
+            "baseName": "end_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "leaderboardStrategy",
+            "baseName": "leaderboard_strategy",
+            "type": "string"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "long_description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "nextEventDate",
+            "baseName": "next_event_date",
+            "type": "number"
+        },
+        {
+            "name": "rewardLagMinutes",
+            "baseName": "reward_lag_minutes",
+            "type": "number"
+        },
+        {
+            "name": "rewardSet",
+            "baseName": "reward_set",
+            "type": "RewardSetResource"
+        },
+        {
+            "name": "schedule",
+            "baseName": "schedule",
+            "type": "Schedule"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "short_description",
+            "type": "string"
+        },
+        {
+            "name": "startDate",
+            "baseName": "start_date",
+            "type": "number"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ChallengeResource.attributeTypeMap;
+    }
 }
 
 export class ClientResource {
@@ -1589,12 +3962,88 @@ export class ClientResource {
     * The client-secret field of the oauth request when creating a private client
     */
     'secret': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "accessTokenValiditySeconds",
+            "baseName": "access_token_validity_seconds",
+            "type": "number"
+        },
+        {
+            "name": "clientKey",
+            "baseName": "client_key",
+            "type": "string"
+        },
+        {
+            "name": "grantTypes",
+            "baseName": "grant_types",
+            "type": "Array<string>"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "isPublic",
+            "baseName": "is_public",
+            "type": "boolean"
+        },
+        {
+            "name": "locked",
+            "baseName": "locked",
+            "type": "boolean"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "redirectUris",
+            "baseName": "redirect_uris",
+            "type": "Array<string>"
+        },
+        {
+            "name": "refreshTokenValiditySeconds",
+            "baseName": "refresh_token_validity_seconds",
+            "type": "number"
+        },
+        {
+            "name": "secret",
+            "baseName": "secret",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ClientResource.attributeTypeMap;
+    }
 }
 
 export class CollectionCountry {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return CollectionCountry.attributeTypeMap;
+    }
 }
 
 export class Collectionstring {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return Collectionstring.attributeTypeMap;
+    }
 }
 
 export class CommentResource {
@@ -1630,6 +4079,54 @@ export class CommentResource {
     * The user who created the comment
     */
     'user': SimpleUserResource;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "string"
+        },
+        {
+            "name": "context",
+            "baseName": "context",
+            "type": "string"
+        },
+        {
+            "name": "contextId",
+            "baseName": "context_id",
+            "type": "number"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CommentResource.attributeTypeMap;
+    }
 }
 
 export class CommentSearch {
@@ -1639,6 +4136,44 @@ export class CommentSearch {
     'id': number;
     'ownerId': number;
     'ownerUsername': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "string"
+        },
+        {
+            "name": "context",
+            "baseName": "context",
+            "type": "string"
+        },
+        {
+            "name": "contextId",
+            "baseName": "context_id",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "ownerId",
+            "baseName": "owner_id",
+            "type": "number"
+        },
+        {
+            "name": "ownerUsername",
+            "baseName": "owner_username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CommentSearch.attributeTypeMap;
+    }
 }
 
 export class Config {
@@ -1658,18 +4193,92 @@ export class Config {
     * The value of the config
     */
     'value': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "publicRead",
+            "baseName": "public_read",
+            "type": "boolean"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Config.attributeTypeMap;
+    }
 }
 
 export class ConfigLookupResource {
     'lookupKey': ExpressionResource;
     'type': string;
     'valueType': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "lookupKey",
+            "baseName": "lookup_key",
+            "type": "ExpressionResource"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "valueType",
+            "baseName": "value_type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ConfigLookupResource.attributeTypeMap;
+    }
 }
 
 export class ConstantResource {
     'type': string;
     'value': any;
     'valueType': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "any"
+        },
+        {
+            "name": "valueType",
+            "baseName": "value_type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ConstantResource.attributeTypeMap;
+    }
 }
 
 export class ContributionResource {
@@ -1685,6 +4294,29 @@ export class ContributionResource {
     * The nature of the contribution (role of the artist as in 'producer', 'performer', etc)
     */
     'role': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "artist",
+            "baseName": "artist",
+            "type": "SimpleReferenceResourcelong"
+        },
+        {
+            "name": "media",
+            "baseName": "media",
+            "type": "SimpleReferenceResourcelong"
+        },
+        {
+            "name": "role",
+            "baseName": "role",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ContributionResource.attributeTypeMap;
+    }
 }
 
 export class Country {
@@ -1692,6 +4324,34 @@ export class Country {
     'iso2': string;
     'iso3': string;
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "iso2",
+            "baseName": "iso2",
+            "type": "string"
+        },
+        {
+            "name": "iso3",
+            "baseName": "iso3",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Country.attributeTypeMap;
+    }
 }
 
 export class CountryResource {
@@ -1707,6 +4367,29 @@ export class CountryResource {
     * The name of the country resource
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "iso2",
+            "baseName": "iso2",
+            "type": "string"
+        },
+        {
+            "name": "iso3",
+            "baseName": "iso3",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CountryResource.attributeTypeMap;
+    }
 }
 
 export class CountryTaxResource {
@@ -1726,6 +4409,34 @@ export class CountryTaxResource {
     * Whether the tax applies to shipping costs
     */
     'taxShipping': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "countryIso3",
+            "baseName": "country_iso3",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "rate",
+            "baseName": "rate",
+            "type": "number"
+        },
+        {
+            "name": "taxShipping",
+            "baseName": "tax_shipping",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CountryTaxResource.attributeTypeMap;
+    }
 }
 
 export class CouponDefinition {
@@ -1789,6 +4500,89 @@ export class CouponDefinition {
     * Which vendor this applies for, if coupon_type is coupon_vendor.
     */
     'vendorId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "code",
+            "baseName": "code",
+            "type": "string"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "discountType",
+            "baseName": "discount_type",
+            "type": "CouponDefinition.DiscountTypeEnum"
+        },
+        {
+            "name": "exclusive",
+            "baseName": "exclusive",
+            "type": "boolean"
+        },
+        {
+            "name": "maxDiscount",
+            "baseName": "max_discount",
+            "type": "number"
+        },
+        {
+            "name": "maxQuantity",
+            "baseName": "max_quantity",
+            "type": "number"
+        },
+        {
+            "name": "minCartTotal",
+            "baseName": "min_cart_total",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "selfExclusive",
+            "baseName": "self_exclusive",
+            "type": "boolean"
+        },
+        {
+            "name": "targetItemId",
+            "baseName": "target_item_id",
+            "type": "number"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "CouponDefinition.TypeEnum"
+        },
+        {
+            "name": "uniqueKey",
+            "baseName": "unique_key",
+            "type": "string"
+        },
+        {
+            "name": "validForTags",
+            "baseName": "valid_for_tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        },
+        {
+            "name": "vendorId",
+            "baseName": "vendor_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CouponDefinition.attributeTypeMap;
+    }
 }
 
 export namespace CouponDefinition {
@@ -1817,6 +4611,29 @@ export class CreateBillingAgreementRequest {
     * The ID of the user. Defaults to the logged in user
     */
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "cancelUrl",
+            "baseName": "cancel_url",
+            "type": "string"
+        },
+        {
+            "name": "returnUrl",
+            "baseName": "return_url",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CreateBillingAgreementRequest.attributeTypeMap;
+    }
 }
 
 export class CreatePayPalPaymentRequest {
@@ -1832,6 +4649,29 @@ export class CreatePayPalPaymentRequest {
     * The endpoint URL to which PayPal should forward the user after they accept. This endpoint will receive information needed for the next step
     */
     'returnUrl': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "cancelUrl",
+            "baseName": "cancel_url",
+            "type": "string"
+        },
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "returnUrl",
+            "baseName": "return_url",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CreatePayPalPaymentRequest.attributeTypeMap;
+    }
 }
 
 export class CurrencyResource {
@@ -1867,6 +4707,54 @@ export class CurrencyResource {
     * The unix timestamp in seconds the currency was last updated in the system.
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "active",
+            "baseName": "active",
+            "type": "boolean"
+        },
+        {
+            "name": "code",
+            "baseName": "code",
+            "type": "string"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "factor",
+            "baseName": "factor",
+            "type": "number"
+        },
+        {
+            "name": "icon",
+            "baseName": "icon",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "CurrencyResource.TypeEnum"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CurrencyResource.attributeTypeMap;
+    }
 }
 
 export namespace CurrencyResource {
@@ -1881,17 +4769,91 @@ export class CustomerConfig {
     'io': IOConfig;
     'name': string;
     's3Config': S3Config;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "aliases",
+            "baseName": "aliases",
+            "type": "string"
+        },
+        {
+            "name": "database",
+            "baseName": "database",
+            "type": "DatabaseConfig"
+        },
+        {
+            "name": "io",
+            "baseName": "io",
+            "type": "IOConfig"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "s3Config",
+            "baseName": "s3_config",
+            "type": "S3Config"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CustomerConfig.attributeTypeMap;
+    }
 }
 
 export class DatabaseConfig {
     'mongo': MongoDatabaseConfig;
     'sql': SqlDatabaseConfig;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "mongo",
+            "baseName": "mongo",
+            "type": "MongoDatabaseConfig"
+        },
+        {
+            "name": "sql",
+            "baseName": "sql",
+            "type": "SqlDatabaseConfig"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return DatabaseConfig.attributeTypeMap;
+    }
 }
 
 export class DateOperationResource {
     'args': Array<ExpressionResource>;
     'op': string;
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "args",
+            "baseName": "args",
+            "type": "Array<ExpressionResource>"
+        },
+        {
+            "name": "op",
+            "baseName": "op",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return DateOperationResource.attributeTypeMap;
+    }
 }
 
 export class DeltaResource {
@@ -1919,6 +4881,44 @@ export class DeltaResource {
     * The date this question was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "categoryId",
+            "baseName": "category_id",
+            "type": "string"
+        },
+        {
+            "name": "mediaType",
+            "baseName": "media_type",
+            "type": "string"
+        },
+        {
+            "name": "questionId",
+            "baseName": "question_id",
+            "type": "string"
+        },
+        {
+            "name": "state",
+            "baseName": "state",
+            "type": "DeltaResource.StateEnum"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return DeltaResource.attributeTypeMap;
+    }
 }
 
 export namespace DeltaResource {
@@ -2000,6 +5000,104 @@ export class DeviceResource {
     * The users currently using the device
     */
     'users': Array<SimpleUserResource>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "authorization",
+            "baseName": "authorization",
+            "type": "string"
+        },
+        {
+            "name": "condition",
+            "baseName": "condition",
+            "type": "DeviceResource.ConditionEnum"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "data",
+            "baseName": "data",
+            "type": "{ [key: string]: string; }"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "deviceType",
+            "baseName": "device_type",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "location",
+            "baseName": "location",
+            "type": "string"
+        },
+        {
+            "name": "macAddress",
+            "baseName": "mac_address",
+            "type": "string"
+        },
+        {
+            "name": "make",
+            "baseName": "make",
+            "type": "string"
+        },
+        {
+            "name": "model",
+            "baseName": "model",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "os",
+            "baseName": "os",
+            "type": "string"
+        },
+        {
+            "name": "serial",
+            "baseName": "serial",
+            "type": "string"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "DeviceResource.StatusEnum"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        },
+        {
+            "name": "users",
+            "baseName": "users",
+            "type": "Array<SimpleUserResource>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return DeviceResource.attributeTypeMap;
+    }
 }
 
 export namespace DeviceResource {
@@ -2021,6 +5119,39 @@ export class Discount {
     'sku': string;
     'uniqueKey': string;
     'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        },
+        {
+            "name": "uniqueKey",
+            "baseName": "unique_key",
+            "type": "string"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Discount.attributeTypeMap;
+    }
 }
 
 export class DispositionCount {
@@ -2032,6 +5163,24 @@ export class DispositionCount {
     * The name of the disposition this count is for
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "count",
+            "baseName": "count",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return DispositionCount.attributeTypeMap;
+    }
 }
 
 export class DispositionResource {
@@ -2059,12 +5208,73 @@ export class DispositionResource {
     * The user
     */
     'user': SimpleUserResource;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "context",
+            "baseName": "context",
+            "type": "string"
+        },
+        {
+            "name": "contextId",
+            "baseName": "context_id",
+            "type": "string"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return DispositionResource.attributeTypeMap;
+    }
 }
 
 export class DoubleOperationResource {
     'args': Array<ExpressionResource>;
     'op': string;
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "args",
+            "baseName": "args",
+            "type": "Array<ExpressionResource>"
+        },
+        {
+            "name": "op",
+            "baseName": "op",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return DoubleOperationResource.attributeTypeMap;
+    }
 }
 
 export class EntitlementGrantRequest {
@@ -2072,6 +5282,19 @@ export class EntitlementGrantRequest {
     * The ID of the entitlement item to grant
     */
     'entitlementId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "entitlementId",
+            "baseName": "entitlement_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return EntitlementGrantRequest.attributeTypeMap;
+    }
 }
 
 export class ErrorResource {
@@ -2087,19 +5310,87 @@ export class ErrorResource {
     * The message explaining the error
     */
     'message': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "details",
+            "baseName": "details",
+            "type": "any"
+        },
+        {
+            "name": "field",
+            "baseName": "field",
+            "type": "any"
+        },
+        {
+            "name": "message",
+            "baseName": "message",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ErrorResource.attributeTypeMap;
+    }
 }
 
 export class EventContextResource {
     'eventName': string;
     'parameters': { [key: string]: ExpressionResource; };
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "eventName",
+            "baseName": "event_name",
+            "type": "string"
+        },
+        {
+            "name": "parameters",
+            "baseName": "parameters",
+            "type": "{ [key: string]: ExpressionResource; }"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return EventContextResource.attributeTypeMap;
+    }
 }
 
 export class ExpressionResource {
     'type': string;
+
+    static discriminator = type;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ExpressionResource.attributeTypeMap;
+    }
 }
 
 export class Expressionobject {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return Expressionobject.attributeTypeMap;
+    }
 }
 
 export class FacebookToken {
@@ -2107,6 +5398,146 @@ export class FacebookToken {
     * A valid access token from facebook. See facebook documention for how to obtain one.
     */
     'accessToken': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "accessToken",
+            "baseName": "access_token",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return FacebookToken.attributeTypeMap;
+    }
+}
+
+export class FattMerchantPaymentMethod {
+    'address1': string;
+    'address2': string;
+    'addressCity': string;
+    'addressCountry': string;
+    'addressState': string;
+    'addressZip': string;
+    /**
+    * Last four digits of the credit card
+    */
+    'cardLastFour': string;
+    'createdAt': string;
+    /**
+    * Unique FattMerchant customer ID
+    */
+    'customerId': string;
+    'deletedAt': string;
+    'id': string;
+    /**
+    * Nickname given to the FattMerchant payment method
+    */
+    'nickname': string;
+    'updatedAt': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "address1",
+            "baseName": "address1",
+            "type": "string"
+        },
+        {
+            "name": "address2",
+            "baseName": "address2",
+            "type": "string"
+        },
+        {
+            "name": "addressCity",
+            "baseName": "address_city",
+            "type": "string"
+        },
+        {
+            "name": "addressCountry",
+            "baseName": "address_country",
+            "type": "string"
+        },
+        {
+            "name": "addressState",
+            "baseName": "address_state",
+            "type": "string"
+        },
+        {
+            "name": "addressZip",
+            "baseName": "address_zip",
+            "type": "string"
+        },
+        {
+            "name": "cardLastFour",
+            "baseName": "card_last_four",
+            "type": "string"
+        },
+        {
+            "name": "createdAt",
+            "baseName": "created_at",
+            "type": "string"
+        },
+        {
+            "name": "customerId",
+            "baseName": "customer_id",
+            "type": "string"
+        },
+        {
+            "name": "deletedAt",
+            "baseName": "deleted_at",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "nickname",
+            "baseName": "nickname",
+            "type": "string"
+        },
+        {
+            "name": "updatedAt",
+            "baseName": "updated_at",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return FattMerchantPaymentMethod.attributeTypeMap;
+    }
+}
+
+export class FattMerchantPaymentMethodRequest {
+    /**
+    * The FattMerchant payment method being created/updated
+    */
+    'method': FattMerchantPaymentMethod;
+    /**
+    * ID of the JSAPI user for whom the payment method is being created/updated. If ID is not that of the currently logged in user, FATMMERCHANT_ADMIN privilege is required. If ID is null, will use the currently logged in user's ID.
+    */
+    'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "method",
+            "baseName": "method",
+            "type": "FattMerchantPaymentMethod"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return FattMerchantPaymentMethodRequest.attributeTypeMap;
+    }
 }
 
 export class FinalizeBillingAgreementRequest {
@@ -2130,6 +5561,39 @@ export class FinalizeBillingAgreementRequest {
     * The ID of the user. Defaults to the logged in user
     */
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "newDefault",
+            "baseName": "new_default",
+            "type": "boolean"
+        },
+        {
+            "name": "payerId",
+            "baseName": "payer_id",
+            "type": "string"
+        },
+        {
+            "name": "token",
+            "baseName": "token",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return FinalizeBillingAgreementRequest.attributeTypeMap;
+    }
 }
 
 export class FinalizePayPalPaymentRequest {
@@ -2145,6 +5609,29 @@ export class FinalizePayPalPaymentRequest {
     * The token that PayPal returned with the user in the return URL
     */
     'token': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "payerId",
+            "baseName": "payer_id",
+            "type": "string"
+        },
+        {
+            "name": "token",
+            "baseName": "token",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return FinalizePayPalPaymentRequest.attributeTypeMap;
+    }
 }
 
 export class FlagReportResource {
@@ -2180,6 +5667,54 @@ export class FlagReportResource {
     * The date/time this resource was last updated in seconds since epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "context",
+            "baseName": "context",
+            "type": "string"
+        },
+        {
+            "name": "contextId",
+            "baseName": "context_id",
+            "type": "string"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "reason",
+            "baseName": "reason",
+            "type": "string"
+        },
+        {
+            "name": "resolution",
+            "baseName": "resolution",
+            "type": "FlagReportResource.ResolutionEnum"
+        },
+        {
+            "name": "resolved",
+            "baseName": "resolved",
+            "type": "number"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return FlagReportResource.attributeTypeMap;
+    }
 }
 
 export namespace FlagReportResource {
@@ -2217,6 +5752,49 @@ export class FlagResource {
     * The basic user resource
     */
     'user': SimpleUserResource;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "context",
+            "baseName": "context",
+            "type": "string"
+        },
+        {
+            "name": "contextId",
+            "baseName": "context_id",
+            "type": "string"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "reason",
+            "baseName": "reason",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return FlagResource.attributeTypeMap;
+    }
 }
 
 export class ForwardLog {
@@ -2253,6 +5831,59 @@ export class ForwardLog {
     * The endpoint url of the forward log entry
     */
     'url': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "endDate",
+            "baseName": "end_date",
+            "type": "number"
+        },
+        {
+            "name": "errorMsg",
+            "baseName": "error_msg",
+            "type": "string"
+        },
+        {
+            "name": "httpStatusCode",
+            "baseName": "http_status_code",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "payload",
+            "baseName": "payload",
+            "type": "any"
+        },
+        {
+            "name": "response",
+            "baseName": "response",
+            "type": "string"
+        },
+        {
+            "name": "retryCount",
+            "baseName": "retry_count",
+            "type": "number"
+        },
+        {
+            "name": "startDate",
+            "baseName": "start_date",
+            "type": "number"
+        },
+        {
+            "name": "url",
+            "baseName": "url",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ForwardLog.attributeTypeMap;
+    }
 }
 
 export class FulfillmentType {
@@ -2272,18 +5903,92 @@ export class FulfillmentType {
     * The name of the type
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "core",
+            "baseName": "core",
+            "type": "boolean"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return FulfillmentType.attributeTypeMap;
+    }
 }
 
 export class GlobalCheckAndIncrementResource {
     'checkValueResource': ExpressionResource;
     'globalResource': ExpressionResource;
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "checkValueResource",
+            "baseName": "check_value_resource",
+            "type": "ExpressionResource"
+        },
+        {
+            "name": "globalResource",
+            "baseName": "global_resource",
+            "type": "ExpressionResource"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GlobalCheckAndIncrementResource.attributeTypeMap;
+    }
 }
 
 export class GlobalResource {
     'globalDefId': string;
     'scopes': { [key: string]: ExpressionResource; };
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "globalDefId",
+            "baseName": "global_def_id",
+            "type": "string"
+        },
+        {
+            "name": "scopes",
+            "baseName": "scopes",
+            "type": "{ [key: string]: ExpressionResource; }"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GlobalResource.attributeTypeMap;
+    }
 }
 
 export class GooglePaymentRequest {
@@ -2295,6 +6000,24 @@ export class GooglePaymentRequest {
     * The signature from Google to verify the payload
     */
     'signature': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "jsonPayload",
+            "baseName": "json_payload",
+            "type": "string"
+        },
+        {
+            "name": "signature",
+            "baseName": "signature",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GooglePaymentRequest.attributeTypeMap;
+    }
 }
 
 export class GoogleToken {
@@ -2302,6 +6025,19 @@ export class GoogleToken {
     * A valid authorization code from google. See google documention for how to obtain one.
     */
     'authorizationCode': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "authorizationCode",
+            "baseName": "authorization_code",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GoogleToken.attributeTypeMap;
+    }
 }
 
 export class GrantTypeResource {
@@ -2313,6 +6049,24 @@ export class GrantTypeResource {
     * The name of the grant type
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GrantTypeResource.attributeTypeMap;
+    }
 }
 
 export class GroupMemberResource {
@@ -2336,6 +6090,39 @@ export class GroupMemberResource {
     * The username of the user
     */
     'username': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "avatarUrl",
+            "baseName": "avatar_url",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "display_name",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "GroupMemberResource.StatusEnum"
+        },
+        {
+            "name": "username",
+            "baseName": "username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GroupMemberResource.attributeTypeMap;
+    }
 }
 
 export namespace GroupMemberResource {
@@ -2385,6 +6172,64 @@ export class GroupResource {
     * Unique name used in url and references. Uppercase, lowercase, numbers and hyphens only. Max 50 characters. Cannot be altered once created
     */
     'uniqueName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "memberCount",
+            "baseName": "member_count",
+            "type": "number"
+        },
+        {
+            "name": "messageOfTheDay",
+            "baseName": "message_of_the_day",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "parent",
+            "baseName": "parent",
+            "type": "string"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "GroupResource.StatusEnum"
+        },
+        {
+            "name": "subMemberCount",
+            "baseName": "sub_member_count",
+            "type": "number"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "uniqueName",
+            "baseName": "unique_name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GroupResource.attributeTypeMap;
+    }
 }
 
 export namespace GroupResource {
@@ -2398,6 +6243,34 @@ export class IOConfig {
     'enabled': boolean;
     'environment': string;
     'product': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "customer",
+            "baseName": "customer",
+            "type": "string"
+        },
+        {
+            "name": "enabled",
+            "baseName": "enabled",
+            "type": "boolean"
+        },
+        {
+            "name": "environment",
+            "baseName": "environment",
+            "type": "string"
+        },
+        {
+            "name": "product",
+            "baseName": "product",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return IOConfig.attributeTypeMap;
+    }
 }
 
 export class ImportJobOutputResource {
@@ -2409,6 +6282,24 @@ export class ImportJobOutputResource {
     * The line number of the import job
     */
     'lineNumber': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "lineNumber",
+            "baseName": "line_number",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ImportJobOutputResource.attributeTypeMap;
+    }
 }
 
 export class ImportJobResource {
@@ -2452,6 +6343,64 @@ export class ImportJobResource {
     * The vendor who supplied this set of questions
     */
     'vendor': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "categoryId",
+            "baseName": "category_id",
+            "type": "string"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "output",
+            "baseName": "output",
+            "type": "Array<ImportJobOutputResource>"
+        },
+        {
+            "name": "recordCount",
+            "baseName": "record_count",
+            "type": "number"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "ImportJobResource.StatusEnum"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "url",
+            "baseName": "url",
+            "type": "string"
+        },
+        {
+            "name": "vendor",
+            "baseName": "vendor",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ImportJobResource.attributeTypeMap;
+    }
 }
 
 export namespace ImportJobResource {
@@ -2466,10 +6415,50 @@ export namespace ImportJobResource {
         FAILED = <any> 'FAILED'
     }
 }
+export class IntWrapper {
+    'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return IntWrapper.attributeTypeMap;
+    }
+}
+
 export class IntegerOperationResource {
     'args': Array<ExpressionResource>;
     'op': string;
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "args",
+            "baseName": "args",
+            "type": "Array<ExpressionResource>"
+        },
+        {
+            "name": "op",
+            "baseName": "op",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return IntegerOperationResource.attributeTypeMap;
+    }
 }
 
 export class InventorySubscriptionResource {
@@ -2533,6 +6522,89 @@ export class InventorySubscriptionResource {
     * The user
     */
     'user': SimpleUserResource;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "billDate",
+            "baseName": "bill_date",
+            "type": "number"
+        },
+        {
+            "name": "credit",
+            "baseName": "credit",
+            "type": "number"
+        },
+        {
+            "name": "creditLog",
+            "baseName": "credit_log",
+            "type": "Array<SubscriptionCreditResource>"
+        },
+        {
+            "name": "graceEnd",
+            "baseName": "grace_end",
+            "type": "number"
+        },
+        {
+            "name": "inventoryId",
+            "baseName": "inventory_id",
+            "type": "number"
+        },
+        {
+            "name": "inventoryStatus",
+            "baseName": "inventory_status",
+            "type": "InventorySubscriptionResource.InventoryStatusEnum"
+        },
+        {
+            "name": "itemId",
+            "baseName": "item_id",
+            "type": "number"
+        },
+        {
+            "name": "paymentMethod",
+            "baseName": "payment_method",
+            "type": "PaymentMethodResource"
+        },
+        {
+            "name": "priceOverride",
+            "baseName": "price_override",
+            "type": "number"
+        },
+        {
+            "name": "priceOverrideReason",
+            "baseName": "price_override_reason",
+            "type": "string"
+        },
+        {
+            "name": "recurringPrice",
+            "baseName": "recurring_price",
+            "type": "number"
+        },
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        },
+        {
+            "name": "startDate",
+            "baseName": "start_date",
+            "type": "number"
+        },
+        {
+            "name": "subscriptionStatus",
+            "baseName": "subscription_status",
+            "type": "number"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return InventorySubscriptionResource.attributeTypeMap;
+    }
 }
 
 export namespace InventorySubscriptionResource {
@@ -2547,6 +6619,19 @@ export class InvoiceCreateRequest {
     * The guid of a cart to create a new invoice for
     */
     'cartGuid': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "cartGuid",
+            "baseName": "cart_guid",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return InvoiceCreateRequest.attributeTypeMap;
+    }
 }
 
 export class InvoiceItemResource {
@@ -2566,6 +6651,94 @@ export class InvoiceItemResource {
     'totalPrice': number;
     'typeHint': string;
     'unitPrice': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "bundleSku",
+            "baseName": "bundle_sku",
+            "type": "string"
+        },
+        {
+            "name": "currentFulfillmentStatus",
+            "baseName": "current_fulfillment_status",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "itemId",
+            "baseName": "item_id",
+            "type": "number"
+        },
+        {
+            "name": "itemName",
+            "baseName": "item_name",
+            "type": "string"
+        },
+        {
+            "name": "originalTotalPrice",
+            "baseName": "original_total_price",
+            "type": "number"
+        },
+        {
+            "name": "originalUnitPrice",
+            "baseName": "original_unit_price",
+            "type": "number"
+        },
+        {
+            "name": "qty",
+            "baseName": "qty",
+            "type": "number"
+        },
+        {
+            "name": "saleName",
+            "baseName": "sale_name",
+            "type": "string"
+        },
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        },
+        {
+            "name": "skuDescription",
+            "baseName": "sku_description",
+            "type": "string"
+        },
+        {
+            "name": "systemPrice",
+            "baseName": "system_price",
+            "type": "number"
+        },
+        {
+            "name": "totalPrice",
+            "baseName": "total_price",
+            "type": "number"
+        },
+        {
+            "name": "typeHint",
+            "baseName": "type_hint",
+            "type": "string"
+        },
+        {
+            "name": "unitPrice",
+            "baseName": "unit_price",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return InvoiceItemResource.attributeTypeMap;
+    }
 }
 
 export class InvoiceLogEntry {
@@ -2585,6 +6758,34 @@ export class InvoiceLogEntry {
     * The type of event
     */
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "date",
+            "baseName": "date",
+            "type": "number"
+        },
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "message",
+            "baseName": "message",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return InvoiceLogEntry.attributeTypeMap;
+    }
 }
 
 export class InvoicePaymentStatusRequest {
@@ -2596,6 +6797,24 @@ export class InvoicePaymentStatusRequest {
     * The new status for the invoice. Additional options may be available based on configuration.  Allowable values: 'new', 'paid', 'hold', 'canceled', 'payment failed', 'partial refund', 'refund'
     */
     'status': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "paymentMethodId",
+            "baseName": "payment_method_id",
+            "type": "number"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return InvoicePaymentStatusRequest.attributeTypeMap;
+    }
 }
 
 export class InvoiceResource {
@@ -2763,6 +6982,219 @@ export class InvoiceResource {
     * The name of the invoice
     */
     'vendorName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "billingAddress1",
+            "baseName": "billing_address1",
+            "type": "string"
+        },
+        {
+            "name": "billingAddress2",
+            "baseName": "billing_address2",
+            "type": "string"
+        },
+        {
+            "name": "billingCityName",
+            "baseName": "billing_city_name",
+            "type": "string"
+        },
+        {
+            "name": "billingCountryName",
+            "baseName": "billing_country_name",
+            "type": "string"
+        },
+        {
+            "name": "billingFullName",
+            "baseName": "billing_full_name",
+            "type": "string"
+        },
+        {
+            "name": "billingPostalCode",
+            "baseName": "billing_postal_code",
+            "type": "string"
+        },
+        {
+            "name": "billingStateName",
+            "baseName": "billing_state_name",
+            "type": "string"
+        },
+        {
+            "name": "cartId",
+            "baseName": "cart_id",
+            "type": "string"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "currency",
+            "baseName": "currency",
+            "type": "string"
+        },
+        {
+            "name": "currentFulfillmentStatus",
+            "baseName": "current_fulfillment_status",
+            "type": "string"
+        },
+        {
+            "name": "currentPaymentStatus",
+            "baseName": "current_payment_status",
+            "type": "string"
+        },
+        {
+            "name": "discount",
+            "baseName": "discount",
+            "type": "number"
+        },
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "string"
+        },
+        {
+            "name": "externalRef",
+            "baseName": "external_ref",
+            "type": "string"
+        },
+        {
+            "name": "fedTax",
+            "baseName": "fed_tax",
+            "type": "number"
+        },
+        {
+            "name": "grandTotal",
+            "baseName": "grand_total",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "invoiceNumber",
+            "baseName": "invoice_number",
+            "type": "string"
+        },
+        {
+            "name": "items",
+            "baseName": "items",
+            "type": "Array<InvoiceItemResource>"
+        },
+        {
+            "name": "namePrefix",
+            "baseName": "name_prefix",
+            "type": "string"
+        },
+        {
+            "name": "orderNotes",
+            "baseName": "order_notes",
+            "type": "string"
+        },
+        {
+            "name": "parentInvoiceId",
+            "baseName": "parent_invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "paymentMethodId",
+            "baseName": "payment_method_id",
+            "type": "number"
+        },
+        {
+            "name": "phone",
+            "baseName": "phone",
+            "type": "string"
+        },
+        {
+            "name": "phoneNumber",
+            "baseName": "phone_number",
+            "type": "string"
+        },
+        {
+            "name": "shipping",
+            "baseName": "shipping",
+            "type": "number"
+        },
+        {
+            "name": "shippingAddress1",
+            "baseName": "shipping_address1",
+            "type": "string"
+        },
+        {
+            "name": "shippingAddress2",
+            "baseName": "shipping_address2",
+            "type": "string"
+        },
+        {
+            "name": "shippingCityName",
+            "baseName": "shipping_city_name",
+            "type": "string"
+        },
+        {
+            "name": "shippingCountryName",
+            "baseName": "shipping_country_name",
+            "type": "string"
+        },
+        {
+            "name": "shippingFullName",
+            "baseName": "shipping_full_name",
+            "type": "string"
+        },
+        {
+            "name": "shippingPostalCode",
+            "baseName": "shipping_postal_code",
+            "type": "string"
+        },
+        {
+            "name": "shippingStateName",
+            "baseName": "shipping_state_name",
+            "type": "string"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "number"
+        },
+        {
+            "name": "stateTax",
+            "baseName": "state_tax",
+            "type": "number"
+        },
+        {
+            "name": "subtotal",
+            "baseName": "subtotal",
+            "type": "number"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        },
+        {
+            "name": "vendorId",
+            "baseName": "vendor_id",
+            "type": "number"
+        },
+        {
+            "name": "vendorName",
+            "baseName": "vendor_name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return InvoiceResource.attributeTypeMap;
+    }
 }
 
 export class Item {
@@ -2822,6 +7254,84 @@ export class Item {
     * The date the item was last updated, unix timestamp in seconds
     */
     'updatedDate': number;
+
+    static discriminator = type_hint;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "behaviors",
+            "baseName": "behaviors",
+            "type": "Array<Behavior>"
+        },
+        {
+            "name": "category",
+            "baseName": "category",
+            "type": "string"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "long_description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "short_description",
+            "type": "string"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "number"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "typeHint",
+            "baseName": "type_hint",
+            "type": "string"
+        },
+        {
+            "name": "uniqueKey",
+            "baseName": "unique_key",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Item.attributeTypeMap;
+    }
 }
 
 export class ItemBehaviorDefinitionResource {
@@ -2837,6 +7347,29 @@ export class ItemBehaviorDefinitionResource {
     * Whether the behavior can be removed
     */
     'required': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "behavior",
+            "baseName": "behavior",
+            "type": "Behavior"
+        },
+        {
+            "name": "modifiable",
+            "baseName": "modifiable",
+            "type": "boolean"
+        },
+        {
+            "name": "required",
+            "baseName": "required",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ItemBehaviorDefinitionResource.attributeTypeMap;
+    }
 }
 
 export class ItemTemplateResource {
@@ -2864,11 +7397,67 @@ export class ItemTemplateResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "behaviors",
+            "baseName": "behaviors",
+            "type": "Array<ItemBehaviorDefinitionResource>"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "properties",
+            "baseName": "properties",
+            "type": "Array<PropertyDefinitionResource>"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ItemTemplateResource.attributeTypeMap;
+    }
 }
 
 export class KeyValuePairstringstring {
     'key': string;
     'value': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "key",
+            "baseName": "key",
+            "type": "string"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return KeyValuePairstringstring.attributeTypeMap;
+    }
 }
 
 export class LeaderboardEntryResource {
@@ -2888,6 +7477,34 @@ export class LeaderboardEntryResource {
     * The player for this entry
     */
     'user': SimpleUserResource;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "rank",
+            "baseName": "rank",
+            "type": "number"
+        },
+        {
+            "name": "score",
+            "baseName": "score",
+            "type": "number"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return LeaderboardEntryResource.attributeTypeMap;
+    }
 }
 
 export class LeaderboardResource {
@@ -2903,6 +7520,29 @@ export class LeaderboardResource {
     * The name of the strategy that defines how entries are stored and compared
     */
     'strategy': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "entries",
+            "baseName": "entries",
+            "type": "Array<LeaderboardEntryResource>"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "strategy",
+            "baseName": "strategy",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return LeaderboardResource.attributeTypeMap;
+    }
 }
 
 export class LevelingResource {
@@ -2930,6 +7570,44 @@ export class LevelingResource {
     * The date the leveling schema was updated
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "tiers",
+            "baseName": "tiers",
+            "type": "Array<TierResource>"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return LevelingResource.attributeTypeMap;
+    }
 }
 
 export class LimitedGettableGroup {
@@ -2945,21 +7623,99 @@ export class LimitedGettableGroup {
     * The max number of items that can be purchased
     */
     'ownedLimit': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "activeOnly",
+            "baseName": "active_only",
+            "type": "boolean"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "ownedLimit",
+            "baseName": "owned_limit",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return LimitedGettableGroup.attributeTypeMap;
+    }
 }
 
 export class Localizer {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return Localizer.attributeTypeMap;
+    }
 }
 
 export class LocationLogResource {
     'country': string;
     'ip': string;
     'time': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "country",
+            "baseName": "country",
+            "type": "string"
+        },
+        {
+            "name": "ip",
+            "baseName": "ip",
+            "type": "string"
+        },
+        {
+            "name": "time",
+            "baseName": "time",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return LocationLogResource.attributeTypeMap;
+    }
 }
 
 export class LookupResource {
     'lookupKey': ExpressionResource;
     'type': string;
     'valueType': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "lookupKey",
+            "baseName": "lookup_key",
+            "type": "ExpressionResource"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "valueType",
+            "baseName": "value_type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return LookupResource.attributeTypeMap;
+    }
 }
 
 export class LookupTypeResource {
@@ -2979,6 +7735,34 @@ export class LookupTypeResource {
     * The variable type of the value this expression returns, or null if it's dependent (see description for explanation in this case)
     */
     'valueType': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "keyType",
+            "baseName": "key_type",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "valueType",
+            "baseName": "value_type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return LookupTypeResource.attributeTypeMap;
+    }
 }
 
 export class Maintenance {
@@ -2994,14 +7778,64 @@ export class Maintenance {
     * User displayable message about the maintenance
     */
     'message': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "accessLocked",
+            "baseName": "access_locked",
+            "type": "boolean"
+        },
+        {
+            "name": "details",
+            "baseName": "details",
+            "type": "any"
+        },
+        {
+            "name": "message",
+            "baseName": "message",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Maintenance.attributeTypeMap;
+    }
 }
 
 export class MapResource {
     'map': { [key: string]: ExpressionResource; };
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "map",
+            "baseName": "map",
+            "type": "{ [key: string]: ExpressionResource; }"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return MapResource.attributeTypeMap;
+    }
 }
 
 export class Mapstringobject extends null<String, any> {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(Mapstringobject.attributeTypeMap);
+    }
 }
 
 export class MetricResource {
@@ -3017,6 +7851,29 @@ export class MetricResource {
     * The value/score of the metric
     */
     'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "activityOccurenceId",
+            "baseName": "activity_occurence_id",
+            "type": "number"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return MetricResource.attributeTypeMap;
+    }
 }
 
 export class MongoDatabaseConfig {
@@ -3025,6 +7882,39 @@ export class MongoDatabaseConfig {
     'password': string;
     'servers': string;
     'username': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "dbName",
+            "baseName": "db_name",
+            "type": "string"
+        },
+        {
+            "name": "options",
+            "baseName": "options",
+            "type": "string"
+        },
+        {
+            "name": "password",
+            "baseName": "password",
+            "type": "string"
+        },
+        {
+            "name": "servers",
+            "baseName": "servers",
+            "type": "string"
+        },
+        {
+            "name": "username",
+            "baseName": "username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return MongoDatabaseConfig.attributeTypeMap;
+    }
 }
 
 export class NestedCategory {
@@ -3040,6 +7930,29 @@ export class NestedCategory {
     * The name of the category
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "active",
+            "baseName": "active",
+            "type": "boolean"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return NestedCategory.attributeTypeMap;
+    }
 }
 
 export class NewPasswordRequest {
@@ -3051,6 +7964,24 @@ export class NewPasswordRequest {
     * The secret provided after the password reset
     */
     'secret': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "password",
+            "baseName": "password",
+            "type": "string"
+        },
+        {
+            "name": "secret",
+            "baseName": "secret",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return NewPasswordRequest.attributeTypeMap;
+    }
 }
 
 export class OAuth2Resource {
@@ -3070,6 +8001,34 @@ export class OAuth2Resource {
     * The type of the token issued
     */
     'tokenType': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "accessToken",
+            "baseName": "access_token",
+            "type": "string"
+        },
+        {
+            "name": "expiresIn",
+            "baseName": "expires_in",
+            "type": "string"
+        },
+        {
+            "name": "scope",
+            "baseName": "scope",
+            "type": "string"
+        },
+        {
+            "name": "tokenType",
+            "baseName": "token_type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return OAuth2Resource.attributeTypeMap;
+    }
 }
 
 export class OauthAccessTokenResource {
@@ -3085,9 +8044,41 @@ export class OauthAccessTokenResource {
     * The username of the user associated with the token
     */
     'username': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "clientId",
+            "baseName": "client_id",
+            "type": "string"
+        },
+        {
+            "name": "token",
+            "baseName": "token",
+            "type": "string"
+        },
+        {
+            "name": "username",
+            "baseName": "username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return OauthAccessTokenResource.attributeTypeMap;
+    }
 }
 
 export class Operator {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return Operator.attributeTypeMap;
+    }
 }
 
 export class OptimalPaymentRequest {
@@ -3119,14 +8110,96 @@ export class OptimalPaymentRequest {
     * The url to redirect the user to after successful payment
     */
     'onSuccess': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "string"
+        },
+        {
+            "name": "firstName",
+            "baseName": "first_name",
+            "type": "string"
+        },
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "lastName",
+            "baseName": "last_name",
+            "type": "string"
+        },
+        {
+            "name": "onDecline",
+            "baseName": "on_decline",
+            "type": "string"
+        },
+        {
+            "name": "onError",
+            "baseName": "on_error",
+            "type": "string"
+        },
+        {
+            "name": "onSuccess",
+            "baseName": "on_success",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return OptimalPaymentRequest.attributeTypeMap;
+    }
 }
 
 export class Order {
     'ascending': boolean;
+    'descending': boolean;
     'direction': Order.DirectionEnum;
     'ignoreCase': boolean;
     'nullHandling': Order.NullHandlingEnum;
     'property': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "ascending",
+            "baseName": "ascending",
+            "type": "boolean"
+        },
+        {
+            "name": "descending",
+            "baseName": "descending",
+            "type": "boolean"
+        },
+        {
+            "name": "direction",
+            "baseName": "direction",
+            "type": "Order.DirectionEnum"
+        },
+        {
+            "name": "ignoreCase",
+            "baseName": "ignore_case",
+            "type": "boolean"
+        },
+        {
+            "name": "nullHandling",
+            "baseName": "null_handling",
+            "type": "Order.NullHandlingEnum"
+        },
+        {
+            "name": "property",
+            "baseName": "property",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Order.attributeTypeMap;
+    }
 }
 
 export namespace Order {
@@ -3150,6 +8223,59 @@ export class PageResourceAchievementDefinitionResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<AchievementDefinitionResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceAchievementDefinitionResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceAggregateCountResource {
@@ -3162,6 +8288,59 @@ export class PageResourceAggregateCountResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<AggregateCountResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceAggregateCountResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceAggregateInvoiceReportResource {
@@ -3174,6 +8353,59 @@ export class PageResourceAggregateInvoiceReportResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<AggregateInvoiceReportResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceAggregateInvoiceReportResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceArticleResource {
@@ -3186,6 +8418,59 @@ export class PageResourceArticleResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<ArticleResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceArticleResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceArtistResource {
@@ -3198,6 +8483,59 @@ export class PageResourceArtistResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<ArtistResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceArtistResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceBareActivityResource {
@@ -3210,6 +8548,59 @@ export class PageResourceBareActivityResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<BareActivityResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceBareActivityResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceBareChallengeActivityResource {
@@ -3222,6 +8613,59 @@ export class PageResourceBareChallengeActivityResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<BareChallengeActivityResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceBareChallengeActivityResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceBillingReport {
@@ -3234,6 +8678,59 @@ export class PageResourceBillingReport {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<BillingReport>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceBillingReport.attributeTypeMap;
+    }
 }
 
 export class PageResourceBreCategoryResource {
@@ -3246,6 +8743,59 @@ export class PageResourceBreCategoryResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<BreCategoryResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceBreCategoryResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceBreEventLog {
@@ -3258,6 +8808,59 @@ export class PageResourceBreEventLog {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<BreEventLog>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceBreEventLog.attributeTypeMap;
+    }
 }
 
 export class PageResourceBreGlobalResource {
@@ -3270,6 +8873,59 @@ export class PageResourceBreGlobalResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<BreGlobalResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceBreGlobalResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceBreRule {
@@ -3282,6 +8938,59 @@ export class PageResourceBreRule {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<BreRule>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceBreRule.attributeTypeMap;
+    }
 }
 
 export class PageResourceBreTriggerResource {
@@ -3294,6 +9003,59 @@ export class PageResourceBreTriggerResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<BreTriggerResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceBreTriggerResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceCampaignResource {
@@ -3306,6 +9068,59 @@ export class PageResourceCampaignResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<CampaignResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceCampaignResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceCartSummary {
@@ -3318,6 +9133,59 @@ export class PageResourceCartSummary {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<CartSummary>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceCartSummary.attributeTypeMap;
+    }
 }
 
 export class PageResourceCatalogSale {
@@ -3330,6 +9198,59 @@ export class PageResourceCatalogSale {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<CatalogSale>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceCatalogSale.attributeTypeMap;
+    }
 }
 
 export class PageResourceCategoryResource {
@@ -3342,6 +9263,59 @@ export class PageResourceCategoryResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<CategoryResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceCategoryResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceChallengeEventParticipantResource {
@@ -3354,6 +9328,59 @@ export class PageResourceChallengeEventParticipantResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<ChallengeEventParticipantResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceChallengeEventParticipantResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceChallengeEventResource {
@@ -3366,6 +9393,59 @@ export class PageResourceChallengeEventResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<ChallengeEventResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceChallengeEventResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceChallengeResource {
@@ -3378,6 +9458,59 @@ export class PageResourceChallengeResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<ChallengeResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceChallengeResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceClientResource {
@@ -3390,6 +9523,59 @@ export class PageResourceClientResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<ClientResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceClientResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceCommentResource {
@@ -3402,6 +9588,59 @@ export class PageResourceCommentResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<CommentResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceCommentResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceConfig {
@@ -3414,6 +9653,59 @@ export class PageResourceConfig {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<Config>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceConfig.attributeTypeMap;
+    }
 }
 
 export class PageResourceCountryTaxResource {
@@ -3426,6 +9718,59 @@ export class PageResourceCountryTaxResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<CountryTaxResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceCountryTaxResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceCurrencyResource {
@@ -3438,6 +9783,59 @@ export class PageResourceCurrencyResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<CurrencyResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceCurrencyResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceDeviceResource {
@@ -3450,6 +9848,59 @@ export class PageResourceDeviceResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<DeviceResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceDeviceResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceDispositionResource {
@@ -3462,6 +9913,59 @@ export class PageResourceDispositionResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<DispositionResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceDispositionResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceEntitlementItem {
@@ -3474,6 +9978,59 @@ export class PageResourceEntitlementItem {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<EntitlementItem>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceEntitlementItem.attributeTypeMap;
+    }
 }
 
 export class PageResourceFlagReportResource {
@@ -3486,6 +10043,59 @@ export class PageResourceFlagReportResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<FlagReportResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceFlagReportResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceForwardLog {
@@ -3498,6 +10108,59 @@ export class PageResourceForwardLog {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<ForwardLog>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceForwardLog.attributeTypeMap;
+    }
 }
 
 export class PageResourceFulfillmentType {
@@ -3510,6 +10173,59 @@ export class PageResourceFulfillmentType {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<FulfillmentType>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceFulfillmentType.attributeTypeMap;
+    }
 }
 
 export class PageResourceGroupMemberResource {
@@ -3522,6 +10238,59 @@ export class PageResourceGroupMemberResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<GroupMemberResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceGroupMemberResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceGroupResource {
@@ -3534,6 +10303,59 @@ export class PageResourceGroupResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<GroupResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceGroupResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceImportJobResource {
@@ -3546,6 +10368,59 @@ export class PageResourceImportJobResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<ImportJobResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceImportJobResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceInvoiceLogEntry {
@@ -3558,6 +10433,59 @@ export class PageResourceInvoiceLogEntry {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<InvoiceLogEntry>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceInvoiceLogEntry.attributeTypeMap;
+    }
 }
 
 export class PageResourceInvoiceResource {
@@ -3570,6 +10498,59 @@ export class PageResourceInvoiceResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<InvoiceResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceInvoiceResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceItemTemplateResource {
@@ -3582,6 +10563,59 @@ export class PageResourceItemTemplateResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<ItemTemplateResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceItemTemplateResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceLevelingResource {
@@ -3594,6 +10628,59 @@ export class PageResourceLevelingResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<LevelingResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceLevelingResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceLocationLogResource {
@@ -3606,6 +10693,59 @@ export class PageResourceLocationLogResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<LocationLogResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceLocationLogResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceMapstringobject {
@@ -3618,6 +10758,59 @@ export class PageResourceMapstringobject {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<Mapstringobject>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceMapstringobject.attributeTypeMap;
+    }
 }
 
 export class PageResourceOauthAccessTokenResource {
@@ -3630,6 +10823,59 @@ export class PageResourceOauthAccessTokenResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<OauthAccessTokenResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceOauthAccessTokenResource.attributeTypeMap;
+    }
 }
 
 export class PageResourcePermissionResource {
@@ -3642,6 +10888,59 @@ export class PageResourcePermissionResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<PermissionResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourcePermissionResource.attributeTypeMap;
+    }
 }
 
 export class PageResourcePollResource {
@@ -3654,6 +10953,59 @@ export class PageResourcePollResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<PollResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourcePollResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceQuestionResource {
@@ -3666,6 +11018,59 @@ export class PageResourceQuestionResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<QuestionResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceQuestionResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceQuestionTemplateResource {
@@ -3678,6 +11083,59 @@ export class PageResourceQuestionTemplateResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<QuestionTemplateResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceQuestionTemplateResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceRevenueCountryReportResource {
@@ -3690,6 +11148,59 @@ export class PageResourceRevenueCountryReportResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<RevenueCountryReportResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceRevenueCountryReportResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceRevenueProductReportResource {
@@ -3702,6 +11213,59 @@ export class PageResourceRevenueProductReportResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<RevenueProductReportResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceRevenueProductReportResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceRewardSetResource {
@@ -3714,6 +11278,59 @@ export class PageResourceRewardSetResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<RewardSetResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceRewardSetResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceRoleResource {
@@ -3726,6 +11343,59 @@ export class PageResourceRoleResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<RoleResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceRoleResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceSavedAddressResource {
@@ -3738,6 +11408,59 @@ export class PageResourceSavedAddressResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<SavedAddressResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceSavedAddressResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceSimpleReferenceResourceobject {
@@ -3750,6 +11473,59 @@ export class PageResourceSimpleReferenceResourceobject {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<SimpleReferenceResourceobject>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceSimpleReferenceResourceobject.attributeTypeMap;
+    }
 }
 
 export class PageResourceSimpleUserResource {
@@ -3762,6 +11538,59 @@ export class PageResourceSimpleUserResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<SimpleUserResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceSimpleUserResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceSimpleWallet {
@@ -3774,6 +11603,59 @@ export class PageResourceSimpleWallet {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<SimpleWallet>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceSimpleWallet.attributeTypeMap;
+    }
 }
 
 export class PageResourceStateTaxResource {
@@ -3786,6 +11668,59 @@ export class PageResourceStateTaxResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<StateTaxResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceStateTaxResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceStoreItem {
@@ -3798,6 +11733,59 @@ export class PageResourceStoreItem {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<StoreItem>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceStoreItem.attributeTypeMap;
+    }
 }
 
 export class PageResourceStoreItemTemplateResource {
@@ -3810,6 +11798,59 @@ export class PageResourceStoreItemTemplateResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<StoreItemTemplateResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceStoreItemTemplateResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceSubscriptionResource {
@@ -3822,6 +11863,59 @@ export class PageResourceSubscriptionResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<SubscriptionResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceSubscriptionResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceSubscriptionTemplateResource {
@@ -3834,6 +11928,59 @@ export class PageResourceSubscriptionTemplateResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<SubscriptionTemplateResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceSubscriptionTemplateResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceTemplateResource {
@@ -3846,6 +11993,59 @@ export class PageResourceTemplateResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<TemplateResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceTemplateResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceTransactionResource {
@@ -3858,6 +12058,59 @@ export class PageResourceTransactionResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<TransactionResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceTransactionResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceUsageInfo {
@@ -3870,6 +12123,59 @@ export class PageResourceUsageInfo {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<UsageInfo>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceUsageInfo.attributeTypeMap;
+    }
 }
 
 export class PageResourceUserAchievementGroupResource {
@@ -3882,6 +12188,59 @@ export class PageResourceUserAchievementGroupResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<UserAchievementGroupResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceUserAchievementGroupResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceUserActionLog {
@@ -3894,6 +12253,59 @@ export class PageResourceUserActionLog {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<UserActionLog>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceUserActionLog.attributeTypeMap;
+    }
 }
 
 export class PageResourceUserBaseResource {
@@ -3906,6 +12318,59 @@ export class PageResourceUserBaseResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<UserBaseResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceUserBaseResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceUserInventoryResource {
@@ -3918,6 +12383,59 @@ export class PageResourceUserInventoryResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<UserInventoryResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceUserInventoryResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceUserItemLogResource {
@@ -3930,6 +12448,59 @@ export class PageResourceUserItemLogResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<UserItemLogResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceUserItemLogResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceUserLevelingResource {
@@ -3942,6 +12513,59 @@ export class PageResourceUserLevelingResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<UserLevelingResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceUserLevelingResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceUserRelationshipResource {
@@ -3954,6 +12578,59 @@ export class PageResourceUserRelationshipResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<UserRelationshipResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceUserRelationshipResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceVendorResource {
@@ -3966,6 +12643,59 @@ export class PageResourceVendorResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<VendorResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceVendorResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceVideoRelationshipResource {
@@ -3978,6 +12708,59 @@ export class PageResourceVideoRelationshipResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<VideoRelationshipResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceVideoRelationshipResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceVideoResource {
@@ -3990,6 +12773,59 @@ export class PageResourceVideoResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<VideoResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceVideoResource.attributeTypeMap;
+    }
 }
 
 export class PageResourceWalletTotalResponse {
@@ -4002,6 +12838,59 @@ export class PageResourceWalletTotalResponse {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<WalletTotalResponse>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceWalletTotalResponse.attributeTypeMap;
+    }
 }
 
 export class PageResourceWalletTransactionResource {
@@ -4014,6 +12903,59 @@ export class PageResourceWalletTransactionResource {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<WalletTransactionResource>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourceWalletTransactionResource.attributeTypeMap;
+    }
 }
 
 export class PageResourcestring {
@@ -4026,12 +12968,88 @@ export class PageResourcestring {
     'sort': Array<Order>;
     'totalElements': number;
     'totalPages': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "content",
+            "baseName": "content",
+            "type": "Array<string>"
+        },
+        {
+            "name": "first",
+            "baseName": "first",
+            "type": "boolean"
+        },
+        {
+            "name": "last",
+            "baseName": "last",
+            "type": "boolean"
+        },
+        {
+            "name": "number",
+            "baseName": "number",
+            "type": "number"
+        },
+        {
+            "name": "numberOfElements",
+            "baseName": "number_of_elements",
+            "type": "number"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "Array<Order>"
+        },
+        {
+            "name": "totalElements",
+            "baseName": "total_elements",
+            "type": "number"
+        },
+        {
+            "name": "totalPages",
+            "baseName": "total_pages",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PageResourcestring.attributeTypeMap;
+    }
 }
 
 export class ParameterResource {
     'of': string;
     'type': string;
     'value': any;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "of",
+            "baseName": "of",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "any"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ParameterResource.attributeTypeMap;
+    }
 }
 
 /**
@@ -4050,6 +13068,29 @@ export class PasswordResetRequest {
     * The user's username
     */
     'username': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "string"
+        },
+        {
+            "name": "mobileNumber",
+            "baseName": "mobile_number",
+            "type": "string"
+        },
+        {
+            "name": "username",
+            "baseName": "username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PasswordResetRequest.attributeTypeMap;
+    }
 }
 
 export class PayBySavedMethodRequest {
@@ -4057,6 +13098,19 @@ export class PayBySavedMethodRequest {
     * The id of the payment method to use. Must belong to the caller, be public or have PAYMENTS_ADMIN permission
     */
     'paymentMethod': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "paymentMethod",
+            "baseName": "payment_method",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PayBySavedMethodRequest.attributeTypeMap;
+    }
 }
 
 export class PaymentAuthorizationResource {
@@ -4084,6 +13138,121 @@ export class PaymentAuthorizationResource {
     * The payment type (which provider) this payment is through
     */
     'paymentType': SimpleReferenceResourceint;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "captured",
+            "baseName": "captured",
+            "type": "boolean"
+        },
+        {
+            "name": "created",
+            "baseName": "created",
+            "type": "number"
+        },
+        {
+            "name": "details",
+            "baseName": "details",
+            "type": "any"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "invoice",
+            "baseName": "invoice",
+            "type": "number"
+        },
+        {
+            "name": "paymentType",
+            "baseName": "payment_type",
+            "type": "SimpleReferenceResourceint"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PaymentAuthorizationResource.attributeTypeMap;
+    }
+}
+
+export class PaymentMethodDetails {
+    'default': boolean;
+    /**
+    * The expiration date for the payment method, expressed as seconds since epoch. Typically used for credit card payment methods
+    */
+    'expirationDate': number;
+    /**
+    * The expiration month (1 - 12) for the payment method. Typically used for credit card payment methods
+    */
+    'expirationMonth': number;
+    /**
+    * The expiration year for the payment method. Typically used for credit card payment methods
+    */
+    'expirationYear': number;
+    /**
+    * The last 4 digits of the account number for the payment method. Typically used for credit card payment methods
+    */
+    'last4': string;
+    /**
+    * The sort value for the payment method
+    */
+    'sort': number;
+    /**
+    * An optional unique identifier
+    */
+    'uniqueKey': string;
+    'verified': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "default",
+            "baseName": "default",
+            "type": "boolean"
+        },
+        {
+            "name": "expirationDate",
+            "baseName": "expiration_date",
+            "type": "number"
+        },
+        {
+            "name": "expirationMonth",
+            "baseName": "expiration_month",
+            "type": "number"
+        },
+        {
+            "name": "expirationYear",
+            "baseName": "expiration_year",
+            "type": "number"
+        },
+        {
+            "name": "last4",
+            "baseName": "last4",
+            "type": "string"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "number"
+        },
+        {
+            "name": "uniqueKey",
+            "baseName": "unique_key",
+            "type": "string"
+        },
+        {
+            "name": "verified",
+            "baseName": "verified",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PaymentMethodDetails.attributeTypeMap;
+    }
 }
 
 export class PaymentMethodResource {
@@ -4149,6 +13318,99 @@ export class PaymentMethodResource {
     */
     'userId': number;
     'verified': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "default",
+            "baseName": "default",
+            "type": "boolean"
+        },
+        {
+            "name": "disabled",
+            "baseName": "disabled",
+            "type": "boolean"
+        },
+        {
+            "name": "expirationDate",
+            "baseName": "expiration_date",
+            "type": "number"
+        },
+        {
+            "name": "expirationMonth",
+            "baseName": "expiration_month",
+            "type": "number"
+        },
+        {
+            "name": "expirationYear",
+            "baseName": "expiration_year",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "last4",
+            "baseName": "last4",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "paymentMethodType",
+            "baseName": "payment_method_type",
+            "type": "PaymentMethodTypeResource"
+        },
+        {
+            "name": "paymentType",
+            "baseName": "payment_type",
+            "type": "PaymentMethodResource.PaymentTypeEnum"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "number"
+        },
+        {
+            "name": "token",
+            "baseName": "token",
+            "type": "string"
+        },
+        {
+            "name": "uniqueKey",
+            "baseName": "unique_key",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        },
+        {
+            "name": "verified",
+            "baseName": "verified",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PaymentMethodResource.attributeTypeMap;
+    }
 }
 
 export namespace PaymentMethodResource {
@@ -4166,6 +13428,24 @@ export class PaymentMethodTypeResource {
     * The name of the payment method type
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PaymentMethodTypeResource.attributeTypeMap;
+    }
 }
 
 export class PermissionResource {
@@ -4197,6 +13477,49 @@ export class PermissionResource {
     * The date the permission was updated. Unix timestamp in seconds
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "locked",
+            "baseName": "locked",
+            "type": "boolean"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "parent",
+            "baseName": "parent",
+            "type": "string"
+        },
+        {
+            "name": "permission",
+            "baseName": "permission",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PermissionResource.attributeTypeMap;
+    }
 }
 
 export class PollAnswerResource {
@@ -4212,6 +13535,29 @@ export class PollAnswerResource {
     * The text of the answer (for user display)
     */
     'text': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "count",
+            "baseName": "count",
+            "type": "number"
+        },
+        {
+            "name": "key",
+            "baseName": "key",
+            "type": "string"
+        },
+        {
+            "name": "text",
+            "baseName": "text",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PollAnswerResource.attributeTypeMap;
+    }
 }
 
 export class PollResource {
@@ -4259,6 +13605,69 @@ export class PollResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "active",
+            "baseName": "active",
+            "type": "boolean"
+        },
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "answers",
+            "baseName": "answers",
+            "type": "Array<PollAnswerResource>"
+        },
+        {
+            "name": "category",
+            "baseName": "category",
+            "type": "NestedCategory"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "text",
+            "baseName": "text",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "PollResource.TypeEnum"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PollResource.attributeTypeMap;
+    }
 }
 
 export namespace PollResource {
@@ -4290,11 +13699,62 @@ export class PollResponseResource {
     * The user
     */
     'user': SimpleUserResource;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "answer",
+            "baseName": "answer",
+            "type": "string"
+        },
+        {
+            "name": "answeredDate",
+            "baseName": "answered_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "pollId",
+            "baseName": "poll_id",
+            "type": "string"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PollResponseResource.attributeTypeMap;
+    }
 }
 
 export class PredicateOperation {
     'args': Array<Expressionobject>;
     'operator': Operator;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "args",
+            "baseName": "args",
+            "type": "Array<Expressionobject>"
+        },
+        {
+            "name": "operator",
+            "baseName": "operator",
+            "type": "Operator"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PredicateOperation.attributeTypeMap;
+    }
 }
 
 export class PredicateResource {
@@ -4307,6 +13767,29 @@ export class PredicateResource {
     */
     'op': string;
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "args",
+            "baseName": "args",
+            "type": "Array<ExpressionResource>"
+        },
+        {
+            "name": "op",
+            "baseName": "op",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PredicateResource.attributeTypeMap;
+    }
 }
 
 export class Property {
@@ -4314,6 +13797,19 @@ export class Property {
     * The type of the property. Used for polymorphic type recognition and thus must match an expected type with additional properties.
     */
     'type': string;
+
+    static discriminator = type;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Property.attributeTypeMap;
+    }
 }
 
 export class PropertyDefinitionResource {
@@ -4333,6 +13829,34 @@ export class PropertyDefinitionResource {
     * The type of the property. Used for polymorphic type recognition and thus must match an expected type with additional properties.
     */
     'type': string;
+
+    static discriminator = type;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "fieldList",
+            "baseName": "field_list",
+            "type": "PropertyFieldListResource"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "required",
+            "baseName": "required",
+            "type": "boolean"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PropertyDefinitionResource.attributeTypeMap;
+    }
 }
 
 export class PropertyFieldListResource {
@@ -4348,6 +13872,29 @@ export class PropertyFieldListResource {
     * The type for the property this describes.
     */
     'propertyType': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "propertyDefinitionFields",
+            "baseName": "property_definition_fields",
+            "type": "Array<PropertyFieldResource>"
+        },
+        {
+            "name": "propertyFields",
+            "baseName": "property_fields",
+            "type": "Array<PropertyFieldResource>"
+        },
+        {
+            "name": "propertyType",
+            "baseName": "property_type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PropertyFieldListResource.attributeTypeMap;
+    }
 }
 
 export class PropertyFieldResource {
@@ -4379,6 +13926,49 @@ export class PropertyFieldResource {
     * A list of valid values for 'enum' type fields
     */
     'validValues': Array<string>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "innerType",
+            "baseName": "inner_type",
+            "type": "PropertyFieldResource.InnerTypeEnum"
+        },
+        {
+            "name": "innerTypeFields",
+            "baseName": "inner_type_fields",
+            "type": "Array<PropertyFieldResource>"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "required",
+            "baseName": "required",
+            "type": "boolean"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "PropertyFieldResource.TypeEnum"
+        },
+        {
+            "name": "validValues",
+            "baseName": "valid_values",
+            "type": "Array<string>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PropertyFieldResource.attributeTypeMap;
+    }
 }
 
 export namespace PropertyFieldResource {
@@ -4462,6 +14052,89 @@ export class QuestionResource {
     * The supplier of the question
     */
     'vendor': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "answers",
+            "baseName": "answers",
+            "type": "Array<AnswerResource>"
+        },
+        {
+            "name": "category",
+            "baseName": "category",
+            "type": "NestedCategory"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "difficulty",
+            "baseName": "difficulty",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "importId",
+            "baseName": "import_id",
+            "type": "number"
+        },
+        {
+            "name": "publishedDate",
+            "baseName": "published_date",
+            "type": "number"
+        },
+        {
+            "name": "question",
+            "baseName": "question",
+            "type": "Property"
+        },
+        {
+            "name": "source1",
+            "baseName": "source1",
+            "type": "string"
+        },
+        {
+            "name": "source2",
+            "baseName": "source2",
+            "type": "string"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "vendor",
+            "baseName": "vendor",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return QuestionResource.attributeTypeMap;
+    }
 }
 
 export class QuestionTemplateResource {
@@ -4493,6 +14166,78 @@ export class QuestionTemplateResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "answerProperty",
+            "baseName": "answer_property",
+            "type": "PropertyDefinitionResource"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "properties",
+            "baseName": "properties",
+            "type": "Array<PropertyDefinitionResource>"
+        },
+        {
+            "name": "questionProperty",
+            "baseName": "question_property",
+            "type": "PropertyDefinitionResource"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return QuestionTemplateResource.attributeTypeMap;
+    }
+}
+
+export class QuickBuyRequest {
+    /**
+    * SKU of item being purchased
+    */
+    'sku': string;
+    /**
+    * ID of the user making the purchase. If null, currently logged in user will be used.
+    */
+    'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return QuickBuyRequest.attributeTypeMap;
+    }
 }
 
 export class RawEmailResource {
@@ -4516,6 +14261,39 @@ export class RawEmailResource {
     * The subject of the outgoing message.
     */
     'subject': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "body",
+            "baseName": "body",
+            "type": "string"
+        },
+        {
+            "name": "from",
+            "baseName": "from",
+            "type": "string"
+        },
+        {
+            "name": "html",
+            "baseName": "html",
+            "type": "boolean"
+        },
+        {
+            "name": "recipients",
+            "baseName": "recipients",
+            "type": "Array<number>"
+        },
+        {
+            "name": "subject",
+            "baseName": "subject",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RawEmailResource.attributeTypeMap;
+    }
 }
 
 export class RawSMSResource {
@@ -4531,6 +14309,29 @@ export class RawSMSResource {
     * The body of the outgoing text message.
     */
     'text': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "from",
+            "baseName": "from",
+            "type": "string"
+        },
+        {
+            "name": "recipients",
+            "baseName": "recipients",
+            "type": "Array<number>"
+        },
+        {
+            "name": "text",
+            "baseName": "text",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RawSMSResource.attributeTypeMap;
+    }
 }
 
 export class ReactivateSubscriptionRequest {
@@ -4542,6 +14343,24 @@ export class ReactivateSubscriptionRequest {
     * Whether to add the additional reactivation fee in addition to the recurring fee
     */
     'reactivationFee': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "inventoryId",
+            "baseName": "inventory_id",
+            "type": "number"
+        },
+        {
+            "name": "reactivationFee",
+            "baseName": "reactivation_fee",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ReactivateSubscriptionRequest.attributeTypeMap;
+    }
 }
 
 export class RefundRequest {
@@ -4561,6 +14380,34 @@ export class RefundRequest {
     * The SKU of a specific item from the invoice to refund. Affects the maximum refund amount (not to exceed the price of this item times quantity on invoice). Transaction must be tied to an invoice if used.
     */
     'sku': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "amount",
+            "baseName": "amount",
+            "type": "number"
+        },
+        {
+            "name": "bundleSku",
+            "baseName": "bundle_sku",
+            "type": "string"
+        },
+        {
+            "name": "notes",
+            "baseName": "notes",
+            "type": "string"
+        },
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RefundRequest.attributeTypeMap;
+    }
 }
 
 export class RefundResource {
@@ -4576,6 +14423,29 @@ export class RefundResource {
     * The id of the original transaction
     */
     'transactionId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "amount",
+            "baseName": "amount",
+            "type": "number"
+        },
+        {
+            "name": "refundTransactionId",
+            "baseName": "refund_transaction_id",
+            "type": "number"
+        },
+        {
+            "name": "transactionId",
+            "baseName": "transaction_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RefundResource.attributeTypeMap;
+    }
 }
 
 export class Result {
@@ -4591,12 +14461,58 @@ export class Result {
     * The error object
     */
     'result': Array<ErrorResource>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "code",
+            "baseName": "code",
+            "type": "number"
+        },
+        {
+            "name": "requestId",
+            "baseName": "request_id",
+            "type": "string"
+        },
+        {
+            "name": "result",
+            "baseName": "result",
+            "type": "Array<ErrorResource>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Result.attributeTypeMap;
+    }
 }
 
 export class RevenueCountryReportResource {
     'country': string;
     'revenue': number;
     'volume': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "country",
+            "baseName": "country",
+            "type": "string"
+        },
+        {
+            "name": "revenue",
+            "baseName": "revenue",
+            "type": "number"
+        },
+        {
+            "name": "volume",
+            "baseName": "volume",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RevenueCountryReportResource.attributeTypeMap;
+    }
 }
 
 export class RevenueProductReportResource {
@@ -4604,6 +14520,34 @@ export class RevenueProductReportResource {
     'itemName': string;
     'revenue': number;
     'volume': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "itemId",
+            "baseName": "item_id",
+            "type": "number"
+        },
+        {
+            "name": "itemName",
+            "baseName": "item_name",
+            "type": "string"
+        },
+        {
+            "name": "revenue",
+            "baseName": "revenue",
+            "type": "number"
+        },
+        {
+            "name": "volume",
+            "baseName": "volume",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RevenueProductReportResource.attributeTypeMap;
+    }
 }
 
 export class RevenueReportResource {
@@ -4611,6 +14555,34 @@ export class RevenueReportResource {
     'saleCount': number;
     'salesAverage': number;
     'salesTotal': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "customerCount",
+            "baseName": "customer_count",
+            "type": "number"
+        },
+        {
+            "name": "saleCount",
+            "baseName": "sale_count",
+            "type": "number"
+        },
+        {
+            "name": "salesAverage",
+            "baseName": "sales_average",
+            "type": "number"
+        },
+        {
+            "name": "salesTotal",
+            "baseName": "sales_total",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RevenueReportResource.attributeTypeMap;
+    }
 }
 
 export class RewardCurrencyResource {
@@ -4638,6 +14610,44 @@ export class RewardCurrencyResource {
     * The amount of currency to give. For percentage values, 0.5 is 50%
     */
     'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "currencyName",
+            "baseName": "currency_name",
+            "type": "string"
+        },
+        {
+            "name": "maxRank",
+            "baseName": "max_rank",
+            "type": "number"
+        },
+        {
+            "name": "minRank",
+            "baseName": "min_rank",
+            "type": "number"
+        },
+        {
+            "name": "percent",
+            "baseName": "percent",
+            "type": "boolean"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RewardCurrencyResource.attributeTypeMap;
+    }
 }
 
 export class RewardItemResource {
@@ -4661,6 +14671,39 @@ export class RewardItemResource {
     * How many copies to give
     */
     'quantity': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "itemId",
+            "baseName": "item_id",
+            "type": "number"
+        },
+        {
+            "name": "itemName",
+            "baseName": "item_name",
+            "type": "string"
+        },
+        {
+            "name": "maxRank",
+            "baseName": "max_rank",
+            "type": "number"
+        },
+        {
+            "name": "minRank",
+            "baseName": "min_rank",
+            "type": "number"
+        },
+        {
+            "name": "quantity",
+            "baseName": "quantity",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RewardItemResource.attributeTypeMap;
+    }
 }
 
 export class RewardSetResource {
@@ -4704,6 +14747,64 @@ export class RewardSetResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "currencyRewards",
+            "baseName": "currency_rewards",
+            "type": "Array<RewardCurrencyResource>"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "itemRewards",
+            "baseName": "item_rewards",
+            "type": "Array<RewardItemResource>"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "long_description",
+            "type": "string"
+        },
+        {
+            "name": "maxPlacing",
+            "baseName": "max_placing",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "short_description",
+            "type": "string"
+        },
+        {
+            "name": "uniqueKey",
+            "baseName": "unique_key",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RewardSetResource.attributeTypeMap;
+    }
 }
 
 export class RoleResource {
@@ -4735,6 +14836,49 @@ export class RoleResource {
     * The number of users this role is assigned to
     */
     'userCount': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "clientCount",
+            "baseName": "client_count",
+            "type": "number"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "locked",
+            "baseName": "locked",
+            "type": "boolean"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "role",
+            "baseName": "role",
+            "type": "string"
+        },
+        {
+            "name": "rolePermission",
+            "baseName": "role_permission",
+            "type": "Array<PermissionResource>"
+        },
+        {
+            "name": "userCount",
+            "baseName": "user_count",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return RoleResource.attributeTypeMap;
+    }
 }
 
 export class S3Config {
@@ -4742,11 +14886,57 @@ export class S3Config {
     'cdnUrl': string;
     'region': string;
     'uploadPrefix': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "bucketName",
+            "baseName": "bucket_name",
+            "type": "string"
+        },
+        {
+            "name": "cdnUrl",
+            "baseName": "cdn_url",
+            "type": "string"
+        },
+        {
+            "name": "region",
+            "baseName": "region",
+            "type": "string"
+        },
+        {
+            "name": "uploadPrefix",
+            "baseName": "upload_prefix",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return S3Config.attributeTypeMap;
+    }
 }
 
 export class SampleCountriesResponse {
     'vendorId1': Array<Country>;
     'vendorId2': Array<Country>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "vendorId1",
+            "baseName": "vendor_id1",
+            "type": "Array<Country>"
+        },
+        {
+            "name": "vendorId2",
+            "baseName": "vendor_id2",
+            "type": "Array<Country>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SampleCountriesResponse.attributeTypeMap;
+    }
 }
 
 export class SavedAddressResource {
@@ -4799,6 +14989,79 @@ export class SavedAddressResource {
     * The code for the state. Required if the country has states/provinces/equivalent
     */
     'stateCode': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "address1",
+            "baseName": "address1",
+            "type": "string"
+        },
+        {
+            "name": "address2",
+            "baseName": "address2",
+            "type": "string"
+        },
+        {
+            "name": "city",
+            "baseName": "city",
+            "type": "string"
+        },
+        {
+            "name": "countryCode",
+            "baseName": "country_code",
+            "type": "string"
+        },
+        {
+            "name": "default",
+            "baseName": "default",
+            "type": "boolean"
+        },
+        {
+            "name": "firstName",
+            "baseName": "first_name",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "lastName",
+            "baseName": "last_name",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "phone1",
+            "baseName": "phone1",
+            "type": "string"
+        },
+        {
+            "name": "phone2",
+            "baseName": "phone2",
+            "type": "string"
+        },
+        {
+            "name": "postalCode",
+            "baseName": "postal_code",
+            "type": "string"
+        },
+        {
+            "name": "stateCode",
+            "baseName": "state_code",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SavedAddressResource.attributeTypeMap;
+    }
 }
 
 export class Schedule {
@@ -4814,6 +15077,29 @@ export class Schedule {
     * How often the event is scheduled
     */
     'repeat': Schedule.RepeatEnum;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "duration",
+            "baseName": "duration",
+            "type": "number"
+        },
+        {
+            "name": "durationUnit",
+            "baseName": "duration_unit",
+            "type": "Schedule.DurationUnitEnum"
+        },
+        {
+            "name": "repeat",
+            "baseName": "repeat",
+            "type": "Schedule.RepeatEnum"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Schedule.attributeTypeMap;
+    }
 }
 
 export namespace Schedule {
@@ -4853,6 +15139,39 @@ export class SearchReferenceMapping {
     * The index type that the mapping is for
     */
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "refIdField",
+            "baseName": "ref_id_field",
+            "type": "string"
+        },
+        {
+            "name": "refType",
+            "baseName": "ref_type",
+            "type": "string"
+        },
+        {
+            "name": "sourceFieldToDestinationField",
+            "baseName": "source_field_to_destination_field",
+            "type": "{ [key: string]: string; }"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SearchReferenceMapping.attributeTypeMap;
+    }
 }
 
 export class SelectedSettingResource {
@@ -4872,6 +15191,34 @@ export class SelectedSettingResource {
     * The textual name of the option
     */
     'valueName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "key",
+            "baseName": "key",
+            "type": "string"
+        },
+        {
+            "name": "keyName",
+            "baseName": "key_name",
+            "type": "string"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "string"
+        },
+        {
+            "name": "valueName",
+            "baseName": "value_name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SelectedSettingResource.attributeTypeMap;
+    }
 }
 
 export class SettingOption {
@@ -4883,6 +15230,24 @@ export class SettingOption {
     * The unique ID for the option. Ex: 10
     */
     'value': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SettingOption.attributeTypeMap;
+    }
 }
 
 export class SimpleReferenceResourceint {
@@ -4894,6 +15259,24 @@ export class SimpleReferenceResourceint {
     * The name of the referenced object
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SimpleReferenceResourceint.attributeTypeMap;
+    }
 }
 
 export class SimpleReferenceResourcelong {
@@ -4905,6 +15288,24 @@ export class SimpleReferenceResourcelong {
     * The name of the referenced object
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SimpleReferenceResourcelong.attributeTypeMap;
+    }
 }
 
 export class SimpleReferenceResourceobject {
@@ -4916,6 +15317,24 @@ export class SimpleReferenceResourceobject {
     * The name of the referenced object
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "any"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SimpleReferenceResourceobject.attributeTypeMap;
+    }
 }
 
 export class SimpleReferenceResourcestring {
@@ -4927,6 +15346,24 @@ export class SimpleReferenceResourcestring {
     * The name of the referenced object
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SimpleReferenceResourcestring.attributeTypeMap;
+    }
 }
 
 export class SimpleUserResource {
@@ -4946,6 +15383,34 @@ export class SimpleUserResource {
     * The username of the user
     */
     'username': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "avatarUrl",
+            "baseName": "avatar_url",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "display_name",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "username",
+            "baseName": "username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SimpleUserResource.attributeTypeMap;
+    }
 }
 
 export class SimpleWallet {
@@ -4969,6 +15434,39 @@ export class SimpleWallet {
     * The ID of the user to whom the wallet belongs
     */
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "balance",
+            "baseName": "balance",
+            "type": "number"
+        },
+        {
+            "name": "code",
+            "baseName": "code",
+            "type": "string"
+        },
+        {
+            "name": "currencyName",
+            "baseName": "currency_name",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SimpleWallet.attributeTypeMap;
+    }
 }
 
 export class Sku {
@@ -5024,6 +15522,79 @@ export class Sku {
     * The date the sku becomes unavailable, unix timestamp in seconds.  If set to null, sku is always available
     */
     'stopDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "inventory",
+            "baseName": "inventory",
+            "type": "number"
+        },
+        {
+            "name": "minInventoryThreshold",
+            "baseName": "min_inventory_threshold",
+            "type": "number"
+        },
+        {
+            "name": "originalPrice",
+            "baseName": "original_price",
+            "type": "number"
+        },
+        {
+            "name": "price",
+            "baseName": "price",
+            "type": "number"
+        },
+        {
+            "name": "published",
+            "baseName": "published",
+            "type": "boolean"
+        },
+        {
+            "name": "saleId",
+            "baseName": "sale_id",
+            "type": "number"
+        },
+        {
+            "name": "saleName",
+            "baseName": "sale_name",
+            "type": "string"
+        },
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        },
+        {
+            "name": "startDate",
+            "baseName": "start_date",
+            "type": "number"
+        },
+        {
+            "name": "stopDate",
+            "baseName": "stop_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Sku.attributeTypeMap;
+    }
 }
 
 export class SkuRequest {
@@ -5031,6 +15602,19 @@ export class SkuRequest {
     * SKU code of the item
     */
     'sku': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SkuRequest.attributeTypeMap;
+    }
 }
 
 export class SqlDatabaseConfig {
@@ -5040,6 +15624,44 @@ export class SqlDatabaseConfig {
     'password': string;
     'port': number;
     'username': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "connectionPoolSize",
+            "baseName": "connection_pool_size",
+            "type": "number"
+        },
+        {
+            "name": "dbName",
+            "baseName": "db_name",
+            "type": "string"
+        },
+        {
+            "name": "hostname",
+            "baseName": "hostname",
+            "type": "string"
+        },
+        {
+            "name": "password",
+            "baseName": "password",
+            "type": "string"
+        },
+        {
+            "name": "port",
+            "baseName": "port",
+            "type": "number"
+        },
+        {
+            "name": "username",
+            "baseName": "username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SqlDatabaseConfig.attributeTypeMap;
+    }
 }
 
 export class StateResource {
@@ -5059,6 +15681,34 @@ export class StateResource {
     * The name of the state
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "code",
+            "baseName": "code",
+            "type": "string"
+        },
+        {
+            "name": "countryCodeIso3",
+            "baseName": "country_code_iso3",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StateResource.attributeTypeMap;
+    }
 }
 
 export class StateTaxResource {
@@ -5086,6 +15736,44 @@ export class StateTaxResource {
     * Whether the tax applies to shipping costs
     */
     'taxShipping': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "countryIso3",
+            "baseName": "country_iso3",
+            "type": "string"
+        },
+        {
+            "name": "federallyExempt",
+            "baseName": "federally_exempt",
+            "type": "boolean"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "rate",
+            "baseName": "rate",
+            "type": "number"
+        },
+        {
+            "name": "stateCode",
+            "baseName": "state_code",
+            "type": "string"
+        },
+        {
+            "name": "taxShipping",
+            "baseName": "tax_shipping",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StateTaxResource.attributeTypeMap;
+    }
 }
 
 export class StoreItemTemplateResource {
@@ -5117,15 +15805,102 @@ export class StoreItemTemplateResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "behaviors",
+            "baseName": "behaviors",
+            "type": "Array<ItemBehaviorDefinitionResource>"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "properties",
+            "baseName": "properties",
+            "type": "Array<PropertyDefinitionResource>"
+        },
+        {
+            "name": "skuTemplate",
+            "baseName": "sku_template",
+            "type": "TemplateResource"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StoreItemTemplateResource.attributeTypeMap;
+    }
 }
 
 export class StringOperationResource {
     'args': Array<ExpressionResource>;
     'op': string;
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "args",
+            "baseName": "args",
+            "type": "Array<ExpressionResource>"
+        },
+        {
+            "name": "op",
+            "baseName": "op",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StringOperationResource.attributeTypeMap;
+    }
+}
+
+export class StringWrapper {
+    'value': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StringWrapper.attributeTypeMap;
+    }
 }
 
 export class StripeCreatePaymentMethod {
+    /**
+    * Additional optional details to store on the payment method. If included, all fields in the details will override any defaults
+    */
+    'details': PaymentMethodDetails;
     /**
     * A token from Stripe to identify payment info to be tied to the customer
     */
@@ -5134,6 +15909,29 @@ export class StripeCreatePaymentMethod {
     * The id of the user, if null the logged in user is used. Admin privilege need to specify other users
     */
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "details",
+            "baseName": "details",
+            "type": "PaymentMethodDetails"
+        },
+        {
+            "name": "token",
+            "baseName": "token",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StripeCreatePaymentMethod.attributeTypeMap;
+    }
 }
 
 export class StripePaymentRequest {
@@ -5145,6 +15943,24 @@ export class StripePaymentRequest {
     * A token from Stripe to identify payment info to be tied to the customer
     */
     'token': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "token",
+            "baseName": "token",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StripePaymentRequest.attributeTypeMap;
+    }
 }
 
 export class SubscriptionCreditResource {
@@ -5168,6 +15984,39 @@ export class SubscriptionCreditResource {
     * The reason for the subscription credit
     */
     'reason': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "amount",
+            "baseName": "amount",
+            "type": "number"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "inventoryId",
+            "baseName": "inventory_id",
+            "type": "number"
+        },
+        {
+            "name": "reason",
+            "baseName": "reason",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SubscriptionCreditResource.attributeTypeMap;
+    }
 }
 
 export class SubscriptionPlan {
@@ -5191,6 +16040,114 @@ export class SubscriptionPlan {
     'renewPeriod': number;
     'renewPeriodUnitOfTime': SubscriptionPlan.RenewPeriodUnitOfTimeEnum;
     'subscriptionId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "availability",
+            "baseName": "availability",
+            "type": "SubscriptionPlan.AvailabilityEnum"
+        },
+        {
+            "name": "billGraceDays",
+            "baseName": "bill_grace_days",
+            "type": "number"
+        },
+        {
+            "name": "consolidated",
+            "baseName": "consolidated",
+            "type": "boolean"
+        },
+        {
+            "name": "firstBill",
+            "baseName": "first_bill",
+            "type": "number"
+        },
+        {
+            "name": "firstBillUnitOfTime",
+            "baseName": "first_bill_unit_of_time",
+            "type": "SubscriptionPlan.FirstBillUnitOfTimeEnum"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "latePaymentSku",
+            "baseName": "late_payment_sku",
+            "type": "string"
+        },
+        {
+            "name": "locked",
+            "baseName": "locked",
+            "type": "boolean"
+        },
+        {
+            "name": "maxAutoRenew",
+            "baseName": "max_auto_renew",
+            "type": "number"
+        },
+        {
+            "name": "maxBillAttempts",
+            "baseName": "max_bill_attempts",
+            "type": "number"
+        },
+        {
+            "name": "migrationPlan",
+            "baseName": "migration_plan",
+            "type": "string"
+        },
+        {
+            "name": "minimumTerm",
+            "baseName": "minimum_term",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "primarySku",
+            "baseName": "primary_sku",
+            "type": "string"
+        },
+        {
+            "name": "reactivationSku",
+            "baseName": "reactivation_sku",
+            "type": "string"
+        },
+        {
+            "name": "recurringSku",
+            "baseName": "recurring_sku",
+            "type": "string"
+        },
+        {
+            "name": "renewPeriod",
+            "baseName": "renew_period",
+            "type": "number"
+        },
+        {
+            "name": "renewPeriodUnitOfTime",
+            "baseName": "renew_period_unit_of_time",
+            "type": "SubscriptionPlan.RenewPeriodUnitOfTimeEnum"
+        },
+        {
+            "name": "subscriptionId",
+            "baseName": "subscription_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SubscriptionPlan.attributeTypeMap;
+    }
 }
 
 export namespace SubscriptionPlan {
@@ -5324,6 +16281,144 @@ export class SubscriptionPlanResource {
     * Used to schedule plan availability start date
     */
     'startDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "billingCycleLength",
+            "baseName": "billing_cycle_length",
+            "type": "number"
+        },
+        {
+            "name": "billingCycleUnit",
+            "baseName": "billing_cycle_unit",
+            "type": "SubscriptionPlanResource.BillingCycleUnitEnum"
+        },
+        {
+            "name": "consolidated",
+            "baseName": "consolidated",
+            "type": "boolean"
+        },
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "endDate",
+            "baseName": "end_date",
+            "type": "number"
+        },
+        {
+            "name": "firstBillingCycleLength",
+            "baseName": "first_billing_cycle_length",
+            "type": "number"
+        },
+        {
+            "name": "firstBillingCycleUnit",
+            "baseName": "first_billing_cycle_unit",
+            "type": "SubscriptionPlanResource.FirstBillingCycleUnitEnum"
+        },
+        {
+            "name": "gracePeriod",
+            "baseName": "grace_period",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "initialFee",
+            "baseName": "initial_fee",
+            "type": "number"
+        },
+        {
+            "name": "initialSku",
+            "baseName": "initial_sku",
+            "type": "string"
+        },
+        {
+            "name": "latePaymentFee",
+            "baseName": "late_payment_fee",
+            "type": "number"
+        },
+        {
+            "name": "latePaymentSku",
+            "baseName": "late_payment_sku",
+            "type": "string"
+        },
+        {
+            "name": "locked",
+            "baseName": "locked",
+            "type": "boolean"
+        },
+        {
+            "name": "maxBillAttempts",
+            "baseName": "max_bill_attempts",
+            "type": "number"
+        },
+        {
+            "name": "maxCycles",
+            "baseName": "max_cycles",
+            "type": "number"
+        },
+        {
+            "name": "migrateToPlan",
+            "baseName": "migrate_to_plan",
+            "type": "string"
+        },
+        {
+            "name": "minCycles",
+            "baseName": "min_cycles",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "published",
+            "baseName": "published",
+            "type": "boolean"
+        },
+        {
+            "name": "reactivationFee",
+            "baseName": "reactivation_fee",
+            "type": "number"
+        },
+        {
+            "name": "reactivationSku",
+            "baseName": "reactivation_sku",
+            "type": "string"
+        },
+        {
+            "name": "recurringFee",
+            "baseName": "recurring_fee",
+            "type": "number"
+        },
+        {
+            "name": "recurringSku",
+            "baseName": "recurring_sku",
+            "type": "string"
+        },
+        {
+            "name": "startDate",
+            "baseName": "start_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SubscriptionPlanResource.attributeTypeMap;
+    }
 }
 
 export namespace SubscriptionPlanResource {
@@ -5357,6 +16452,24 @@ export class SubscriptionPriceOverrideRequest {
     * An explanation for the reason the price is being overridden
     */
     'reason': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "newPrice",
+            "baseName": "new_price",
+            "type": "number"
+        },
+        {
+            "name": "reason",
+            "baseName": "reason",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SubscriptionPriceOverrideRequest.attributeTypeMap;
+    }
 }
 
 export class SubscriptionResource {
@@ -5440,6 +16553,114 @@ export class SubscriptionResource {
     * The vendor who provides the item
     */
     'vendorId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "availability",
+            "baseName": "availability",
+            "type": "SubscriptionResource.AvailabilityEnum"
+        },
+        {
+            "name": "category",
+            "baseName": "category",
+            "type": "string"
+        },
+        {
+            "name": "consolidationDayOfMonth",
+            "baseName": "consolidation_day_of_month",
+            "type": "number"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "geoCountryList",
+            "baseName": "geo_country_list",
+            "type": "Array<string>"
+        },
+        {
+            "name": "geoPolicyType",
+            "baseName": "geo_policy_type",
+            "type": "SubscriptionResource.GeoPolicyTypeEnum"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "long_description",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "plans",
+            "baseName": "plans",
+            "type": "Array<SubscriptionPlanResource>"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "short_description",
+            "type": "string"
+        },
+        {
+            "name": "sort",
+            "baseName": "sort",
+            "type": "number"
+        },
+        {
+            "name": "storeEnd",
+            "baseName": "store_end",
+            "type": "number"
+        },
+        {
+            "name": "storeStart",
+            "baseName": "store_start",
+            "type": "number"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "uniqueKey",
+            "baseName": "unique_key",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "vendorId",
+            "baseName": "vendor_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SubscriptionResource.attributeTypeMap;
+    }
 }
 
 export namespace SubscriptionResource {
@@ -5477,6 +16698,44 @@ export class SubscriptionTemplateResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "planTemplate",
+            "baseName": "plan_template",
+            "type": "TemplateResource"
+        },
+        {
+            "name": "properties",
+            "baseName": "properties",
+            "type": "Array<PropertyDefinitionResource>"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SubscriptionTemplateResource.attributeTypeMap;
+    }
 }
 
 export class TemplateEmailResource {
@@ -5496,6 +16755,34 @@ export class TemplateEmailResource {
     * A list of variables to fill in the template
     */
     'templateVars': Array<KeyValuePairstringstring>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "from",
+            "baseName": "from",
+            "type": "string"
+        },
+        {
+            "name": "recipients",
+            "baseName": "recipients",
+            "type": "Array<number>"
+        },
+        {
+            "name": "templateKey",
+            "baseName": "template_key",
+            "type": "string"
+        },
+        {
+            "name": "templateVars",
+            "baseName": "template_vars",
+            "type": "Array<KeyValuePairstringstring>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TemplateEmailResource.attributeTypeMap;
+    }
 }
 
 export class TemplateResource {
@@ -5519,6 +16806,39 @@ export class TemplateResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "properties",
+            "baseName": "properties",
+            "type": "Array<PropertyDefinitionResource>"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TemplateResource.attributeTypeMap;
+    }
 }
 
 export class TemplateSMSResource {
@@ -5539,6 +16859,39 @@ export class TemplateSMSResource {
     * A list of values to fill in the template. Order matters.
     */
     'templateVars': Array<string>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "from",
+            "baseName": "from",
+            "type": "string"
+        },
+        {
+            "name": "localizer",
+            "baseName": "localizer",
+            "type": "Localizer"
+        },
+        {
+            "name": "recipients",
+            "baseName": "recipients",
+            "type": "Array<number>"
+        },
+        {
+            "name": "templateKey",
+            "baseName": "template_key",
+            "type": "string"
+        },
+        {
+            "name": "templateVars",
+            "baseName": "template_vars",
+            "type": "Array<string>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TemplateSMSResource.attributeTypeMap;
+    }
 }
 
 export class TierResource {
@@ -5558,12 +16911,63 @@ export class TierResource {
     * The name of the triggered event
     */
     'triggerEventName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "requiredProgress",
+            "baseName": "required_progress",
+            "type": "number"
+        },
+        {
+            "name": "triggerEventName",
+            "baseName": "trigger_event_name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TierResource.attributeTypeMap;
+    }
 }
 
 export class TokenDetailsResource {
     'clientId': string;
     'roles': Array<string>;
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "clientId",
+            "baseName": "client_id",
+            "type": "string"
+        },
+        {
+            "name": "roles",
+            "baseName": "roles",
+            "type": "Array<string>"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TokenDetailsResource.attributeTypeMap;
+    }
 }
 
 export class TransactionResource {
@@ -5619,6 +17023,79 @@ export class TransactionResource {
     * The amount of the transaction, positive if a gain, negative if an expenditure
     */
     'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "createDate",
+            "baseName": "create_date",
+            "type": "number"
+        },
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "details",
+            "baseName": "details",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "isRefunded",
+            "baseName": "is_refunded",
+            "type": "boolean"
+        },
+        {
+            "name": "response",
+            "baseName": "response",
+            "type": "string"
+        },
+        {
+            "name": "source",
+            "baseName": "source",
+            "type": "TransactionResource.SourceEnum"
+        },
+        {
+            "name": "successful",
+            "baseName": "successful",
+            "type": "boolean"
+        },
+        {
+            "name": "transactionId",
+            "baseName": "transaction_id",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "typeHint",
+            "baseName": "type_hint",
+            "type": "string"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TransactionResource.attributeTypeMap;
+    }
 }
 
 export namespace TransactionResource {
@@ -5631,6 +17108,29 @@ export class TypeHintLookupResource {
     'lookupKey': ExpressionResource;
     'type': string;
     'valueType': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "lookupKey",
+            "baseName": "lookup_key",
+            "type": "ExpressionResource"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "valueType",
+            "baseName": "value_type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TypeHintLookupResource.attributeTypeMap;
+    }
 }
 
 export class UsageInfo {
@@ -5650,6 +17150,34 @@ export class UsageInfo {
     * The url path
     */
     'url': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "count",
+            "baseName": "count",
+            "type": "number"
+        },
+        {
+            "name": "date",
+            "baseName": "date",
+            "type": "number"
+        },
+        {
+            "name": "method",
+            "baseName": "method",
+            "type": "string"
+        },
+        {
+            "name": "url",
+            "baseName": "url",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UsageInfo.attributeTypeMap;
+    }
 }
 
 export class UserAchievementGroupResource {
@@ -5673,6 +17201,39 @@ export class UserAchievementGroupResource {
     * The id of the user whose progress is being tracked
     */
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "achievements",
+            "baseName": "achievements",
+            "type": "Array<UserAchievementResource>"
+        },
+        {
+            "name": "groupName",
+            "baseName": "group_name",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "progress",
+            "baseName": "progress",
+            "type": "number"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserAchievementGroupResource.attributeTypeMap;
+    }
 }
 
 export class UserAchievementResource {
@@ -5696,6 +17257,39 @@ export class UserAchievementResource {
     * The date/time this resource was last updated in seconds since unix epoch
     */
     'updatedDate': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "achieved",
+            "baseName": "achieved",
+            "type": "boolean"
+        },
+        {
+            "name": "achievementName",
+            "baseName": "achievement_name",
+            "type": "string"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "earnedDate",
+            "baseName": "earned_date",
+            "type": "number"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserAchievementResource.attributeTypeMap;
+    }
 }
 
 export class UserActionLog {
@@ -5727,6 +17321,49 @@ export class UserActionLog {
     * The id of the user that took the action, if any. Read-only if not posting with LOGS_ADMIN
     */
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "actionDescription",
+            "baseName": "action_description",
+            "type": "string"
+        },
+        {
+            "name": "actionName",
+            "baseName": "action_name",
+            "type": "string"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "details",
+            "baseName": "details",
+            "type": "{ [key: string]: string; }"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "string"
+        },
+        {
+            "name": "requestId",
+            "baseName": "request_id",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserActionLog.attributeTypeMap;
+    }
 }
 
 export class UserActivityResults {
@@ -5762,6 +17399,54 @@ export class UserActivityResults {
     * The player for this entry
     */
     'user': SimpleUserResource;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "currencyRewards",
+            "baseName": "currency_rewards",
+            "type": "Array<RewardCurrencyResource>"
+        },
+        {
+            "name": "itemRewards",
+            "baseName": "item_rewards",
+            "type": "Array<RewardItemResource>"
+        },
+        {
+            "name": "rank",
+            "baseName": "rank",
+            "type": "number"
+        },
+        {
+            "name": "score",
+            "baseName": "score",
+            "type": "number"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "ties",
+            "baseName": "ties",
+            "type": "number"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserActivityResults.attributeTypeMap;
+    }
 }
 
 export class UserActivityResultsResource {
@@ -5777,6 +17462,29 @@ export class UserActivityResultsResource {
     * The id of the player
     */
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "score",
+            "baseName": "score",
+            "type": "number"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserActivityResultsResource.attributeTypeMap;
+    }
 }
 
 export class UserBaseResource {
@@ -5816,6 +17524,59 @@ export class UserBaseResource {
     * The login username for the user (private). May be set to match email if system does not require usernames separately.
     */
     'username': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "avatarUrl",
+            "baseName": "avatar_url",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "display_name",
+            "type": "string"
+        },
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "string"
+        },
+        {
+            "name": "fullname",
+            "baseName": "fullname",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "lastActivity",
+            "baseName": "last_activity",
+            "type": "number"
+        },
+        {
+            "name": "lastUpdated",
+            "baseName": "last_updated",
+            "type": "number"
+        },
+        {
+            "name": "memberSince",
+            "baseName": "member_since",
+            "type": "number"
+        },
+        {
+            "name": "username",
+            "baseName": "username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserBaseResource.attributeTypeMap;
+    }
 }
 
 export class UserInventoryAddRequest {
@@ -5835,6 +17596,34 @@ export class UserInventoryAddRequest {
     * The specific SKU of the item to be added to the inventory
     */
     'sku': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "note",
+            "baseName": "note",
+            "type": "string"
+        },
+        {
+            "name": "overrides",
+            "baseName": "overrides",
+            "type": "Array<string>"
+        },
+        {
+            "name": "skipInvoice",
+            "baseName": "skip_invoice",
+            "type": "boolean"
+        },
+        {
+            "name": "sku",
+            "baseName": "sku",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserInventoryAddRequest.attributeTypeMap;
+    }
 }
 
 export class UserInventoryResource {
@@ -5882,6 +17671,69 @@ export class UserInventoryResource {
     * The id of the user this inventory belongs to
     */
     'user': SimpleUserResource;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "behaviorData",
+            "baseName": "behavior_data",
+            "type": "any"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "expires",
+            "baseName": "expires",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "itemId",
+            "baseName": "item_id",
+            "type": "number"
+        },
+        {
+            "name": "itemName",
+            "baseName": "item_name",
+            "type": "string"
+        },
+        {
+            "name": "itemTypeHint",
+            "baseName": "item_type_hint",
+            "type": "string"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "UserInventoryResource.StatusEnum"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserInventoryResource.attributeTypeMap;
+    }
 }
 
 export namespace UserInventoryResource {
@@ -5920,6 +17772,49 @@ export class UserItemLogResource {
     * The id of the inventory entry this event is related to, if any
     */
     'userInventory': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "info",
+            "baseName": "info",
+            "type": "string"
+        },
+        {
+            "name": "item",
+            "baseName": "item",
+            "type": "SimpleReferenceResourceint"
+        },
+        {
+            "name": "logDate",
+            "baseName": "log_date",
+            "type": "number"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        },
+        {
+            "name": "userInventory",
+            "baseName": "user_inventory",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserItemLogResource.attributeTypeMap;
+    }
 }
 
 export class UserLevelingResource {
@@ -5955,6 +17850,54 @@ export class UserLevelingResource {
     * The ID of the user
     */
     'userId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "lastTierName",
+            "baseName": "last_tier_name",
+            "type": "string"
+        },
+        {
+            "name": "lastTierProgress",
+            "baseName": "last_tier_progress",
+            "type": "number"
+        },
+        {
+            "name": "levelName",
+            "baseName": "level_name",
+            "type": "string"
+        },
+        {
+            "name": "nextTierName",
+            "baseName": "next_tier_name",
+            "type": "string"
+        },
+        {
+            "name": "nextTierProgress",
+            "baseName": "next_tier_progress",
+            "type": "number"
+        },
+        {
+            "name": "progress",
+            "baseName": "progress",
+            "type": "number"
+        },
+        {
+            "name": "tierNames",
+            "baseName": "tier_names",
+            "type": "Array<string>"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserLevelingResource.attributeTypeMap;
+    }
 }
 
 export class UserRelationshipReferenceResource {
@@ -5982,6 +17925,44 @@ export class UserRelationshipReferenceResource {
     * The username of the user
     */
     'username': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "avatarUrl",
+            "baseName": "avatar_url",
+            "type": "string"
+        },
+        {
+            "name": "context",
+            "baseName": "context",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "display_name",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "relationshipId",
+            "baseName": "relationship_id",
+            "type": "number"
+        },
+        {
+            "name": "username",
+            "baseName": "username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserRelationshipReferenceResource.attributeTypeMap;
+    }
 }
 
 export class UserRelationshipResource {
@@ -6001,6 +17982,34 @@ export class UserRelationshipResource {
     * The parent in the relationship
     */
     'parent': SimpleUserResource;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "child",
+            "baseName": "child",
+            "type": "SimpleUserResource"
+        },
+        {
+            "name": "context",
+            "baseName": "context",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "parent",
+            "baseName": "parent",
+            "type": "SimpleUserResource"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserRelationshipResource.attributeTypeMap;
+    }
 }
 
 export class UserResource {
@@ -6124,12 +18133,193 @@ export class UserResource {
     * The login username for the user (private). May be set to match email if system does not require usernames separately.
     */
     'username': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "address",
+            "baseName": "address",
+            "type": "string"
+        },
+        {
+            "name": "address2",
+            "baseName": "address2",
+            "type": "string"
+        },
+        {
+            "name": "avatarUrl",
+            "baseName": "avatar_url",
+            "type": "string"
+        },
+        {
+            "name": "children",
+            "baseName": "children",
+            "type": "Array<UserRelationshipReferenceResource>"
+        },
+        {
+            "name": "city",
+            "baseName": "city",
+            "type": "string"
+        },
+        {
+            "name": "countryCode",
+            "baseName": "country_code",
+            "type": "string"
+        },
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "dateOfBirth",
+            "baseName": "date_of_birth",
+            "type": "number"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "display_name",
+            "type": "string"
+        },
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "string"
+        },
+        {
+            "name": "firstName",
+            "baseName": "first_name",
+            "type": "string"
+        },
+        {
+            "name": "fullname",
+            "baseName": "fullname",
+            "type": "string"
+        },
+        {
+            "name": "gender",
+            "baseName": "gender",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "languageCode",
+            "baseName": "language_code",
+            "type": "string"
+        },
+        {
+            "name": "lastActivity",
+            "baseName": "last_activity",
+            "type": "number"
+        },
+        {
+            "name": "lastName",
+            "baseName": "last_name",
+            "type": "string"
+        },
+        {
+            "name": "lastUpdated",
+            "baseName": "last_updated",
+            "type": "number"
+        },
+        {
+            "name": "memberSince",
+            "baseName": "member_since",
+            "type": "number"
+        },
+        {
+            "name": "mobileNumber",
+            "baseName": "mobile_number",
+            "type": "string"
+        },
+        {
+            "name": "parents",
+            "baseName": "parents",
+            "type": "Array<UserRelationshipReferenceResource>"
+        },
+        {
+            "name": "password",
+            "baseName": "password",
+            "type": "string"
+        },
+        {
+            "name": "postalCode",
+            "baseName": "postal_code",
+            "type": "string"
+        },
+        {
+            "name": "state",
+            "baseName": "state",
+            "type": "string"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "timezoneCode",
+            "baseName": "timezone_code",
+            "type": "string"
+        },
+        {
+            "name": "username",
+            "baseName": "username",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserResource.attributeTypeMap;
+    }
 }
 
 export class UsernameLookupResource {
     'lookupKey': ExpressionResource;
     'type': string;
     'valueType': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "lookupKey",
+            "baseName": "lookup_key",
+            "type": "ExpressionResource"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "valueType",
+            "baseName": "value_type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UsernameLookupResource.attributeTypeMap;
+    }
 }
 
 export class VariableTypeResource {
@@ -6145,6 +18335,29 @@ export class VariableTypeResource {
     * The name of the variable type. Used as the unique id
     */
     'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "base",
+            "baseName": "base",
+            "type": "VariableTypeResource.BaseEnum"
+        },
+        {
+            "name": "enumerable",
+            "baseName": "enumerable",
+            "type": "boolean"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return VariableTypeResource.attributeTypeMap;
+    }
 }
 
 export namespace VariableTypeResource {
@@ -6160,6 +18373,29 @@ export class VendorEmailLookupResource {
     'lookupKey': ExpressionResource;
     'type': string;
     'valueType': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "lookupKey",
+            "baseName": "lookup_key",
+            "type": "ExpressionResource"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "valueType",
+            "baseName": "value_type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return VendorEmailLookupResource.attributeTypeMap;
+    }
 }
 
 export class VendorResource {
@@ -6227,10 +18463,111 @@ export class VendorResource {
     * The url for the vendor's site
     */
     'url': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "active",
+            "baseName": "active",
+            "type": "boolean"
+        },
+        {
+            "name": "additionalProperties",
+            "baseName": "additional_properties",
+            "type": "{ [key: string]: Property; }"
+        },
+        {
+            "name": "createDate",
+            "baseName": "create_date",
+            "type": "number"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "imageUrl",
+            "baseName": "image_url",
+            "type": "string"
+        },
+        {
+            "name": "manualApproval",
+            "baseName": "manual_approval",
+            "type": "boolean"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "primaryContactEmail",
+            "baseName": "primary_contact_email",
+            "type": "string"
+        },
+        {
+            "name": "primaryContactName",
+            "baseName": "primary_contact_name",
+            "type": "string"
+        },
+        {
+            "name": "primaryContactPhone",
+            "baseName": "primary_contact_phone",
+            "type": "string"
+        },
+        {
+            "name": "salesEmail",
+            "baseName": "sales_email",
+            "type": "string"
+        },
+        {
+            "name": "supportEmail",
+            "baseName": "support_email",
+            "type": "string"
+        },
+        {
+            "name": "template",
+            "baseName": "template",
+            "type": "string"
+        },
+        {
+            "name": "updateDate",
+            "baseName": "update_date",
+            "type": "number"
+        },
+        {
+            "name": "url",
+            "baseName": "url",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return VendorResource.attributeTypeMap;
+    }
 }
 
 export class Version {
     'version': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "version",
+            "baseName": "version",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Version.attributeTypeMap;
+    }
 }
 
 export class VideoRelationshipResource {
@@ -6250,6 +18587,34 @@ export class VideoRelationshipResource {
     * The target of the relationship.
     */
     'to': SimpleReferenceResourcelong;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "from",
+            "baseName": "from",
+            "type": "SimpleReferenceResourcelong"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "relationshipDetails",
+            "baseName": "relationship_details",
+            "type": "string"
+        },
+        {
+            "name": "to",
+            "baseName": "to",
+            "type": "SimpleReferenceResourcelong"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return VideoRelationshipResource.attributeTypeMap;
+    }
 }
 
 export class VideoResource {
@@ -6365,6 +18730,154 @@ export class VideoResource {
     * The width of the video in px
     */
     'width': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "active",
+            "baseName": "active",
+            "type": "boolean"
+        },
+        {
+            "name": "author",
+            "baseName": "author",
+            "type": "SimpleReferenceResourcelong"
+        },
+        {
+            "name": "authored",
+            "baseName": "authored",
+            "type": "number"
+        },
+        {
+            "name": "banned",
+            "baseName": "banned",
+            "type": "boolean"
+        },
+        {
+            "name": "category",
+            "baseName": "category",
+            "type": "SimpleReferenceResourcestring"
+        },
+        {
+            "name": "comments",
+            "baseName": "comments",
+            "type": "Array<CommentResource>"
+        },
+        {
+            "name": "contributors",
+            "baseName": "contributors",
+            "type": "Array<ContributionResource>"
+        },
+        {
+            "name": "createdDate",
+            "baseName": "created_date",
+            "type": "number"
+        },
+        {
+            "name": "embed",
+            "baseName": "embed",
+            "type": "string"
+        },
+        {
+            "name": "extension",
+            "baseName": "extension",
+            "type": "string"
+        },
+        {
+            "name": "height",
+            "baseName": "height",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "length",
+            "baseName": "length",
+            "type": "number"
+        },
+        {
+            "name": "location",
+            "baseName": "location",
+            "type": "string"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "long_description",
+            "type": "string"
+        },
+        {
+            "name": "mimeType",
+            "baseName": "mime_type",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "priority",
+            "baseName": "priority",
+            "type": "number"
+        },
+        {
+            "name": "privacy",
+            "baseName": "privacy",
+            "type": "VideoResource.PrivacyEnum"
+        },
+        {
+            "name": "published",
+            "baseName": "published",
+            "type": "boolean"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "short_description",
+            "type": "string"
+        },
+        {
+            "name": "size",
+            "baseName": "size",
+            "type": "number"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "thumbnail",
+            "baseName": "thumbnail",
+            "type": "string"
+        },
+        {
+            "name": "updatedDate",
+            "baseName": "updated_date",
+            "type": "number"
+        },
+        {
+            "name": "uploader",
+            "baseName": "uploader",
+            "type": "SimpleUserResource"
+        },
+        {
+            "name": "views",
+            "baseName": "views",
+            "type": "number"
+        },
+        {
+            "name": "width",
+            "baseName": "width",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return VideoResource.attributeTypeMap;
+    }
 }
 
 export namespace VideoResource {
@@ -6391,6 +18904,34 @@ export class WalletAlterRequest {
     * The transaction type to allow for search/etc
     */
     'type': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "delta",
+            "baseName": "delta",
+            "type": "number"
+        },
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "reason",
+            "baseName": "reason",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return WalletAlterRequest.attributeTypeMap;
+    }
 }
 
 export class WalletTotalResponse {
@@ -6402,6 +18943,24 @@ export class WalletTotalResponse {
     * The sum of all wallets in the system for this currency
     */
     'total': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "total",
+            "baseName": "total",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return WalletTotalResponse.attributeTypeMap;
+    }
 }
 
 export class WalletTransactionResource {
@@ -6469,6 +19028,94 @@ export class WalletTransactionResource {
     * The id of the wallet this transaction affected
     */
     'walletId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "balance",
+            "baseName": "balance",
+            "type": "number"
+        },
+        {
+            "name": "createDate",
+            "baseName": "create_date",
+            "type": "number"
+        },
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "details",
+            "baseName": "details",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "isRefunded",
+            "baseName": "is_refunded",
+            "type": "boolean"
+        },
+        {
+            "name": "response",
+            "baseName": "response",
+            "type": "string"
+        },
+        {
+            "name": "source",
+            "baseName": "source",
+            "type": "WalletTransactionResource.SourceEnum"
+        },
+        {
+            "name": "successful",
+            "baseName": "successful",
+            "type": "boolean"
+        },
+        {
+            "name": "transactionId",
+            "baseName": "transaction_id",
+            "type": "string"
+        },
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "typeHint",
+            "baseName": "type_hint",
+            "type": "string"
+        },
+        {
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        },
+        {
+            "name": "walletId",
+            "baseName": "wallet_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return WalletTransactionResource.attributeTypeMap;
+    }
 }
 
 export namespace WalletTransactionResource {
@@ -6486,6 +19133,24 @@ export class XsollaPaymentRequest {
     * The endpoint URL xsolla should forward the user to after they pay
     */
     'returnUrl': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "invoiceId",
+            "baseName": "invoice_id",
+            "type": "number"
+        },
+        {
+            "name": "returnUrl",
+            "baseName": "return_url",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return XsollaPaymentRequest.attributeTypeMap;
+    }
 }
 
 export class AudioPropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6501,6 +19166,29 @@ export class AudioPropertyDefinitionResource extends PropertyDefinitionResource 
     * If provided, the minimum length of the audio
     */
     'minLength': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "fileType",
+            "baseName": "file_type",
+            "type": "string"
+        },
+        {
+            "name": "maxLength",
+            "baseName": "max_length",
+            "type": "number"
+        },
+        {
+            "name": "minLength",
+            "baseName": "min_length",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(AudioPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class BooleanProperty extends Property {
@@ -6508,14 +19196,54 @@ export class BooleanProperty extends Property {
     * The value
     */
     'value': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(BooleanProperty.attributeTypeMap);
+    }
 }
 
 export class BooleanPropertyDefinitionResource extends PropertyDefinitionResource {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(BooleanPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class CacheClearEvent extends BroadcastableEvent {
     'customerSetup': boolean;
     'customerTeardown': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "customerSetup",
+            "baseName": "customer_setup",
+            "type": "boolean"
+        },
+        {
+            "name": "customerTeardown",
+            "baseName": "customer_teardown",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(CacheClearEvent.attributeTypeMap);
+    }
 }
 
 export class Consumable extends Behavior {
@@ -6523,6 +19251,19 @@ export class Consumable extends Behavior {
     * The maximum number of times an item can be used
     */
     'maxUse': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "maxUse",
+            "baseName": "max_use",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(Consumable.attributeTypeMap);
+    }
 }
 
 export class DateProperty extends Property {
@@ -6530,6 +19271,19 @@ export class DateProperty extends Property {
     * The value
     */
     'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(DateProperty.attributeTypeMap);
+    }
 }
 
 export class DatePropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6541,6 +19295,24 @@ export class DatePropertyDefinitionResource extends PropertyDefinitionResource {
     * If provided, the minimum value
     */
     'min': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "max",
+            "baseName": "max",
+            "type": "number"
+        },
+        {
+            "name": "min",
+            "baseName": "min",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(DatePropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class DoubleProperty extends Property {
@@ -6548,6 +19320,19 @@ export class DoubleProperty extends Property {
     * The value
     */
     'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(DoubleProperty.attributeTypeMap);
+    }
 }
 
 export class DoublePropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6559,9 +19344,36 @@ export class DoublePropertyDefinitionResource extends PropertyDefinitionResource
     * If provided, the minimum value
     */
     'min': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "max",
+            "baseName": "max",
+            "type": "number"
+        },
+        {
+            "name": "min",
+            "baseName": "min",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(DoublePropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class EntitlementItem extends Item {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(EntitlementItem.attributeTypeMap);
+    }
 }
 
 export class Expirable extends Behavior {
@@ -6573,6 +19385,24 @@ export class Expirable extends Behavior {
     * The unit of time
     */
     'unitOfTime': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "timeLength",
+            "baseName": "time_length",
+            "type": "number"
+        },
+        {
+            "name": "unitOfTime",
+            "baseName": "unit_of_time",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(Expirable.attributeTypeMap);
+    }
 }
 
 export class FileGroupProperty extends Property {
@@ -6580,6 +19410,19 @@ export class FileGroupProperty extends Property {
     * The list of files
     */
     'files': Array<FileProperty>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "files",
+            "baseName": "files",
+            "type": "Array<FileProperty>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(FileGroupProperty.attributeTypeMap);
+    }
 }
 
 export class FileGroupPropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6599,6 +19442,34 @@ export class FileGroupPropertyDefinitionResource extends PropertyDefinitionResou
     * If provided, the minimum number of files in the group
     */
     'minCount': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "fileType",
+            "baseName": "file_type",
+            "type": "string"
+        },
+        {
+            "name": "maxCount",
+            "baseName": "max_count",
+            "type": "number"
+        },
+        {
+            "name": "maxFileSize",
+            "baseName": "max_file_size",
+            "type": "number"
+        },
+        {
+            "name": "minCount",
+            "baseName": "min_count",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(FileGroupPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class FileProperty extends Property {
@@ -6618,6 +19489,34 @@ export class FileProperty extends Property {
     * The url of the file
     */
     'url': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "crc",
+            "baseName": "crc",
+            "type": "string"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "fileType",
+            "baseName": "file_type",
+            "type": "string"
+        },
+        {
+            "name": "url",
+            "baseName": "url",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(FileProperty.attributeTypeMap);
+    }
 }
 
 export class FilePropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6629,6 +19528,24 @@ export class FilePropertyDefinitionResource extends PropertyDefinitionResource {
     * If provided, the maximum allowed file size in bytes
     */
     'maxFileSize': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "fileType",
+            "baseName": "file_type",
+            "type": "string"
+        },
+        {
+            "name": "maxFileSize",
+            "baseName": "max_file_size",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(FilePropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class FormattedTextProperty extends Property {
@@ -6636,6 +19553,19 @@ export class FormattedTextProperty extends Property {
     * The value
     */
     'value': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(FormattedTextProperty.attributeTypeMap);
+    }
 }
 
 export class FormattedTextPropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6643,6 +19573,19 @@ export class FormattedTextPropertyDefinitionResource extends PropertyDefinitionR
     * If provided, the maximum length of the text
     */
     'maxLength': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "maxLength",
+            "baseName": "max_length",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(FormattedTextPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class Fulfillable extends Behavior {
@@ -6650,6 +19593,19 @@ export class Fulfillable extends Behavior {
     * The name of the fulfillment type that describes how the item should be fulfilled.  Examples: inventory, wallet, amazon
     */
     'typeName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "typeName",
+            "baseName": "type_name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(Fulfillable.attributeTypeMap);
+    }
 }
 
 export class GuestPlayable extends Behavior {
@@ -6661,6 +19617,24 @@ export class GuestPlayable extends Behavior {
     * Whether guests are allowed on the leaderboard
     */
     'leaderboard': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "allowed",
+            "baseName": "allowed",
+            "type": "boolean"
+        },
+        {
+            "name": "leaderboard",
+            "baseName": "leaderboard",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(GuestPlayable.attributeTypeMap);
+    }
 }
 
 export class ImagePropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6684,6 +19658,39 @@ export class ImagePropertyDefinitionResource extends PropertyDefinitionResource 
     * If provided, the minimum width of the image
     */
     'minWidth': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "fileType",
+            "baseName": "file_type",
+            "type": "string"
+        },
+        {
+            "name": "maxHeight",
+            "baseName": "max_height",
+            "type": "number"
+        },
+        {
+            "name": "maxWidth",
+            "baseName": "max_width",
+            "type": "number"
+        },
+        {
+            "name": "minHeight",
+            "baseName": "min_height",
+            "type": "number"
+        },
+        {
+            "name": "minWidth",
+            "baseName": "min_width",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(ImagePropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class IntegerProperty extends Property {
@@ -6691,6 +19698,19 @@ export class IntegerProperty extends Property {
     * The value
     */
     'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(IntegerProperty.attributeTypeMap);
+    }
 }
 
 export class IntegerPropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6702,10 +19722,64 @@ export class IntegerPropertyDefinitionResource extends PropertyDefinitionResourc
     * If provided, the minimum value
     */
     'min': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "max",
+            "baseName": "max",
+            "type": "number"
+        },
+        {
+            "name": "min",
+            "baseName": "min",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(IntegerPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class LimitedGettable extends Behavior {
     'group': LimitedGettableGroup;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "group",
+            "baseName": "group",
+            "type": "LimitedGettableGroup"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(LimitedGettable.attributeTypeMap);
+    }
+}
+
+export class LogLevelEvent extends BroadcastableEvent {
+    'level': string;
+    'name': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "level",
+            "baseName": "level",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(LogLevelEvent.attributeTypeMap);
+    }
 }
 
 export class LongProperty extends Property {
@@ -6713,6 +19787,19 @@ export class LongProperty extends Property {
     * The value
     */
     'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(LongProperty.attributeTypeMap);
+    }
 }
 
 export class LongPropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6724,10 +19811,41 @@ export class LongPropertyDefinitionResource extends PropertyDefinitionResource {
     * If provided, the minimum value
     */
     'min': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "max",
+            "baseName": "max",
+            "type": "number"
+        },
+        {
+            "name": "min",
+            "baseName": "min",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(LongPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class NewCustomerEvent extends BroadcastableEvent {
     'customerConfig': CustomerConfig;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "customerConfig",
+            "baseName": "customer_config",
+            "type": "CustomerConfig"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(NewCustomerEvent.attributeTypeMap);
+    }
 }
 
 export class PreReqEntitlement extends Behavior {
@@ -6735,6 +19853,19 @@ export class PreReqEntitlement extends Behavior {
     * The item ids that must already be in the user's inventory
     */
     'itemIds': Array<number>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "itemIds",
+            "baseName": "item_ids",
+            "type": "Array<number>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(PreReqEntitlement.attributeTypeMap);
+    }
 }
 
 export class PriceOverridable extends Behavior {
@@ -6746,10 +19877,41 @@ export class PriceOverridable extends Behavior {
     * The minimum price allowed
     */
     'minPrice': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "maxPrice",
+            "baseName": "max_price",
+            "type": "number"
+        },
+        {
+            "name": "minPrice",
+            "baseName": "min_price",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(PriceOverridable.attributeTypeMap);
+    }
 }
 
 export class RemoveCustomerEvent extends BroadcastableEvent {
     'customerConfig': CustomerConfig;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "customerConfig",
+            "baseName": "customer_config",
+            "type": "CustomerConfig"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(RemoveCustomerEvent.attributeTypeMap);
+    }
 }
 
 export class Spendable extends Behavior {
@@ -6761,6 +19923,24 @@ export class Spendable extends Behavior {
     * The spendable value
     */
     'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "currencyCode",
+            "baseName": "currency_code",
+            "type": "string"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(Spendable.attributeTypeMap);
+    }
 }
 
 export class StoreItem extends Item {
@@ -6796,6 +19976,54 @@ export class StoreItem extends Item {
     * The vendor who provides the item
     */
     'vendorId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "displayable",
+            "baseName": "displayable",
+            "type": "boolean"
+        },
+        {
+            "name": "geoCountryList",
+            "baseName": "geo_country_list",
+            "type": "Array<string>"
+        },
+        {
+            "name": "geoPolicyType",
+            "baseName": "geo_policy_type",
+            "type": "StoreItem.GeoPolicyTypeEnum"
+        },
+        {
+            "name": "shippingTier",
+            "baseName": "shipping_tier",
+            "type": "number"
+        },
+        {
+            "name": "skus",
+            "baseName": "skus",
+            "type": "Array<Sku>"
+        },
+        {
+            "name": "storeEnd",
+            "baseName": "store_end",
+            "type": "number"
+        },
+        {
+            "name": "storeStart",
+            "baseName": "store_start",
+            "type": "number"
+        },
+        {
+            "name": "vendorId",
+            "baseName": "vendor_id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(StoreItem.attributeTypeMap);
+    }
 }
 
 export namespace StoreItem {
@@ -6809,6 +20037,19 @@ export class TextProperty extends Property {
     * The value
     */
     'value': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(TextProperty.attributeTypeMap);
+    }
 }
 
 export class TextPropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6816,6 +20057,19 @@ export class TextPropertyDefinitionResource extends PropertyDefinitionResource {
     * If provided, the maximum length of the text
     */
     'maxLength': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "maxLength",
+            "baseName": "max_length",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(TextPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class TimePeriodGettable extends Behavior {
@@ -6835,6 +20089,34 @@ export class TimePeriodGettable extends Behavior {
     * The unit of time
     */
     'unitOfTime': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "getLimit",
+            "baseName": "get_limit",
+            "type": "number"
+        },
+        {
+            "name": "groupName",
+            "baseName": "group_name",
+            "type": "string"
+        },
+        {
+            "name": "timeLength",
+            "baseName": "time_length",
+            "type": "number"
+        },
+        {
+            "name": "unitOfTime",
+            "baseName": "unit_of_time",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(TimePeriodGettable.attributeTypeMap);
+    }
 }
 
 export class TimePeriodUsable extends Behavior {
@@ -6850,6 +20132,29 @@ export class TimePeriodUsable extends Behavior {
     * The unit of time
     */
     'unitOfTime': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "maxUse",
+            "baseName": "max_use",
+            "type": "number"
+        },
+        {
+            "name": "timeLength",
+            "baseName": "time_length",
+            "type": "number"
+        },
+        {
+            "name": "unitOfTime",
+            "baseName": "unit_of_time",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(TimePeriodUsable.attributeTypeMap);
+    }
 }
 
 export class VideoPropertyDefinitionResource extends PropertyDefinitionResource {
@@ -6881,9 +20186,61 @@ export class VideoPropertyDefinitionResource extends PropertyDefinitionResource 
     * If provided, the minimum width of the video
     */
     'minWidth': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "fileType",
+            "baseName": "file_type",
+            "type": "string"
+        },
+        {
+            "name": "maxHeight",
+            "baseName": "max_height",
+            "type": "number"
+        },
+        {
+            "name": "maxLength",
+            "baseName": "max_length",
+            "type": "number"
+        },
+        {
+            "name": "maxWidth",
+            "baseName": "max_width",
+            "type": "number"
+        },
+        {
+            "name": "minHeight",
+            "baseName": "min_height",
+            "type": "number"
+        },
+        {
+            "name": "minLength",
+            "baseName": "min_length",
+            "type": "number"
+        },
+        {
+            "name": "minWidth",
+            "baseName": "min_width",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(VideoPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class AudioGroupProperty extends FileGroupProperty {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(AudioGroupProperty.attributeTypeMap);
+    }
 }
 
 export class AudioGroupPropertyDefinitionResource extends FileGroupPropertyDefinitionResource {
@@ -6895,9 +20252,36 @@ export class AudioGroupPropertyDefinitionResource extends FileGroupPropertyDefin
     * If provided, the minimum length of the audio
     */
     'minLength': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "maxLength",
+            "baseName": "max_length",
+            "type": "number"
+        },
+        {
+            "name": "minLength",
+            "baseName": "min_length",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(AudioGroupPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class AudioProperty extends FileProperty {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(AudioProperty.attributeTypeMap);
+    }
 }
 
 export class BundleItem extends StoreItem {
@@ -6905,6 +20289,19 @@ export class BundleItem extends StoreItem {
     * The skus of items to be included in this bundle, and how they influence the bundle total price.  Must have at least one SKU
     */
     'bundledSkus': Array<BundledSku>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "bundledSkus",
+            "baseName": "bundled_skus",
+            "type": "Array<BundledSku>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(BundleItem.attributeTypeMap);
+    }
 }
 
 export namespace BundleItem {
@@ -6950,6 +20347,64 @@ export class CouponItem extends StoreItem {
     * A list of tags for a coupon.  The coupon can only apply to an item that has at least one of these tags.  Applies if coupon_type_hint is coupon_tag
     */
     'validForTags': Array<string>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "couponTypeHint",
+            "baseName": "coupon_type_hint",
+            "type": "CouponItem.CouponTypeHintEnum"
+        },
+        {
+            "name": "discountMax",
+            "baseName": "discount_max",
+            "type": "number"
+        },
+        {
+            "name": "discountMinCartValue",
+            "baseName": "discount_min_cart_value",
+            "type": "number"
+        },
+        {
+            "name": "discountType",
+            "baseName": "discount_type",
+            "type": "CouponItem.DiscountTypeEnum"
+        },
+        {
+            "name": "discountValue",
+            "baseName": "discount_value",
+            "type": "number"
+        },
+        {
+            "name": "exclusive",
+            "baseName": "exclusive",
+            "type": "boolean"
+        },
+        {
+            "name": "itemId",
+            "baseName": "item_id",
+            "type": "number"
+        },
+        {
+            "name": "maxQuantity",
+            "baseName": "max_quantity",
+            "type": "number"
+        },
+        {
+            "name": "selfExclusive",
+            "baseName": "self_exclusive",
+            "type": "boolean"
+        },
+        {
+            "name": "validForTags",
+            "baseName": "valid_for_tags",
+            "type": "Array<string>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(CouponItem.attributeTypeMap);
+    }
 }
 
 export namespace CouponItem {
@@ -6966,6 +20421,15 @@ export namespace CouponItem {
     }
 }
 export class ImageGroupProperty extends FileGroupProperty {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(ImageGroupProperty.attributeTypeMap);
+    }
 }
 
 export class ImageGroupPropertyDefinitionResource extends FileGroupPropertyDefinitionResource {
@@ -6985,9 +20449,46 @@ export class ImageGroupPropertyDefinitionResource extends FileGroupPropertyDefin
     * If provided, the minumum width of each image
     */
     'minWidth': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "maxHeight",
+            "baseName": "max_height",
+            "type": "number"
+        },
+        {
+            "name": "maxWidth",
+            "baseName": "max_width",
+            "type": "number"
+        },
+        {
+            "name": "minHeight",
+            "baseName": "min_height",
+            "type": "number"
+        },
+        {
+            "name": "minWidth",
+            "baseName": "min_width",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(ImageGroupPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class ImageProperty extends FileProperty {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(ImageProperty.attributeTypeMap);
+    }
 }
 
 export class ShippingItem extends StoreItem {
@@ -7003,6 +20504,29 @@ export class ShippingItem extends StoreItem {
     * Whether tax should be applied to the shipping price.  Default = false
     */
     'taxable': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "countries",
+            "baseName": "countries",
+            "type": "Array<string>"
+        },
+        {
+            "name": "maxTierTotal",
+            "baseName": "max_tier_total",
+            "type": "number"
+        },
+        {
+            "name": "taxable",
+            "baseName": "taxable",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(ShippingItem.attributeTypeMap);
+    }
 }
 
 export namespace ShippingItem {
@@ -7011,6 +20535,29 @@ export class Subscription extends StoreItem {
     'availability': Subscription.AvailabilityEnum;
     'consolidationDayOfMonth': number;
     'subscriptionPlans': Array<SubscriptionPlan>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "availability",
+            "baseName": "availability",
+            "type": "Subscription.AvailabilityEnum"
+        },
+        {
+            "name": "consolidationDayOfMonth",
+            "baseName": "consolidation_day_of_month",
+            "type": "number"
+        },
+        {
+            "name": "subscriptionPlans",
+            "baseName": "subscription_plans",
+            "type": "Array<SubscriptionPlan>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(Subscription.attributeTypeMap);
+    }
 }
 
 export namespace Subscription {
@@ -7020,6 +20567,15 @@ export namespace Subscription {
     }
 }
 export class VideoGroupProperty extends FileGroupProperty {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(VideoGroupProperty.attributeTypeMap);
+    }
 }
 
 export class VideoGroupPropertyDefinitionResource extends FileGroupPropertyDefinitionResource {
@@ -7047,11 +20603,463 @@ export class VideoGroupPropertyDefinitionResource extends FileGroupPropertyDefin
     * If provided, the minimum width of each video
     */
     'minWidth': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "maxHeight",
+            "baseName": "max_height",
+            "type": "number"
+        },
+        {
+            "name": "maxLength",
+            "baseName": "max_length",
+            "type": "number"
+        },
+        {
+            "name": "maxWidth",
+            "baseName": "max_width",
+            "type": "number"
+        },
+        {
+            "name": "minHeight",
+            "baseName": "min_height",
+            "type": "number"
+        },
+        {
+            "name": "minLength",
+            "baseName": "min_length",
+            "type": "number"
+        },
+        {
+            "name": "minWidth",
+            "baseName": "min_width",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(VideoGroupPropertyDefinitionResource.attributeTypeMap);
+    }
 }
 
 export class VideoProperty extends FileProperty {
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+    ];
+
+    static getAttributeTypeMap() {
+        return super.getAttributeTypeMap().concat(VideoProperty.attributeTypeMap);
+    }
 }
 
+
+let enumsMap = {
+    "ActionResource.CategoryEnum": ActionResource.CategoryEnum,
+    "ActivityOccurrenceResource.RewardStatusEnum": ActivityOccurrenceResource.RewardStatusEnum,
+    "ActivityOccurrenceResource.StatusEnum": ActivityOccurrenceResource.StatusEnum,
+    "ActivityUserResource.StatusEnum": ActivityUserResource.StatusEnum,
+    "BreTriggerResource.CategoryEnum": BreTriggerResource.CategoryEnum,
+    "CampaignResource.RewardStatusEnum": CampaignResource.RewardStatusEnum,
+    "Cart.StatusEnum": Cart.StatusEnum,
+    "CartSummary.StatusEnum": CartSummary.StatusEnum,
+    "CatalogSale.DiscountTypeEnum": CatalogSale.DiscountTypeEnum,
+    "ChallengeEventResource.RewardStatusEnum": ChallengeEventResource.RewardStatusEnum,
+    "CouponDefinition.DiscountTypeEnum": CouponDefinition.DiscountTypeEnum,
+    "CouponDefinition.TypeEnum": CouponDefinition.TypeEnum,
+    "CurrencyResource.TypeEnum": CurrencyResource.TypeEnum,
+    "DeltaResource.StateEnum": DeltaResource.StateEnum,
+    "DeviceResource.ConditionEnum": DeviceResource.ConditionEnum,
+    "DeviceResource.StatusEnum": DeviceResource.StatusEnum,
+    "FlagReportResource.ResolutionEnum": FlagReportResource.ResolutionEnum,
+    "GroupMemberResource.StatusEnum": GroupMemberResource.StatusEnum,
+    "GroupResource.StatusEnum": GroupResource.StatusEnum,
+    "ImportJobResource.StatusEnum": ImportJobResource.StatusEnum,
+    "InventorySubscriptionResource.InventoryStatusEnum": InventorySubscriptionResource.InventoryStatusEnum,
+    "Order.DirectionEnum": Order.DirectionEnum,
+    "Order.NullHandlingEnum": Order.NullHandlingEnum,
+    "PaymentMethodResource.PaymentTypeEnum": PaymentMethodResource.PaymentTypeEnum,
+    "PollResource.TypeEnum": PollResource.TypeEnum,
+    "PropertyFieldResource.InnerTypeEnum": PropertyFieldResource.InnerTypeEnum,
+    "PropertyFieldResource.TypeEnum": PropertyFieldResource.TypeEnum,
+    "Schedule.DurationUnitEnum": Schedule.DurationUnitEnum,
+    "Schedule.RepeatEnum": Schedule.RepeatEnum,
+    "SubscriptionPlan.AvailabilityEnum": SubscriptionPlan.AvailabilityEnum,
+    "SubscriptionPlan.FirstBillUnitOfTimeEnum": SubscriptionPlan.FirstBillUnitOfTimeEnum,
+    "SubscriptionPlan.RenewPeriodUnitOfTimeEnum": SubscriptionPlan.RenewPeriodUnitOfTimeEnum,
+    "SubscriptionPlanResource.BillingCycleUnitEnum": SubscriptionPlanResource.BillingCycleUnitEnum,
+    "SubscriptionPlanResource.FirstBillingCycleUnitEnum": SubscriptionPlanResource.FirstBillingCycleUnitEnum,
+    "SubscriptionResource.AvailabilityEnum": SubscriptionResource.AvailabilityEnum,
+    "SubscriptionResource.GeoPolicyTypeEnum": SubscriptionResource.GeoPolicyTypeEnum,
+    "TransactionResource.SourceEnum": TransactionResource.SourceEnum,
+    "UserInventoryResource.StatusEnum": UserInventoryResource.StatusEnum,
+    "VariableTypeResource.BaseEnum": VariableTypeResource.BaseEnum,
+    "VideoResource.PrivacyEnum": VideoResource.PrivacyEnum,
+    "WalletTransactionResource.SourceEnum": WalletTransactionResource.SourceEnum,
+    "StoreItem.GeoPolicyTypeEnum": StoreItem.GeoPolicyTypeEnum,
+    "CouponItem.CouponTypeHintEnum": CouponItem.CouponTypeHintEnum,
+    "CouponItem.DiscountTypeEnum": CouponItem.DiscountTypeEnum,
+    "Subscription.AvailabilityEnum": Subscription.AvailabilityEnum,
+}
+
+let typeMap = {
+    "AchievementDefinitionResource": AchievementDefinitionResource,
+    "ActionResource": ActionResource,
+    "ActionVariableResource": ActionVariableResource,
+    "ActivityEntitlementResource": ActivityEntitlementResource,
+    "ActivityOccurrenceCreationFailure": ActivityOccurrenceCreationFailure,
+    "ActivityOccurrenceJoinResult": ActivityOccurrenceJoinResult,
+    "ActivityOccurrenceResource": ActivityOccurrenceResource,
+    "ActivityOccurrenceResults": ActivityOccurrenceResults,
+    "ActivityOccurrenceResultsResource": ActivityOccurrenceResultsResource,
+    "ActivityResource": ActivityResource,
+    "ActivityUserResource": ActivityUserResource,
+    "AddressResource": AddressResource,
+    "AggregateCountResource": AggregateCountResource,
+    "AggregateInvoiceReportResource": AggregateInvoiceReportResource,
+    "AmazonS3Activity": AmazonS3Activity,
+    "AnswerResource": AnswerResource,
+    "ApplyPaymentRequest": ApplyPaymentRequest,
+    "ArticleResource": ArticleResource,
+    "ArtistResource": ArtistResource,
+    "AvailableSettingResource": AvailableSettingResource,
+    "BareActivityResource": BareActivityResource,
+    "BareChallengeActivityResource": BareChallengeActivityResource,
+    "Batch": Batch,
+    "BatchRequest": BatchRequest,
+    "BatchResult": BatchResult,
+    "BatchReturn": BatchReturn,
+    "Behavior": Behavior,
+    "BehaviorDefinitionResource": BehaviorDefinitionResource,
+    "BillingReport": BillingReport,
+    "BooleanResource": BooleanResource,
+    "BreCategoryResource": BreCategoryResource,
+    "BreEvent": BreEvent,
+    "BreEventLog": BreEventLog,
+    "BreGlobalResource": BreGlobalResource,
+    "BreGlobalScopeDefinition": BreGlobalScopeDefinition,
+    "BreRule": BreRule,
+    "BreRuleLog": BreRuleLog,
+    "BreTriggerParameterDefinition": BreTriggerParameterDefinition,
+    "BreTriggerResource": BreTriggerResource,
+    "BroadcastableEvent": BroadcastableEvent,
+    "BundledSku": BundledSku,
+    "CampaignResource": CampaignResource,
+    "Cart": Cart,
+    "CartItemRequest": CartItemRequest,
+    "CartLineItem": CartLineItem,
+    "CartShippableResponse": CartShippableResponse,
+    "CartShippingAddressRequest": CartShippingAddressRequest,
+    "CartShippingOption": CartShippingOption,
+    "CartSummary": CartSummary,
+    "CatalogSale": CatalogSale,
+    "CategoryResource": CategoryResource,
+    "ChallengeActivityResource": ChallengeActivityResource,
+    "ChallengeEventParticipantResource": ChallengeEventParticipantResource,
+    "ChallengeEventResource": ChallengeEventResource,
+    "ChallengeResource": ChallengeResource,
+    "ClientResource": ClientResource,
+    "CollectionCountry": CollectionCountry,
+    "Collectionstring": Collectionstring,
+    "CommentResource": CommentResource,
+    "CommentSearch": CommentSearch,
+    "Config": Config,
+    "ConfigLookupResource": ConfigLookupResource,
+    "ConstantResource": ConstantResource,
+    "ContributionResource": ContributionResource,
+    "Country": Country,
+    "CountryResource": CountryResource,
+    "CountryTaxResource": CountryTaxResource,
+    "CouponDefinition": CouponDefinition,
+    "CreateBillingAgreementRequest": CreateBillingAgreementRequest,
+    "CreatePayPalPaymentRequest": CreatePayPalPaymentRequest,
+    "CurrencyResource": CurrencyResource,
+    "CustomerConfig": CustomerConfig,
+    "DatabaseConfig": DatabaseConfig,
+    "DateOperationResource": DateOperationResource,
+    "DeltaResource": DeltaResource,
+    "DeviceResource": DeviceResource,
+    "Discount": Discount,
+    "DispositionCount": DispositionCount,
+    "DispositionResource": DispositionResource,
+    "DoubleOperationResource": DoubleOperationResource,
+    "EntitlementGrantRequest": EntitlementGrantRequest,
+    "ErrorResource": ErrorResource,
+    "EventContextResource": EventContextResource,
+    "ExpressionResource": ExpressionResource,
+    "Expressionobject": Expressionobject,
+    "FacebookToken": FacebookToken,
+    "FattMerchantPaymentMethod": FattMerchantPaymentMethod,
+    "FattMerchantPaymentMethodRequest": FattMerchantPaymentMethodRequest,
+    "FinalizeBillingAgreementRequest": FinalizeBillingAgreementRequest,
+    "FinalizePayPalPaymentRequest": FinalizePayPalPaymentRequest,
+    "FlagReportResource": FlagReportResource,
+    "FlagResource": FlagResource,
+    "ForwardLog": ForwardLog,
+    "FulfillmentType": FulfillmentType,
+    "GlobalCheckAndIncrementResource": GlobalCheckAndIncrementResource,
+    "GlobalResource": GlobalResource,
+    "GooglePaymentRequest": GooglePaymentRequest,
+    "GoogleToken": GoogleToken,
+    "GrantTypeResource": GrantTypeResource,
+    "GroupMemberResource": GroupMemberResource,
+    "GroupResource": GroupResource,
+    "IOConfig": IOConfig,
+    "ImportJobOutputResource": ImportJobOutputResource,
+    "ImportJobResource": ImportJobResource,
+    "IntWrapper": IntWrapper,
+    "IntegerOperationResource": IntegerOperationResource,
+    "InventorySubscriptionResource": InventorySubscriptionResource,
+    "InvoiceCreateRequest": InvoiceCreateRequest,
+    "InvoiceItemResource": InvoiceItemResource,
+    "InvoiceLogEntry": InvoiceLogEntry,
+    "InvoicePaymentStatusRequest": InvoicePaymentStatusRequest,
+    "InvoiceResource": InvoiceResource,
+    "Item": Item,
+    "ItemBehaviorDefinitionResource": ItemBehaviorDefinitionResource,
+    "ItemTemplateResource": ItemTemplateResource,
+    "KeyValuePairstringstring": KeyValuePairstringstring,
+    "LeaderboardEntryResource": LeaderboardEntryResource,
+    "LeaderboardResource": LeaderboardResource,
+    "LevelingResource": LevelingResource,
+    "LimitedGettableGroup": LimitedGettableGroup,
+    "Localizer": Localizer,
+    "LocationLogResource": LocationLogResource,
+    "LookupResource": LookupResource,
+    "LookupTypeResource": LookupTypeResource,
+    "Maintenance": Maintenance,
+    "MapResource": MapResource,
+    "Mapstringobject": Mapstringobject,
+    "MetricResource": MetricResource,
+    "MongoDatabaseConfig": MongoDatabaseConfig,
+    "NestedCategory": NestedCategory,
+    "NewPasswordRequest": NewPasswordRequest,
+    "OAuth2Resource": OAuth2Resource,
+    "OauthAccessTokenResource": OauthAccessTokenResource,
+    "Operator": Operator,
+    "OptimalPaymentRequest": OptimalPaymentRequest,
+    "Order": Order,
+    "PageResourceAchievementDefinitionResource": PageResourceAchievementDefinitionResource,
+    "PageResourceAggregateCountResource": PageResourceAggregateCountResource,
+    "PageResourceAggregateInvoiceReportResource": PageResourceAggregateInvoiceReportResource,
+    "PageResourceArticleResource": PageResourceArticleResource,
+    "PageResourceArtistResource": PageResourceArtistResource,
+    "PageResourceBareActivityResource": PageResourceBareActivityResource,
+    "PageResourceBareChallengeActivityResource": PageResourceBareChallengeActivityResource,
+    "PageResourceBillingReport": PageResourceBillingReport,
+    "PageResourceBreCategoryResource": PageResourceBreCategoryResource,
+    "PageResourceBreEventLog": PageResourceBreEventLog,
+    "PageResourceBreGlobalResource": PageResourceBreGlobalResource,
+    "PageResourceBreRule": PageResourceBreRule,
+    "PageResourceBreTriggerResource": PageResourceBreTriggerResource,
+    "PageResourceCampaignResource": PageResourceCampaignResource,
+    "PageResourceCartSummary": PageResourceCartSummary,
+    "PageResourceCatalogSale": PageResourceCatalogSale,
+    "PageResourceCategoryResource": PageResourceCategoryResource,
+    "PageResourceChallengeEventParticipantResource": PageResourceChallengeEventParticipantResource,
+    "PageResourceChallengeEventResource": PageResourceChallengeEventResource,
+    "PageResourceChallengeResource": PageResourceChallengeResource,
+    "PageResourceClientResource": PageResourceClientResource,
+    "PageResourceCommentResource": PageResourceCommentResource,
+    "PageResourceConfig": PageResourceConfig,
+    "PageResourceCountryTaxResource": PageResourceCountryTaxResource,
+    "PageResourceCurrencyResource": PageResourceCurrencyResource,
+    "PageResourceDeviceResource": PageResourceDeviceResource,
+    "PageResourceDispositionResource": PageResourceDispositionResource,
+    "PageResourceEntitlementItem": PageResourceEntitlementItem,
+    "PageResourceFlagReportResource": PageResourceFlagReportResource,
+    "PageResourceForwardLog": PageResourceForwardLog,
+    "PageResourceFulfillmentType": PageResourceFulfillmentType,
+    "PageResourceGroupMemberResource": PageResourceGroupMemberResource,
+    "PageResourceGroupResource": PageResourceGroupResource,
+    "PageResourceImportJobResource": PageResourceImportJobResource,
+    "PageResourceInvoiceLogEntry": PageResourceInvoiceLogEntry,
+    "PageResourceInvoiceResource": PageResourceInvoiceResource,
+    "PageResourceItemTemplateResource": PageResourceItemTemplateResource,
+    "PageResourceLevelingResource": PageResourceLevelingResource,
+    "PageResourceLocationLogResource": PageResourceLocationLogResource,
+    "PageResourceMapstringobject": PageResourceMapstringobject,
+    "PageResourceOauthAccessTokenResource": PageResourceOauthAccessTokenResource,
+    "PageResourcePermissionResource": PageResourcePermissionResource,
+    "PageResourcePollResource": PageResourcePollResource,
+    "PageResourceQuestionResource": PageResourceQuestionResource,
+    "PageResourceQuestionTemplateResource": PageResourceQuestionTemplateResource,
+    "PageResourceRevenueCountryReportResource": PageResourceRevenueCountryReportResource,
+    "PageResourceRevenueProductReportResource": PageResourceRevenueProductReportResource,
+    "PageResourceRewardSetResource": PageResourceRewardSetResource,
+    "PageResourceRoleResource": PageResourceRoleResource,
+    "PageResourceSavedAddressResource": PageResourceSavedAddressResource,
+    "PageResourceSimpleReferenceResourceobject": PageResourceSimpleReferenceResourceobject,
+    "PageResourceSimpleUserResource": PageResourceSimpleUserResource,
+    "PageResourceSimpleWallet": PageResourceSimpleWallet,
+    "PageResourceStateTaxResource": PageResourceStateTaxResource,
+    "PageResourceStoreItem": PageResourceStoreItem,
+    "PageResourceStoreItemTemplateResource": PageResourceStoreItemTemplateResource,
+    "PageResourceSubscriptionResource": PageResourceSubscriptionResource,
+    "PageResourceSubscriptionTemplateResource": PageResourceSubscriptionTemplateResource,
+    "PageResourceTemplateResource": PageResourceTemplateResource,
+    "PageResourceTransactionResource": PageResourceTransactionResource,
+    "PageResourceUsageInfo": PageResourceUsageInfo,
+    "PageResourceUserAchievementGroupResource": PageResourceUserAchievementGroupResource,
+    "PageResourceUserActionLog": PageResourceUserActionLog,
+    "PageResourceUserBaseResource": PageResourceUserBaseResource,
+    "PageResourceUserInventoryResource": PageResourceUserInventoryResource,
+    "PageResourceUserItemLogResource": PageResourceUserItemLogResource,
+    "PageResourceUserLevelingResource": PageResourceUserLevelingResource,
+    "PageResourceUserRelationshipResource": PageResourceUserRelationshipResource,
+    "PageResourceVendorResource": PageResourceVendorResource,
+    "PageResourceVideoRelationshipResource": PageResourceVideoRelationshipResource,
+    "PageResourceVideoResource": PageResourceVideoResource,
+    "PageResourceWalletTotalResponse": PageResourceWalletTotalResponse,
+    "PageResourceWalletTransactionResource": PageResourceWalletTransactionResource,
+    "PageResourcestring": PageResourcestring,
+    "ParameterResource": ParameterResource,
+    "PasswordResetRequest": PasswordResetRequest,
+    "PayBySavedMethodRequest": PayBySavedMethodRequest,
+    "PaymentAuthorizationResource": PaymentAuthorizationResource,
+    "PaymentMethodDetails": PaymentMethodDetails,
+    "PaymentMethodResource": PaymentMethodResource,
+    "PaymentMethodTypeResource": PaymentMethodTypeResource,
+    "PermissionResource": PermissionResource,
+    "PollAnswerResource": PollAnswerResource,
+    "PollResource": PollResource,
+    "PollResponseResource": PollResponseResource,
+    "PredicateOperation": PredicateOperation,
+    "PredicateResource": PredicateResource,
+    "Property": Property,
+    "PropertyDefinitionResource": PropertyDefinitionResource,
+    "PropertyFieldListResource": PropertyFieldListResource,
+    "PropertyFieldResource": PropertyFieldResource,
+    "QuestionResource": QuestionResource,
+    "QuestionTemplateResource": QuestionTemplateResource,
+    "QuickBuyRequest": QuickBuyRequest,
+    "RawEmailResource": RawEmailResource,
+    "RawSMSResource": RawSMSResource,
+    "ReactivateSubscriptionRequest": ReactivateSubscriptionRequest,
+    "RefundRequest": RefundRequest,
+    "RefundResource": RefundResource,
+    "Result": Result,
+    "RevenueCountryReportResource": RevenueCountryReportResource,
+    "RevenueProductReportResource": RevenueProductReportResource,
+    "RevenueReportResource": RevenueReportResource,
+    "RewardCurrencyResource": RewardCurrencyResource,
+    "RewardItemResource": RewardItemResource,
+    "RewardSetResource": RewardSetResource,
+    "RoleResource": RoleResource,
+    "S3Config": S3Config,
+    "SampleCountriesResponse": SampleCountriesResponse,
+    "SavedAddressResource": SavedAddressResource,
+    "Schedule": Schedule,
+    "SearchReferenceMapping": SearchReferenceMapping,
+    "SelectedSettingResource": SelectedSettingResource,
+    "SettingOption": SettingOption,
+    "SimpleReferenceResourceint": SimpleReferenceResourceint,
+    "SimpleReferenceResourcelong": SimpleReferenceResourcelong,
+    "SimpleReferenceResourceobject": SimpleReferenceResourceobject,
+    "SimpleReferenceResourcestring": SimpleReferenceResourcestring,
+    "SimpleUserResource": SimpleUserResource,
+    "SimpleWallet": SimpleWallet,
+    "Sku": Sku,
+    "SkuRequest": SkuRequest,
+    "SqlDatabaseConfig": SqlDatabaseConfig,
+    "StateResource": StateResource,
+    "StateTaxResource": StateTaxResource,
+    "StoreItemTemplateResource": StoreItemTemplateResource,
+    "StringOperationResource": StringOperationResource,
+    "StringWrapper": StringWrapper,
+    "StripeCreatePaymentMethod": StripeCreatePaymentMethod,
+    "StripePaymentRequest": StripePaymentRequest,
+    "SubscriptionCreditResource": SubscriptionCreditResource,
+    "SubscriptionPlan": SubscriptionPlan,
+    "SubscriptionPlanResource": SubscriptionPlanResource,
+    "SubscriptionPriceOverrideRequest": SubscriptionPriceOverrideRequest,
+    "SubscriptionResource": SubscriptionResource,
+    "SubscriptionTemplateResource": SubscriptionTemplateResource,
+    "TemplateEmailResource": TemplateEmailResource,
+    "TemplateResource": TemplateResource,
+    "TemplateSMSResource": TemplateSMSResource,
+    "TierResource": TierResource,
+    "TokenDetailsResource": TokenDetailsResource,
+    "TransactionResource": TransactionResource,
+    "TypeHintLookupResource": TypeHintLookupResource,
+    "UsageInfo": UsageInfo,
+    "UserAchievementGroupResource": UserAchievementGroupResource,
+    "UserAchievementResource": UserAchievementResource,
+    "UserActionLog": UserActionLog,
+    "UserActivityResults": UserActivityResults,
+    "UserActivityResultsResource": UserActivityResultsResource,
+    "UserBaseResource": UserBaseResource,
+    "UserInventoryAddRequest": UserInventoryAddRequest,
+    "UserInventoryResource": UserInventoryResource,
+    "UserItemLogResource": UserItemLogResource,
+    "UserLevelingResource": UserLevelingResource,
+    "UserRelationshipReferenceResource": UserRelationshipReferenceResource,
+    "UserRelationshipResource": UserRelationshipResource,
+    "UserResource": UserResource,
+    "UsernameLookupResource": UsernameLookupResource,
+    "VariableTypeResource": VariableTypeResource,
+    "VendorEmailLookupResource": VendorEmailLookupResource,
+    "VendorResource": VendorResource,
+    "Version": Version,
+    "VideoRelationshipResource": VideoRelationshipResource,
+    "VideoResource": VideoResource,
+    "WalletAlterRequest": WalletAlterRequest,
+    "WalletTotalResponse": WalletTotalResponse,
+    "WalletTransactionResource": WalletTransactionResource,
+    "XsollaPaymentRequest": XsollaPaymentRequest,
+    "AudioPropertyDefinitionResource": AudioPropertyDefinitionResource,
+    "BooleanProperty": BooleanProperty,
+    "BooleanPropertyDefinitionResource": BooleanPropertyDefinitionResource,
+    "CacheClearEvent": CacheClearEvent,
+    "Consumable": Consumable,
+    "DateProperty": DateProperty,
+    "DatePropertyDefinitionResource": DatePropertyDefinitionResource,
+    "DoubleProperty": DoubleProperty,
+    "DoublePropertyDefinitionResource": DoublePropertyDefinitionResource,
+    "EntitlementItem": EntitlementItem,
+    "Expirable": Expirable,
+    "FileGroupProperty": FileGroupProperty,
+    "FileGroupPropertyDefinitionResource": FileGroupPropertyDefinitionResource,
+    "FileProperty": FileProperty,
+    "FilePropertyDefinitionResource": FilePropertyDefinitionResource,
+    "FormattedTextProperty": FormattedTextProperty,
+    "FormattedTextPropertyDefinitionResource": FormattedTextPropertyDefinitionResource,
+    "Fulfillable": Fulfillable,
+    "GuestPlayable": GuestPlayable,
+    "ImagePropertyDefinitionResource": ImagePropertyDefinitionResource,
+    "IntegerProperty": IntegerProperty,
+    "IntegerPropertyDefinitionResource": IntegerPropertyDefinitionResource,
+    "LimitedGettable": LimitedGettable,
+    "LogLevelEvent": LogLevelEvent,
+    "LongProperty": LongProperty,
+    "LongPropertyDefinitionResource": LongPropertyDefinitionResource,
+    "NewCustomerEvent": NewCustomerEvent,
+    "PreReqEntitlement": PreReqEntitlement,
+    "PriceOverridable": PriceOverridable,
+    "RemoveCustomerEvent": RemoveCustomerEvent,
+    "Spendable": Spendable,
+    "StoreItem": StoreItem,
+    "TextProperty": TextProperty,
+    "TextPropertyDefinitionResource": TextPropertyDefinitionResource,
+    "TimePeriodGettable": TimePeriodGettable,
+    "TimePeriodUsable": TimePeriodUsable,
+    "VideoPropertyDefinitionResource": VideoPropertyDefinitionResource,
+    "AudioGroupProperty": AudioGroupProperty,
+    "AudioGroupPropertyDefinitionResource": AudioGroupPropertyDefinitionResource,
+    "AudioProperty": AudioProperty,
+    "BundleItem": BundleItem,
+    "CouponItem": CouponItem,
+    "ImageGroupProperty": ImageGroupProperty,
+    "ImageGroupPropertyDefinitionResource": ImageGroupPropertyDefinitionResource,
+    "ImageProperty": ImageProperty,
+    "ShippingItem": ShippingItem,
+    "Subscription": Subscription,
+    "VideoGroupProperty": VideoGroupProperty,
+    "VideoGroupPropertyDefinitionResource": VideoGroupPropertyDefinitionResource,
+    "VideoProperty": VideoProperty,
+}
 
 export interface Authentication {
     /**
@@ -7178,26 +21186,27 @@ export class AccessTokenApi {
             throw new Error('Required parameter clientId was null or undefined when calling getOAuthToken.');
         }
 
+
         let useFormData = false;
 
         if (grantType !== undefined) {
-            formParams['grant_type'] = grantType;
+            formParams['grant_type'] = ObjectSerializer.serialize(grantType, "string");
         }
 
         if (clientId !== undefined) {
-            formParams['client_id'] = clientId;
+            formParams['client_id'] = ObjectSerializer.serialize(clientId, "string");
         }
 
         if (clientSecret !== undefined) {
-            formParams['client_secret'] = clientSecret;
+            formParams['client_secret'] = ObjectSerializer.serialize(clientSecret, "string");
         }
 
         if (username !== undefined) {
-            formParams['username'] = username;
+            formParams['username'] = ObjectSerializer.serialize(username, "string");
         }
 
         if (password !== undefined) {
-            formParams['password'] = password;
+            formParams['password'] = ObjectSerializer.serialize(password, "string");
         }
 
         let requestOptions: request.Options = {
@@ -7223,6 +21232,7 @@ export class AccessTokenApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "OAuth2Resource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -7294,6 +21304,7 @@ export class ActivitiesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -7303,7 +21314,7 @@ export class ActivitiesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: activityResource,
+            body: ObjectSerializer.serialize(activityResource, "ActivityResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -7322,6 +21333,7 @@ export class ActivitiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ActivityResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -7345,8 +21357,9 @@ export class ActivitiesApi {
 
 
         if (test !== undefined) {
-            queryParameters['test'] = test;
+            queryParameters['test'] = ObjectSerializer.serialize(test, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -7357,7 +21370,7 @@ export class ActivitiesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: activityOccurrenceResource,
+            body: ObjectSerializer.serialize(activityOccurrenceResource, "ActivityOccurrenceResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -7376,6 +21389,7 @@ export class ActivitiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ActivityOccurrenceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -7397,6 +21411,7 @@ export class ActivitiesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -7406,7 +21421,7 @@ export class ActivitiesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: activityTemplateResource,
+            body: ObjectSerializer.serialize(activityTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -7425,6 +21440,7 @@ export class ActivitiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -7451,6 +21467,7 @@ export class ActivitiesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteActivity.');
         }
+
 
         let useFormData = false;
 
@@ -7508,8 +21525,9 @@ export class ActivitiesApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -7565,28 +21583,29 @@ export class ActivitiesApi {
 
 
         if (filterTemplate !== undefined) {
-            queryParameters['filter_template'] = filterTemplate;
+            queryParameters['filter_template'] = ObjectSerializer.serialize(filterTemplate, "boolean");
         }
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (filterId !== undefined) {
-            queryParameters['filter_id'] = filterId;
+            queryParameters['filter_id'] = ObjectSerializer.serialize(filterId, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -7613,6 +21632,7 @@ export class ActivitiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceBareActivityResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -7640,6 +21660,7 @@ export class ActivitiesApi {
             throw new Error('Required parameter id was null or undefined when calling getActivity.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -7665,6 +21686,7 @@ export class ActivitiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ActivityResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -7691,6 +21713,7 @@ export class ActivitiesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getActivityTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -7719,6 +21742,7 @@ export class ActivitiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -7743,16 +21767,17 @@ export class ActivitiesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -7781,6 +21806,7 @@ export class ActivitiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -7809,6 +21835,7 @@ export class ActivitiesApi {
             throw new Error('Required parameter activityOccurrenceId was null or undefined when calling setActivityOccurrenceResults.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -7818,7 +21845,7 @@ export class ActivitiesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: activityOccurrenceResults,
+            body: ObjectSerializer.serialize(activityOccurrenceResults, "ActivityOccurrenceResultsResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -7837,6 +21864,7 @@ export class ActivitiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ActivityOccurrenceResults");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -7865,6 +21893,7 @@ export class ActivitiesApi {
             throw new Error('Required parameter id was null or undefined when calling updateActivity.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -7874,7 +21903,7 @@ export class ActivitiesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: activityResource,
+            body: ObjectSerializer.serialize(activityResource, "ActivityResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -7893,6 +21922,7 @@ export class ActivitiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ActivityResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -7921,6 +21951,7 @@ export class ActivitiesApi {
             throw new Error('Required parameter activityOccurrenceId was null or undefined when calling updateActivityOccurrence.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -7930,7 +21961,7 @@ export class ActivitiesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: activityCccurrenceStatus,
+            body: ObjectSerializer.serialize(activityCccurrenceStatus, "string")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -7977,6 +22008,7 @@ export class ActivitiesApi {
             throw new Error('Required parameter id was null or undefined when calling updateActivityTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -7986,7 +22018,7 @@ export class ActivitiesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: activityTemplateResource,
+            body: ObjectSerializer.serialize(activityTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -8005,6 +22037,7 @@ export class ActivitiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8078,12 +22111,13 @@ export class AmazonWebServicesS3Api {
 
 
         if (filename !== undefined) {
-            queryParameters['filename'] = filename;
+            queryParameters['filename'] = ObjectSerializer.serialize(filename, "string");
         }
 
         if (contentType !== undefined) {
-            queryParameters['content_type'] = contentType;
+            queryParameters['content_type'] = ObjectSerializer.serialize(contentType, "string");
         }
+
 
         let useFormData = false;
 
@@ -8112,6 +22146,7 @@ export class AmazonWebServicesS3Api {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "AmazonS3Activity");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8183,6 +22218,7 @@ export class AuthClientsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -8192,7 +22228,7 @@ export class AuthClientsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: clientResource,
+            body: ObjectSerializer.serialize(clientResource, "ClientResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -8211,6 +22247,7 @@ export class AuthClientsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ClientResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8237,6 +22274,7 @@ export class AuthClientsApi {
         if (clientKey === null || clientKey === undefined) {
             throw new Error('Required parameter clientKey was null or undefined when calling deleteClient.');
         }
+
 
         let useFormData = false;
 
@@ -8292,6 +22330,7 @@ export class AuthClientsApi {
             throw new Error('Required parameter clientKey was null or undefined when calling getClient.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -8319,6 +22358,7 @@ export class AuthClientsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ClientResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8337,6 +22377,7 @@ export class AuthClientsApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -8366,6 +22407,7 @@ export class AuthClientsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<GrantTypeResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8390,16 +22432,17 @@ export class AuthClientsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -8428,6 +22471,7 @@ export class AuthClientsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceClientResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8456,6 +22500,7 @@ export class AuthClientsApi {
             throw new Error('Required parameter clientKey was null or undefined when calling setClientGrantTypes.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -8465,7 +22510,7 @@ export class AuthClientsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: grantList,
+            body: ObjectSerializer.serialize(grantList, "Array<string>")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -8512,6 +22557,7 @@ export class AuthClientsApi {
             throw new Error('Required parameter clientKey was null or undefined when calling setClientRedirectUris.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -8521,7 +22567,7 @@ export class AuthClientsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: redirectList,
+            body: ObjectSerializer.serialize(redirectList, "Array<string>")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -8568,6 +22614,7 @@ export class AuthClientsApi {
             throw new Error('Required parameter clientKey was null or undefined when calling updateClient.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -8577,7 +22624,7 @@ export class AuthClientsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: clientResource,
+            body: ObjectSerializer.serialize(clientResource, "ClientResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -8596,6 +22643,7 @@ export class AuthClientsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ClientResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8667,6 +22715,7 @@ export class AuthPermissionsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -8676,7 +22725,7 @@ export class AuthPermissionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: permissionResource,
+            body: ObjectSerializer.serialize(permissionResource, "PermissionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -8695,6 +22744,7 @@ export class AuthPermissionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PermissionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8724,8 +22774,9 @@ export class AuthPermissionsApi {
         }
 
         if (force !== undefined) {
-            queryParameters['force'] = force;
+            queryParameters['force'] = ObjectSerializer.serialize(force, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -8781,6 +22832,7 @@ export class AuthPermissionsApi {
             throw new Error('Required parameter permission was null or undefined when calling getPermission.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -8808,6 +22860,7 @@ export class AuthPermissionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PermissionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8832,16 +22885,17 @@ export class AuthPermissionsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -8870,6 +22924,7 @@ export class AuthPermissionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourcePermissionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8898,6 +22953,7 @@ export class AuthPermissionsApi {
             throw new Error('Required parameter permission was null or undefined when calling updatePermission.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -8907,7 +22963,7 @@ export class AuthPermissionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: permissionResource,
+            body: ObjectSerializer.serialize(permissionResource, "PermissionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -8926,6 +22982,7 @@ export class AuthPermissionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PermissionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -8997,6 +23054,7 @@ export class AuthRolesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -9006,7 +23064,7 @@ export class AuthRolesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: roleResource,
+            body: ObjectSerializer.serialize(roleResource, "RoleResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -9025,6 +23083,7 @@ export class AuthRolesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RoleResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9054,8 +23113,9 @@ export class AuthRolesApi {
         }
 
         if (force !== undefined) {
-            queryParameters['force'] = force;
+            queryParameters['force'] = ObjectSerializer.serialize(force, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -9111,6 +23171,7 @@ export class AuthRolesApi {
             throw new Error('Required parameter clientKey was null or undefined when calling getClientRoles.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -9138,6 +23199,7 @@ export class AuthRolesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<RoleResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9164,6 +23226,7 @@ export class AuthRolesApi {
         if (role === null || role === undefined) {
             throw new Error('Required parameter role was null or undefined when calling getRole.');
         }
+
 
         let useFormData = false;
 
@@ -9192,6 +23255,7 @@ export class AuthRolesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RoleResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9204,28 +23268,39 @@ export class AuthRolesApi {
     /**
      * 
      * @summary List and search roles
+     * @param filterName Filter for roles that have a name starting with specified string
+     * @param filterRole Filter for roles that have a role starting with specified string
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
      */
-    public getRoles (size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceRoleResource;  }> {
+    public getRoles (filterName?: string, filterRole?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceRoleResource;  }> {
         const localVarPath = this.basePath + '/auth/roles';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (filterName !== undefined) {
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
+        }
+
+        if (filterRole !== undefined) {
+            queryParameters['filter_role'] = ObjectSerializer.serialize(filterRole, "string");
+        }
+
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -9254,6 +23329,7 @@ export class AuthRolesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceRoleResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9280,6 +23356,7 @@ export class AuthRolesApi {
         if (userId === null || userId === undefined) {
             throw new Error('Required parameter userId was null or undefined when calling getUserRoles.');
         }
+
 
         let useFormData = false;
 
@@ -9308,6 +23385,7 @@ export class AuthRolesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<RoleResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9336,6 +23414,7 @@ export class AuthRolesApi {
             throw new Error('Required parameter clientKey was null or undefined when calling setClientRoles.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -9345,7 +23424,7 @@ export class AuthRolesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: rolesList,
+            body: ObjectSerializer.serialize(rolesList, "Array<string>")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -9364,6 +23443,7 @@ export class AuthRolesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ClientResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9392,6 +23472,7 @@ export class AuthRolesApi {
             throw new Error('Required parameter role was null or undefined when calling setPermissionsForRole.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -9401,7 +23482,7 @@ export class AuthRolesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: permissionsList,
+            body: ObjectSerializer.serialize(permissionsList, "Array<string>")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -9420,6 +23501,7 @@ export class AuthRolesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RoleResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9448,6 +23530,7 @@ export class AuthRolesApi {
             throw new Error('Required parameter userId was null or undefined when calling setUserRoles.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -9457,7 +23540,7 @@ export class AuthRolesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: rolesList,
+            body: ObjectSerializer.serialize(rolesList, "Array<string>")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -9476,6 +23559,7 @@ export class AuthRolesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9504,6 +23588,7 @@ export class AuthRolesApi {
             throw new Error('Required parameter role was null or undefined when calling updateRole.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -9513,7 +23598,7 @@ export class AuthRolesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: roleResource,
+            body: ObjectSerializer.serialize(roleResource, "RoleResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -9532,6 +23617,7 @@ export class AuthRolesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RoleResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9605,12 +23691,13 @@ export class AuthTokensApi {
 
 
         if (username !== undefined) {
-            queryParameters['username'] = username;
+            queryParameters['username'] = ObjectSerializer.serialize(username, "string");
         }
 
         if (clientId !== undefined) {
-            queryParameters['client_id'] = clientId;
+            queryParameters['client_id'] = ObjectSerializer.serialize(clientId, "string");
         }
+
 
         let useFormData = false;
 
@@ -9673,6 +23760,7 @@ export class AuthTokensApi {
             throw new Error('Required parameter clientId was null or undefined when calling getToken.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -9700,6 +23788,7 @@ export class AuthTokensApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "OauthAccessTokenResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9726,24 +23815,25 @@ export class AuthTokensApi {
 
 
         if (filterClientId !== undefined) {
-            queryParameters['filter_client_id'] = filterClientId;
+            queryParameters['filter_client_id'] = ObjectSerializer.serialize(filterClientId, "string");
         }
 
         if (filterUsername !== undefined) {
-            queryParameters['filter_username'] = filterUsername;
+            queryParameters['filter_username'] = ObjectSerializer.serialize(filterUsername, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -9772,6 +23862,7 @@ export class AuthTokensApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceOauthAccessTokenResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9847,20 +23938,21 @@ export class BRERuleEngineActionsApi {
 
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (filterTags !== undefined) {
-            queryParameters['filter_tags'] = filterTags;
+            queryParameters['filter_tags'] = ObjectSerializer.serialize(filterTags, "string");
         }
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
+
 
         let useFormData = false;
 
@@ -9889,6 +23981,7 @@ export class BRERuleEngineActionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<ActionResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -9960,6 +24053,7 @@ export class BRERuleEngineCategoriesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -9969,7 +24063,7 @@ export class BRERuleEngineCategoriesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: template,
+            body: ObjectSerializer.serialize(template, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -9988,6 +24082,7 @@ export class BRERuleEngineCategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10017,8 +24112,9 @@ export class BRERuleEngineCategoriesApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -10070,12 +24166,13 @@ export class BRERuleEngineCategoriesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -10104,6 +24201,7 @@ export class BRERuleEngineCategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceBreCategoryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10130,6 +24228,7 @@ export class BRERuleEngineCategoriesApi {
         if (name === null || name === undefined) {
             throw new Error('Required parameter name was null or undefined when calling getBRECategory.');
         }
+
 
         let useFormData = false;
 
@@ -10158,6 +24257,7 @@ export class BRERuleEngineCategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreCategoryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10184,6 +24284,7 @@ export class BRERuleEngineCategoriesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getBRECategoryTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -10212,6 +24313,7 @@ export class BRERuleEngineCategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10236,16 +24338,17 @@ export class BRERuleEngineCategoriesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -10274,6 +24377,7 @@ export class BRERuleEngineCategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10302,6 +24406,7 @@ export class BRERuleEngineCategoriesApi {
             throw new Error('Required parameter name was null or undefined when calling updateBRECategory.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -10311,7 +24416,7 @@ export class BRERuleEngineCategoriesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: category,
+            body: ObjectSerializer.serialize(category, "BreCategoryResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -10330,6 +24435,7 @@ export class BRERuleEngineCategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreCategoryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10358,6 +24464,7 @@ export class BRERuleEngineCategoriesApi {
             throw new Error('Required parameter id was null or undefined when calling updateBRECategoryTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -10367,7 +24474,7 @@ export class BRERuleEngineCategoriesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: template,
+            body: ObjectSerializer.serialize(template, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -10386,6 +24493,7 @@ export class BRERuleEngineCategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10457,6 +24565,7 @@ export class BRERuleEngineEventsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -10466,7 +24575,7 @@ export class BRERuleEngineEventsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: breEvent,
+            body: ObjectSerializer.serialize(breEvent, "BreEvent")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -10485,6 +24594,7 @@ export class BRERuleEngineEventsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "string");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10555,6 +24665,7 @@ export class BRERuleEngineExpressionsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -10582,6 +24693,7 @@ export class BRERuleEngineExpressionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<LookupTypeResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10653,6 +24765,7 @@ export class BRERuleEngineGlobalsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -10662,7 +24775,7 @@ export class BRERuleEngineGlobalsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: breGlobalResource,
+            body: ObjectSerializer.serialize(breGlobalResource, "BreGlobalResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -10681,6 +24794,7 @@ export class BRERuleEngineGlobalsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreGlobalResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10707,6 +24821,7 @@ export class BRERuleEngineGlobalsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteBREGlobal.');
         }
+
 
         let useFormData = false;
 
@@ -10762,6 +24877,7 @@ export class BRERuleEngineGlobalsApi {
             throw new Error('Required parameter id was null or undefined when calling getBREGlobal.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -10789,6 +24905,7 @@ export class BRERuleEngineGlobalsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreGlobalResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10813,16 +24930,17 @@ export class BRERuleEngineGlobalsApi {
 
 
         if (filterSystem !== undefined) {
-            queryParameters['filter_system'] = filterSystem;
+            queryParameters['filter_system'] = ObjectSerializer.serialize(filterSystem, "boolean");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -10851,6 +24969,7 @@ export class BRERuleEngineGlobalsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceBreGlobalResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10879,6 +24998,7 @@ export class BRERuleEngineGlobalsApi {
             throw new Error('Required parameter id was null or undefined when calling updateBREGlobal.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -10888,7 +25008,7 @@ export class BRERuleEngineGlobalsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: breGlobalResource,
+            body: ObjectSerializer.serialize(breGlobalResource, "BreGlobalResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -10907,6 +25027,7 @@ export class BRERuleEngineGlobalsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreGlobalResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -10978,6 +25099,7 @@ export class BRERuleEngineRulesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -10987,7 +25109,7 @@ export class BRERuleEngineRulesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: breRule,
+            body: ObjectSerializer.serialize(breRule, "BreRule")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -11006,6 +25128,7 @@ export class BRERuleEngineRulesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreRule");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11032,6 +25155,7 @@ export class BRERuleEngineRulesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteBRERule.');
         }
+
 
         let useFormData = false;
 
@@ -11081,6 +25205,7 @@ export class BRERuleEngineRulesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -11090,7 +25215,7 @@ export class BRERuleEngineRulesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: expression,
+            body: ObjectSerializer.serialize(expression, "Expressionobject")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -11109,6 +25234,7 @@ export class BRERuleEngineRulesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "string");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11135,6 +25261,7 @@ export class BRERuleEngineRulesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getBRERule.');
         }
+
 
         let useFormData = false;
 
@@ -11163,6 +25290,7 @@ export class BRERuleEngineRulesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreRule");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11192,36 +25320,37 @@ export class BRERuleEngineRulesApi {
 
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (filterEnabled !== undefined) {
-            queryParameters['filter_enabled'] = filterEnabled;
+            queryParameters['filter_enabled'] = ObjectSerializer.serialize(filterEnabled, "boolean");
         }
 
         if (filterSystem !== undefined) {
-            queryParameters['filter_system'] = filterSystem;
+            queryParameters['filter_system'] = ObjectSerializer.serialize(filterSystem, "boolean");
         }
 
         if (filterTrigger !== undefined) {
-            queryParameters['filter_trigger'] = filterTrigger;
+            queryParameters['filter_trigger'] = ObjectSerializer.serialize(filterTrigger, "string");
         }
 
         if (filterAction !== undefined) {
-            queryParameters['filter_action'] = filterAction;
+            queryParameters['filter_action'] = ObjectSerializer.serialize(filterAction, "string");
         }
 
         if (filterCondition !== undefined) {
-            queryParameters['filter_condition'] = filterCondition;
+            queryParameters['filter_condition'] = ObjectSerializer.serialize(filterCondition, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -11250,6 +25379,7 @@ export class BRERuleEngineRulesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceBreRule");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11278,6 +25408,7 @@ export class BRERuleEngineRulesApi {
             throw new Error('Required parameter id was null or undefined when calling setBRERule.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -11287,7 +25418,7 @@ export class BRERuleEngineRulesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: enabled,
+            body: ObjectSerializer.serialize(enabled, "BooleanResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -11334,6 +25465,7 @@ export class BRERuleEngineRulesApi {
             throw new Error('Required parameter id was null or undefined when calling updateBRERule.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -11343,7 +25475,7 @@ export class BRERuleEngineRulesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: breRule,
+            body: ObjectSerializer.serialize(breRule, "BreRule")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -11362,6 +25494,7 @@ export class BRERuleEngineRulesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreRule");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11433,6 +25566,7 @@ export class BRERuleEngineTriggersApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -11442,7 +25576,7 @@ export class BRERuleEngineTriggersApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: breTriggerResource,
+            body: ObjectSerializer.serialize(breTriggerResource, "BreTriggerResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -11461,6 +25595,7 @@ export class BRERuleEngineTriggersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreTriggerResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11487,6 +25622,7 @@ export class BRERuleEngineTriggersApi {
         if (eventName === null || eventName === undefined) {
             throw new Error('Required parameter eventName was null or undefined when calling deleteBRETrigger.');
         }
+
 
         let useFormData = false;
 
@@ -11542,6 +25678,7 @@ export class BRERuleEngineTriggersApi {
             throw new Error('Required parameter eventName was null or undefined when calling getBRETrigger.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -11569,6 +25706,7 @@ export class BRERuleEngineTriggersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreTriggerResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11597,32 +25735,33 @@ export class BRERuleEngineTriggersApi {
 
 
         if (filterSystem !== undefined) {
-            queryParameters['filter_system'] = filterSystem;
+            queryParameters['filter_system'] = ObjectSerializer.serialize(filterSystem, "boolean");
         }
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterTags !== undefined) {
-            queryParameters['filter_tags'] = filterTags;
+            queryParameters['filter_tags'] = ObjectSerializer.serialize(filterTags, "string");
         }
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -11651,6 +25790,7 @@ export class BRERuleEngineTriggersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceBreTriggerResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11679,6 +25819,7 @@ export class BRERuleEngineTriggersApi {
             throw new Error('Required parameter eventName was null or undefined when calling updateBRETrigger.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -11688,7 +25829,7 @@ export class BRERuleEngineTriggersApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: breTriggerResource,
+            body: ObjectSerializer.serialize(breTriggerResource, "BreTriggerResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -11707,6 +25848,7 @@ export class BRERuleEngineTriggersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreTriggerResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11777,6 +25919,7 @@ export class BRERuleEngineVariablesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -11804,6 +25947,7 @@ export class BRERuleEngineVariablesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<VariableTypeResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11835,16 +25979,17 @@ export class BRERuleEngineVariablesApi {
         }
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -11873,6 +26018,7 @@ export class BRERuleEngineVariablesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceSimpleReferenceResourceobject");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -11951,6 +26097,7 @@ export class CampaignsApi {
             throw new Error('Required parameter id was null or undefined when calling addChallengeToCampaign.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -11960,7 +26107,7 @@ export class CampaignsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: challengeId,
+            body: ObjectSerializer.serialize(challengeId, "number")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -12000,6 +26147,7 @@ export class CampaignsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -12009,7 +26157,7 @@ export class CampaignsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: campaignResource,
+            body: ObjectSerializer.serialize(campaignResource, "CampaignResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -12028,6 +26176,7 @@ export class CampaignsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CampaignResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12049,6 +26198,7 @@ export class CampaignsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -12058,7 +26208,7 @@ export class CampaignsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: campaignTemplateResource,
+            body: ObjectSerializer.serialize(campaignTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -12077,6 +26227,7 @@ export class CampaignsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12103,6 +26254,7 @@ export class CampaignsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteCampaign.');
         }
+
 
         let useFormData = false;
 
@@ -12160,8 +26312,9 @@ export class CampaignsApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -12217,6 +26370,7 @@ export class CampaignsApi {
             throw new Error('Required parameter id was null or undefined when calling getCampaign.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -12242,6 +26396,7 @@ export class CampaignsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CampaignResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12275,24 +26430,25 @@ export class CampaignsApi {
         }
 
         if (filterStartDate !== undefined) {
-            queryParameters['filter_start_date'] = filterStartDate;
+            queryParameters['filter_start_date'] = ObjectSerializer.serialize(filterStartDate, "string");
         }
 
         if (filterEndDate !== undefined) {
-            queryParameters['filter_end_date'] = filterEndDate;
+            queryParameters['filter_end_date'] = ObjectSerializer.serialize(filterEndDate, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -12319,6 +26475,7 @@ export class CampaignsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceChallengeResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12345,6 +26502,7 @@ export class CampaignsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getCampaignTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -12373,6 +26531,7 @@ export class CampaignsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12397,16 +26556,17 @@ export class CampaignsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -12435,6 +26595,7 @@ export class CampaignsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12460,20 +26621,21 @@ export class CampaignsApi {
 
 
         if (filterActive !== undefined) {
-            queryParameters['filter_active'] = filterActive;
+            queryParameters['filter_active'] = ObjectSerializer.serialize(filterActive, "boolean");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -12500,6 +26662,7 @@ export class CampaignsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceCampaignResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12533,6 +26696,7 @@ export class CampaignsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling removeChallengeFromCampaign.');
         }
+
 
         let useFormData = false;
 
@@ -12589,6 +26753,7 @@ export class CampaignsApi {
             throw new Error('Required parameter id was null or undefined when calling updateCampaign.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -12598,7 +26763,7 @@ export class CampaignsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: campaignResource,
+            body: ObjectSerializer.serialize(campaignResource, "CampaignResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -12617,6 +26782,7 @@ export class CampaignsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CampaignResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12645,6 +26811,7 @@ export class CampaignsApi {
             throw new Error('Required parameter id was null or undefined when calling updateCampaignTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -12654,7 +26821,7 @@ export class CampaignsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: campaignTemplateResource,
+            body: ObjectSerializer.serialize(campaignTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -12673,6 +26840,7 @@ export class CampaignsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12744,6 +26912,7 @@ export class CampaignsChallengesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -12753,7 +26922,7 @@ export class CampaignsChallengesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: challengeResource,
+            body: ObjectSerializer.serialize(challengeResource, "ChallengeResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -12772,6 +26941,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ChallengeResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12802,8 +26972,9 @@ export class CampaignsChallengesApi {
         }
 
         if (validateSettings !== undefined) {
-            queryParameters['validateSettings'] = validateSettings;
+            queryParameters['validateSettings'] = ObjectSerializer.serialize(validateSettings, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -12814,7 +26985,7 @@ export class CampaignsChallengesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: challengeActivityResource,
+            body: ObjectSerializer.serialize(challengeActivityResource, "ChallengeActivityResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -12833,6 +27004,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ChallengeActivityResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12854,6 +27026,7 @@ export class CampaignsChallengesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -12863,7 +27036,7 @@ export class CampaignsChallengesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: challengeActivityTemplateResource,
+            body: ObjectSerializer.serialize(challengeActivityTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -12882,6 +27055,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12903,6 +27077,7 @@ export class CampaignsChallengesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -12912,7 +27087,7 @@ export class CampaignsChallengesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: challengeTemplateResource,
+            body: ObjectSerializer.serialize(challengeTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -12931,6 +27106,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -12957,6 +27133,7 @@ export class CampaignsChallengesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteChallenge.');
         }
+
 
         let useFormData = false;
 
@@ -13019,6 +27196,7 @@ export class CampaignsChallengesApi {
             throw new Error('Required parameter challengeId was null or undefined when calling deleteChallengeActivity.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -13075,8 +27253,9 @@ export class CampaignsChallengesApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -13131,6 +27310,7 @@ export class CampaignsChallengesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteChallengeEvent.');
         }
+
 
         let useFormData = false;
 
@@ -13188,8 +27368,9 @@ export class CampaignsChallengesApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -13245,6 +27426,7 @@ export class CampaignsChallengesApi {
             throw new Error('Required parameter id was null or undefined when calling getChallenge.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -13270,6 +27452,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ChallengeResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13301,16 +27484,17 @@ export class CampaignsChallengesApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -13337,6 +27521,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceBareChallengeActivityResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13371,6 +27556,7 @@ export class CampaignsChallengesApi {
             throw new Error('Required parameter challengeId was null or undefined when calling getChallengeActivity.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -13396,6 +27582,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ChallengeActivityResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13422,6 +27609,7 @@ export class CampaignsChallengesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getChallengeActivityTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -13450,6 +27638,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13474,16 +27663,17 @@ export class CampaignsChallengesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -13512,6 +27702,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13539,6 +27730,7 @@ export class CampaignsChallengesApi {
             throw new Error('Required parameter id was null or undefined when calling getChallengeEvent.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -13564,6 +27756,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ChallengeEventResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13592,32 +27785,33 @@ export class CampaignsChallengesApi {
 
 
         if (filterStartDate !== undefined) {
-            queryParameters['filter_start_date'] = filterStartDate;
+            queryParameters['filter_start_date'] = ObjectSerializer.serialize(filterStartDate, "string");
         }
 
         if (filterEndDate !== undefined) {
-            queryParameters['filter_end_date'] = filterEndDate;
+            queryParameters['filter_end_date'] = ObjectSerializer.serialize(filterEndDate, "string");
         }
 
         if (filterCampaigns !== undefined) {
-            queryParameters['filter_campaigns'] = filterCampaigns;
+            queryParameters['filter_campaigns'] = ObjectSerializer.serialize(filterCampaigns, "boolean");
         }
 
         if (filterChallenge !== undefined) {
-            queryParameters['filter_challenge'] = filterChallenge;
+            queryParameters['filter_challenge'] = ObjectSerializer.serialize(filterChallenge, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -13644,6 +27838,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceChallengeEventResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13670,6 +27865,7 @@ export class CampaignsChallengesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getChallengeTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -13698,6 +27894,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13722,16 +27919,17 @@ export class CampaignsChallengesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -13760,6 +27958,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13788,32 +27987,33 @@ export class CampaignsChallengesApi {
 
 
         if (filterTemplate !== undefined) {
-            queryParameters['filter_template'] = filterTemplate;
+            queryParameters['filter_template'] = ObjectSerializer.serialize(filterTemplate, "boolean");
         }
 
         if (filterActiveCampaign !== undefined) {
-            queryParameters['filter_active_campaign'] = filterActiveCampaign;
+            queryParameters['filter_active_campaign'] = ObjectSerializer.serialize(filterActiveCampaign, "boolean");
         }
 
         if (filterStartDate !== undefined) {
-            queryParameters['filter_start_date'] = filterStartDate;
+            queryParameters['filter_start_date'] = ObjectSerializer.serialize(filterStartDate, "string");
         }
 
         if (filterEndDate !== undefined) {
-            queryParameters['filter_end_date'] = filterEndDate;
+            queryParameters['filter_end_date'] = ObjectSerializer.serialize(filterEndDate, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -13840,6 +28040,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceChallengeResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13868,6 +28069,7 @@ export class CampaignsChallengesApi {
             throw new Error('Required parameter id was null or undefined when calling updateChallenge.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -13877,7 +28079,7 @@ export class CampaignsChallengesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: challengeResource,
+            body: ObjectSerializer.serialize(challengeResource, "ChallengeResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -13896,6 +28098,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ChallengeResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13931,6 +28134,7 @@ export class CampaignsChallengesApi {
             throw new Error('Required parameter challengeId was null or undefined when calling updateChallengeActivity.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -13940,7 +28144,7 @@ export class CampaignsChallengesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: challengeActivityResource,
+            body: ObjectSerializer.serialize(challengeActivityResource, "ChallengeActivityResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -13959,6 +28163,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ChallengeActivityResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -13987,6 +28192,7 @@ export class CampaignsChallengesApi {
             throw new Error('Required parameter id was null or undefined when calling updateChallengeActivityTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -13996,7 +28202,7 @@ export class CampaignsChallengesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: challengeActivityTemplateResource,
+            body: ObjectSerializer.serialize(challengeActivityTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -14015,6 +28221,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14043,6 +28250,7 @@ export class CampaignsChallengesApi {
             throw new Error('Required parameter id was null or undefined when calling updateChallengeTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -14052,7 +28260,7 @@ export class CampaignsChallengesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: challengeTemplateResource,
+            body: ObjectSerializer.serialize(challengeTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -14071,6 +28279,7 @@ export class CampaignsChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14142,6 +28351,7 @@ export class CampaignsRewardsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -14151,7 +28361,7 @@ export class CampaignsRewardsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: rewardSetResource,
+            body: ObjectSerializer.serialize(rewardSetResource, "RewardSetResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -14170,6 +28380,7 @@ export class CampaignsRewardsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RewardSetResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14196,6 +28407,7 @@ export class CampaignsRewardsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteRewardSet.');
         }
+
 
         let useFormData = false;
 
@@ -14251,6 +28463,7 @@ export class CampaignsRewardsApi {
             throw new Error('Required parameter id was null or undefined when calling getRewardSet.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -14276,6 +28489,7 @@ export class CampaignsRewardsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RewardSetResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14300,16 +28514,17 @@ export class CampaignsRewardsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -14336,6 +28551,7 @@ export class CampaignsRewardsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceRewardSetResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14364,6 +28580,7 @@ export class CampaignsRewardsApi {
             throw new Error('Required parameter id was null or undefined when calling updateRewardSet.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -14373,7 +28590,7 @@ export class CampaignsRewardsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: rewardSetResource,
+            body: ObjectSerializer.serialize(rewardSetResource, "RewardSetResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -14392,6 +28609,7 @@ export class CampaignsRewardsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RewardSetResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14463,6 +28681,7 @@ export class CategoriesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -14472,7 +28691,7 @@ export class CategoriesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: category,
+            body: ObjectSerializer.serialize(category, "CategoryResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -14491,6 +28710,7 @@ export class CategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CategoryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14512,6 +28732,7 @@ export class CategoriesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -14521,7 +28742,7 @@ export class CategoriesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: template,
+            body: ObjectSerializer.serialize(template, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -14540,6 +28761,7 @@ export class CategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14566,6 +28788,7 @@ export class CategoriesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteCategory.');
         }
+
 
         let useFormData = false;
 
@@ -14623,8 +28846,9 @@ export class CategoriesApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -14679,24 +28903,25 @@ export class CategoriesApi {
 
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
 
         if (filterActive !== undefined) {
-            queryParameters['filter_active'] = filterActive;
+            queryParameters['filter_active'] = ObjectSerializer.serialize(filterActive, "boolean");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -14723,6 +28948,7 @@ export class CategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceCategoryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14750,6 +28976,7 @@ export class CategoriesApi {
             throw new Error('Required parameter id was null or undefined when calling getCategory.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -14775,6 +29002,7 @@ export class CategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CategoryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14801,6 +29029,7 @@ export class CategoriesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getCategoryTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -14829,6 +29058,7 @@ export class CategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14853,16 +29083,17 @@ export class CategoriesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -14891,6 +29122,7 @@ export class CategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14914,12 +29146,13 @@ export class CategoriesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -14946,6 +29179,7 @@ export class CategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourcestring");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -14974,6 +29208,7 @@ export class CategoriesApi {
             throw new Error('Required parameter id was null or undefined when calling updateCategory.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -14983,7 +29218,7 @@ export class CategoriesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: category,
+            body: ObjectSerializer.serialize(category, "CategoryResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -15002,6 +29237,7 @@ export class CategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CategoryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15030,6 +29266,7 @@ export class CategoriesApi {
             throw new Error('Required parameter id was null or undefined when calling updateCategoryTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -15039,7 +29276,7 @@ export class CategoriesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: template,
+            body: ObjectSerializer.serialize(template, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -15058,6 +29295,7 @@ export class CategoriesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15129,6 +29367,7 @@ export class ConfigsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -15138,7 +29377,7 @@ export class ConfigsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: config,
+            body: ObjectSerializer.serialize(config, "Config")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -15157,6 +29396,7 @@ export class ConfigsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Config");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15183,6 +29423,7 @@ export class ConfigsApi {
         if (name === null || name === undefined) {
             throw new Error('Required parameter name was null or undefined when calling deleteConfig.');
         }
+
 
         let useFormData = false;
 
@@ -15238,6 +29479,7 @@ export class ConfigsApi {
             throw new Error('Required parameter name was null or undefined when calling getConfig.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -15265,6 +29507,7 @@ export class ConfigsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Config");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15290,20 +29533,21 @@ export class ConfigsApi {
 
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -15332,6 +29576,7 @@ export class ConfigsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceConfig");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15360,6 +29605,7 @@ export class ConfigsApi {
             throw new Error('Required parameter name was null or undefined when calling updateConfig.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -15369,7 +29615,7 @@ export class ConfigsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: config,
+            body: ObjectSerializer.serialize(config, "Config")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -15459,6 +29705,7 @@ export class ContentArticlesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -15468,7 +29715,7 @@ export class ContentArticlesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: articleResource,
+            body: ObjectSerializer.serialize(articleResource, "ArticleResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -15487,6 +29734,7 @@ export class ContentArticlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ArticleResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15508,6 +29756,7 @@ export class ContentArticlesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -15517,7 +29766,7 @@ export class ContentArticlesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: articleTemplateResource,
+            body: ObjectSerializer.serialize(articleTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -15536,6 +29785,7 @@ export class ContentArticlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15562,6 +29812,7 @@ export class ContentArticlesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteArticle.');
         }
+
 
         let useFormData = false;
 
@@ -15619,8 +29870,9 @@ export class ContentArticlesApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -15676,6 +29928,7 @@ export class ContentArticlesApi {
             throw new Error('Required parameter id was null or undefined when calling getArticle.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -15701,6 +29954,7 @@ export class ContentArticlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ArticleResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15727,6 +29981,7 @@ export class ContentArticlesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getArticleTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -15755,6 +30010,7 @@ export class ContentArticlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15779,16 +30035,17 @@ export class ContentArticlesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -15817,6 +30074,7 @@ export class ContentArticlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15846,36 +30104,37 @@ export class ContentArticlesApi {
 
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterTagset !== undefined) {
-            queryParameters['filter_tagset'] = filterTagset;
+            queryParameters['filter_tagset'] = ObjectSerializer.serialize(filterTagset, "string");
         }
 
         if (filterTagIntersection !== undefined) {
-            queryParameters['filter_tag_intersection'] = filterTagIntersection;
+            queryParameters['filter_tag_intersection'] = ObjectSerializer.serialize(filterTagIntersection, "string");
         }
 
         if (filterTagExclusion !== undefined) {
-            queryParameters['filter_tag_exclusion'] = filterTagExclusion;
+            queryParameters['filter_tag_exclusion'] = ObjectSerializer.serialize(filterTagExclusion, "string");
         }
 
         if (filterTitle !== undefined) {
-            queryParameters['filter_title'] = filterTitle;
+            queryParameters['filter_title'] = ObjectSerializer.serialize(filterTitle, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -15902,6 +30161,7 @@ export class ContentArticlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceArticleResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15930,6 +30190,7 @@ export class ContentArticlesApi {
             throw new Error('Required parameter id was null or undefined when calling updateArticle.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -15939,7 +30200,7 @@ export class ContentArticlesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: articleResource,
+            body: ObjectSerializer.serialize(articleResource, "ArticleResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -15958,6 +30219,7 @@ export class ContentArticlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ArticleResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -15986,6 +30248,7 @@ export class ContentArticlesApi {
             throw new Error('Required parameter id was null or undefined when calling updateArticleTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -15995,7 +30258,7 @@ export class ContentArticlesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: articleTemplateResource,
+            body: ObjectSerializer.serialize(articleTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -16014,6 +30277,7 @@ export class ContentArticlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16085,6 +30349,7 @@ export class ContentCommentsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -16094,7 +30359,7 @@ export class ContentCommentsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: commentResource,
+            body: ObjectSerializer.serialize(commentResource, "CommentResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -16113,6 +30378,7 @@ export class ContentCommentsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CommentResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16139,6 +30405,7 @@ export class ContentCommentsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteComment.');
         }
+
 
         let useFormData = false;
 
@@ -16194,6 +30461,7 @@ export class ContentCommentsApi {
             throw new Error('Required parameter id was null or undefined when calling getComment.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -16219,6 +30487,7 @@ export class ContentCommentsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CommentResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16254,20 +30523,21 @@ export class ContentCommentsApi {
         }
 
         if (context !== undefined) {
-            queryParameters['context'] = context;
+            queryParameters['context'] = ObjectSerializer.serialize(context, "string");
         }
 
         if (contextId !== undefined) {
-            queryParameters['context_id'] = contextId;
+            queryParameters['context_id'] = ObjectSerializer.serialize(contextId, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -16294,6 +30564,7 @@ export class ContentCommentsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceCommentResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16318,12 +30589,13 @@ export class ContentCommentsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -16334,7 +30606,7 @@ export class ContentCommentsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: query,
+            body: ObjectSerializer.serialize(query, "any")
         };
 
         this.authentications.default.applyToRequest(requestOptions);
@@ -16351,6 +30623,7 @@ export class ContentCommentsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CommentSearch");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16366,7 +30639,7 @@ export class ContentCommentsApi {
      * @param id The comment id
      * @param content The comment content
      */
-    public updateComment (id: number, content?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public updateComment (id: number, content?: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/comments/{id}/content'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -16379,6 +30652,7 @@ export class ContentCommentsApi {
             throw new Error('Required parameter id was null or undefined when calling updateComment.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -16388,7 +30662,7 @@ export class ContentCommentsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: content,
+            body: ObjectSerializer.serialize(content, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -16472,7 +30746,7 @@ export class ContentPollsApi {
      * @param id The poll id
      * @param answerKey The answer key
      */
-    public answerPoll (id: string, answerKey?: string) : Promise<{ response: http.ClientResponse; body: PollResponseResource;  }> {
+    public answerPoll (id: string, answerKey?: StringWrapper) : Promise<{ response: http.ClientResponse; body: PollResponseResource;  }> {
         const localVarPath = this.basePath + '/media/polls/{id}/response'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -16485,6 +30759,7 @@ export class ContentPollsApi {
             throw new Error('Required parameter id was null or undefined when calling answerPoll.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -16494,7 +30769,7 @@ export class ContentPollsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: answerKey,
+            body: ObjectSerializer.serialize(answerKey, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -16513,6 +30788,7 @@ export class ContentPollsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PollResponseResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16534,6 +30810,7 @@ export class ContentPollsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -16543,7 +30820,7 @@ export class ContentPollsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: pollResource,
+            body: ObjectSerializer.serialize(pollResource, "PollResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -16562,6 +30839,7 @@ export class ContentPollsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PollResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16583,6 +30861,7 @@ export class ContentPollsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -16592,7 +30871,7 @@ export class ContentPollsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: pollTemplateResource,
+            body: ObjectSerializer.serialize(pollTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -16611,6 +30890,7 @@ export class ContentPollsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16637,6 +30917,7 @@ export class ContentPollsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deletePoll.');
         }
+
 
         let useFormData = false;
 
@@ -16694,8 +30975,9 @@ export class ContentPollsApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -16751,6 +31033,7 @@ export class ContentPollsApi {
             throw new Error('Required parameter id was null or undefined when calling getPoll.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -16776,6 +31059,7 @@ export class ContentPollsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PollResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16802,6 +31086,7 @@ export class ContentPollsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getPollAnswer.');
         }
+
 
         let useFormData = false;
 
@@ -16830,6 +31115,7 @@ export class ContentPollsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PollResponseResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16856,6 +31142,7 @@ export class ContentPollsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getPollTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -16884,6 +31171,7 @@ export class ContentPollsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16908,16 +31196,17 @@ export class ContentPollsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -16946,6 +31235,7 @@ export class ContentPollsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -16973,28 +31263,29 @@ export class ContentPollsApi {
 
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterTagset !== undefined) {
-            queryParameters['filter_tagset'] = filterTagset;
+            queryParameters['filter_tagset'] = ObjectSerializer.serialize(filterTagset, "string");
         }
 
         if (filterText !== undefined) {
-            queryParameters['filter_text'] = filterText;
+            queryParameters['filter_text'] = ObjectSerializer.serialize(filterText, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -17021,6 +31312,7 @@ export class ContentPollsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourcePollResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -17049,6 +31341,7 @@ export class ContentPollsApi {
             throw new Error('Required parameter id was null or undefined when calling updatePoll.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -17058,7 +31351,7 @@ export class ContentPollsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: pollResource,
+            body: ObjectSerializer.serialize(pollResource, "PollResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -17077,6 +31370,7 @@ export class ContentPollsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PollResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -17105,6 +31399,7 @@ export class ContentPollsApi {
             throw new Error('Required parameter id was null or undefined when calling updatePollTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -17114,7 +31409,7 @@ export class ContentPollsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: pollTemplateResource,
+            body: ObjectSerializer.serialize(pollTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -17133,6 +31428,7 @@ export class ContentPollsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -17204,6 +31500,7 @@ export class CurrenciesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -17213,7 +31510,7 @@ export class CurrenciesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: currency,
+            body: ObjectSerializer.serialize(currency, "CurrencyResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -17232,6 +31529,7 @@ export class CurrenciesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CurrencyResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -17258,6 +31556,7 @@ export class CurrenciesApi {
         if (code === null || code === undefined) {
             throw new Error('Required parameter code was null or undefined when calling deleteCurrency.');
         }
+
 
         let useFormData = false;
 
@@ -17312,24 +31611,25 @@ export class CurrenciesApi {
 
 
         if (filterEnabledCurrencies !== undefined) {
-            queryParameters['filter_enabled_currencies'] = filterEnabledCurrencies;
+            queryParameters['filter_enabled_currencies'] = ObjectSerializer.serialize(filterEnabledCurrencies, "boolean");
         }
 
         if (filterType !== undefined) {
-            queryParameters['filter_type'] = filterType;
+            queryParameters['filter_type'] = ObjectSerializer.serialize(filterType, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -17356,6 +31656,7 @@ export class CurrenciesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceCurrencyResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -17383,6 +31684,7 @@ export class CurrenciesApi {
             throw new Error('Required parameter code was null or undefined when calling getCurrency.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -17408,6 +31710,7 @@ export class CurrenciesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CurrencyResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -17436,6 +31739,7 @@ export class CurrenciesApi {
             throw new Error('Required parameter code was null or undefined when calling updateCurrency.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -17445,7 +31749,7 @@ export class CurrenciesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: currency,
+            body: ObjectSerializer.serialize(currency, "CurrencyResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -17547,6 +31851,7 @@ export class DevicesApi {
             throw new Error('Required parameter id was null or undefined when calling addDeviceUsers.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -17556,7 +31861,7 @@ export class DevicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: userResources,
+            body: ObjectSerializer.serialize(userResources, "Array<SimpleUserResource>")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -17575,6 +31880,7 @@ export class DevicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "DeviceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -17601,6 +31907,7 @@ export class DevicesApi {
             throw new Error('Required parameter device was null or undefined when calling createDevice.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -17610,7 +31917,7 @@ export class DevicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: device,
+            body: ObjectSerializer.serialize(device, "DeviceResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -17629,6 +31936,7 @@ export class DevicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "DeviceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -17655,6 +31963,7 @@ export class DevicesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteDevice.');
         }
+
 
         let useFormData = false;
 
@@ -17717,6 +32026,7 @@ export class DevicesApi {
             throw new Error('Required parameter userId was null or undefined when calling deleteDeviceUser.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -17773,8 +32083,9 @@ export class DevicesApi {
         }
 
         if (filterId !== undefined) {
-            queryParameters['filter_id'] = filterId;
+            queryParameters['filter_id'] = ObjectSerializer.serialize(filterId, "string");
         }
+
 
         let useFormData = false;
 
@@ -17830,6 +32141,7 @@ export class DevicesApi {
             throw new Error('Required parameter id was null or undefined when calling getDevice.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -17857,6 +32169,7 @@ export class DevicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "DeviceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -17883,24 +32196,25 @@ export class DevicesApi {
 
 
         if (filterMake !== undefined) {
-            queryParameters['filter_make'] = filterMake;
+            queryParameters['filter_make'] = ObjectSerializer.serialize(filterMake, "string");
         }
 
         if (filterModel !== undefined) {
-            queryParameters['filter_model'] = filterModel;
+            queryParameters['filter_model'] = ObjectSerializer.serialize(filterModel, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -17929,6 +32243,7 @@ export class DevicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceDeviceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -17962,6 +32277,7 @@ export class DevicesApi {
             throw new Error('Required parameter id was null or undefined when calling updateDevice.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -17971,7 +32287,7 @@ export class DevicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: device,
+            body: ObjectSerializer.serialize(device, "DeviceResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -17990,6 +32306,7 @@ export class DevicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "DeviceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18061,6 +32378,7 @@ export class DispositionsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -18070,7 +32388,7 @@ export class DispositionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: disposition,
+            body: ObjectSerializer.serialize(disposition, "DispositionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -18089,6 +32407,7 @@ export class DispositionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "DispositionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18115,6 +32434,7 @@ export class DispositionsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteDisposition.');
         }
+
 
         let useFormData = false;
 
@@ -18170,6 +32490,7 @@ export class DispositionsApi {
             throw new Error('Required parameter id was null or undefined when calling getDisposition.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -18195,6 +32516,7 @@ export class DispositionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "DispositionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18218,12 +32540,13 @@ export class DispositionsApi {
 
 
         if (filterContext !== undefined) {
-            queryParameters['filter_context'] = filterContext;
+            queryParameters['filter_context'] = ObjectSerializer.serialize(filterContext, "string");
         }
 
         if (filterOwner !== undefined) {
-            queryParameters['filter_owner'] = filterOwner;
+            queryParameters['filter_owner'] = ObjectSerializer.serialize(filterOwner, "string");
         }
+
 
         let useFormData = false;
 
@@ -18250,6 +32573,7 @@ export class DispositionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<DispositionCount>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18276,24 +32600,25 @@ export class DispositionsApi {
 
 
         if (filterContext !== undefined) {
-            queryParameters['filter_context'] = filterContext;
+            queryParameters['filter_context'] = ObjectSerializer.serialize(filterContext, "string");
         }
 
         if (filterOwner !== undefined) {
-            queryParameters['filter_owner'] = filterOwner;
+            queryParameters['filter_owner'] = ObjectSerializer.serialize(filterOwner, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -18320,6 +32645,7 @@ export class DispositionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceDispositionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18391,6 +32717,7 @@ export class FulfillmentApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -18400,7 +32727,7 @@ export class FulfillmentApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: type,
+            body: ObjectSerializer.serialize(type, "FulfillmentType")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -18419,6 +32746,7 @@ export class FulfillmentApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "FulfillmentType");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18445,6 +32773,7 @@ export class FulfillmentApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteFulfillmentType.');
         }
+
 
         let useFormData = false;
 
@@ -18500,6 +32829,7 @@ export class FulfillmentApi {
             throw new Error('Required parameter id was null or undefined when calling getFulfillmentType.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -18525,6 +32855,7 @@ export class FulfillmentApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "FulfillmentType");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18549,16 +32880,17 @@ export class FulfillmentApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -18585,6 +32917,7 @@ export class FulfillmentApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceFulfillmentType");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18613,6 +32946,7 @@ export class FulfillmentApi {
             throw new Error('Required parameter id was null or undefined when calling updateFulfillmentType.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -18622,7 +32956,7 @@ export class FulfillmentApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: fulfillmentType,
+            body: ObjectSerializer.serialize(fulfillmentType, "FulfillmentType")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -18712,6 +33046,7 @@ export class GamificationAchievementsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -18721,7 +33056,7 @@ export class GamificationAchievementsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: achievement,
+            body: ObjectSerializer.serialize(achievement, "AchievementDefinitionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -18740,6 +33075,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "AchievementDefinitionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18761,6 +33097,7 @@ export class GamificationAchievementsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -18770,7 +33107,7 @@ export class GamificationAchievementsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: template,
+            body: ObjectSerializer.serialize(template, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -18789,6 +33126,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18815,6 +33153,7 @@ export class GamificationAchievementsApi {
         if (name === null || name === undefined) {
             throw new Error('Required parameter name was null or undefined when calling deleteAchievement.');
         }
+
 
         let useFormData = false;
 
@@ -18872,8 +33211,9 @@ export class GamificationAchievementsApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -18929,6 +33269,7 @@ export class GamificationAchievementsApi {
             throw new Error('Required parameter name was null or undefined when calling getAchievement.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -18956,6 +33297,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "AchievementDefinitionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -18982,6 +33324,7 @@ export class GamificationAchievementsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getAchievementTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -19010,6 +33353,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19034,16 +33378,17 @@ export class GamificationAchievementsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -19072,6 +33417,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19090,6 +33436,7 @@ export class GamificationAchievementsApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -19119,6 +33466,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<BreTriggerResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19147,32 +33495,33 @@ export class GamificationAchievementsApi {
 
 
         if (filterTagset !== undefined) {
-            queryParameters['filter_tagset'] = filterTagset;
+            queryParameters['filter_tagset'] = ObjectSerializer.serialize(filterTagset, "string");
         }
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (filterHidden !== undefined) {
-            queryParameters['filter_hidden'] = filterHidden;
+            queryParameters['filter_hidden'] = ObjectSerializer.serialize(filterHidden, "boolean");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
 
         if (filterDerived !== undefined) {
-            queryParameters['filter_derived'] = filterDerived;
+            queryParameters['filter_derived'] = ObjectSerializer.serialize(filterDerived, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -19201,6 +33550,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceAchievementDefinitionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19227,6 +33577,7 @@ export class GamificationAchievementsApi {
         if (name === null || name === undefined) {
             throw new Error('Required parameter name was null or undefined when calling getDerivedAchievements.');
         }
+
 
         let useFormData = false;
 
@@ -19255,6 +33606,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<AchievementDefinitionResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19289,6 +33641,7 @@ export class GamificationAchievementsApi {
             throw new Error('Required parameter achievementName was null or undefined when calling getUserAchievementProgress.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -19316,6 +33669,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserAchievementGroupResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19349,24 +33703,25 @@ export class GamificationAchievementsApi {
         }
 
         if (filterAchievementDerived !== undefined) {
-            queryParameters['filter_achievement_derived'] = filterAchievementDerived;
+            queryParameters['filter_achievement_derived'] = ObjectSerializer.serialize(filterAchievementDerived, "boolean");
         }
 
         if (filterAchievementTagset !== undefined) {
-            queryParameters['filter_achievement_tagset'] = filterAchievementTagset;
+            queryParameters['filter_achievement_tagset'] = ObjectSerializer.serialize(filterAchievementTagset, "string");
         }
 
         if (filterAchievementName !== undefined) {
-            queryParameters['filter_achievement_name'] = filterAchievementName;
+            queryParameters['filter_achievement_name'] = ObjectSerializer.serialize(filterAchievementName, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -19395,6 +33750,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUserAchievementGroupResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19428,24 +33784,25 @@ export class GamificationAchievementsApi {
         }
 
         if (filterAchievementDerived !== undefined) {
-            queryParameters['filter_achievement_derived'] = filterAchievementDerived;
+            queryParameters['filter_achievement_derived'] = ObjectSerializer.serialize(filterAchievementDerived, "boolean");
         }
 
         if (filterAchievementTagset !== undefined) {
-            queryParameters['filter_achievement_tagset'] = filterAchievementTagset;
+            queryParameters['filter_achievement_tagset'] = ObjectSerializer.serialize(filterAchievementTagset, "string");
         }
 
         if (filterAchievementName !== undefined) {
-            queryParameters['filter_achievement_name'] = filterAchievementName;
+            queryParameters['filter_achievement_name'] = ObjectSerializer.serialize(filterAchievementName, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -19474,6 +33831,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUserAchievementGroupResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19500,24 +33858,25 @@ export class GamificationAchievementsApi {
 
 
         if (filterAchievementDerived !== undefined) {
-            queryParameters['filter_achievement_derived'] = filterAchievementDerived;
+            queryParameters['filter_achievement_derived'] = ObjectSerializer.serialize(filterAchievementDerived, "boolean");
         }
 
         if (filterAchievementTagset !== undefined) {
-            queryParameters['filter_achievement_tagset'] = filterAchievementTagset;
+            queryParameters['filter_achievement_tagset'] = ObjectSerializer.serialize(filterAchievementTagset, "string");
         }
 
         if (filterAchievementName !== undefined) {
-            queryParameters['filter_achievement_name'] = filterAchievementName;
+            queryParameters['filter_achievement_name'] = ObjectSerializer.serialize(filterAchievementName, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -19546,6 +33905,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUserAchievementGroupResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19562,7 +33922,7 @@ export class GamificationAchievementsApi {
      * @param achievementName The achievement&#39;s name
      * @param progress The amount to add to the progress value
      */
-    public incrementAchievementProgress (userId: number, achievementName: string, progress?: number) : Promise<{ response: http.ClientResponse; body: UserAchievementGroupResource;  }> {
+    public incrementAchievementProgress (userId: number, achievementName: string, progress?: IntWrapper) : Promise<{ response: http.ClientResponse; body: UserAchievementGroupResource;  }> {
         const localVarPath = this.basePath + '/users/{user_id}/achievements/{achievement_name}/progress'
             .replace('{' + 'user_id' + '}', String(userId))
             .replace('{' + 'achievement_name' + '}', String(achievementName));
@@ -19581,6 +33941,7 @@ export class GamificationAchievementsApi {
             throw new Error('Required parameter achievementName was null or undefined when calling incrementAchievementProgress.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -19590,7 +33951,7 @@ export class GamificationAchievementsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: progress,
+            body: ObjectSerializer.serialize(progress, "IntWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -19609,6 +33970,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserAchievementGroupResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19625,7 +33987,7 @@ export class GamificationAchievementsApi {
      * @param achievementName The achievement&#39;s name
      * @param progress The new progress value
      */
-    public setAchievementProgress (userId: number, achievementName: string, progress?: number) : Promise<{ response: http.ClientResponse; body: UserAchievementGroupResource;  }> {
+    public setAchievementProgress (userId: number, achievementName: string, progress?: IntWrapper) : Promise<{ response: http.ClientResponse; body: UserAchievementGroupResource;  }> {
         const localVarPath = this.basePath + '/users/{user_id}/achievements/{achievement_name}/progress'
             .replace('{' + 'user_id' + '}', String(userId))
             .replace('{' + 'achievement_name' + '}', String(achievementName));
@@ -19644,6 +34006,7 @@ export class GamificationAchievementsApi {
             throw new Error('Required parameter achievementName was null or undefined when calling setAchievementProgress.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -19653,7 +34016,7 @@ export class GamificationAchievementsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: progress,
+            body: ObjectSerializer.serialize(progress, "IntWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -19672,6 +34035,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserAchievementGroupResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19700,6 +34064,7 @@ export class GamificationAchievementsApi {
             throw new Error('Required parameter name was null or undefined when calling updateAchievement.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -19709,7 +34074,7 @@ export class GamificationAchievementsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: achievement,
+            body: ObjectSerializer.serialize(achievement, "AchievementDefinitionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -19728,6 +34093,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "AchievementDefinitionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19756,6 +34122,7 @@ export class GamificationAchievementsApi {
             throw new Error('Required parameter id was null or undefined when calling updateAchievementTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -19765,7 +34132,7 @@ export class GamificationAchievementsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: template,
+            body: ObjectSerializer.serialize(template, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -19784,6 +34151,7 @@ export class GamificationAchievementsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19872,16 +34240,17 @@ export class GamificationLeaderboardsApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -19908,6 +34277,7 @@ export class GamificationLeaderboardsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "LeaderboardResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19949,6 +34319,7 @@ export class GamificationLeaderboardsApi {
             throw new Error('Required parameter id was null or undefined when calling getLeaderboardRank.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -19976,6 +34347,7 @@ export class GamificationLeaderboardsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "LeaderboardEntryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -19994,6 +34366,7 @@ export class GamificationLeaderboardsApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -20021,6 +34394,7 @@ export class GamificationLeaderboardsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<string>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -20092,6 +34466,7 @@ export class GamificationLevelingApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -20101,7 +34476,7 @@ export class GamificationLevelingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: level,
+            body: ObjectSerializer.serialize(level, "LevelingResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -20120,6 +34495,7 @@ export class GamificationLevelingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "LevelingResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -20146,6 +34522,7 @@ export class GamificationLevelingApi {
         if (name === null || name === undefined) {
             throw new Error('Required parameter name was null or undefined when calling deleteLevel.');
         }
+
 
         let useFormData = false;
 
@@ -20201,6 +34578,7 @@ export class GamificationLevelingApi {
             throw new Error('Required parameter name was null or undefined when calling getLevel.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -20228,6 +34606,7 @@ export class GamificationLevelingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "LevelingResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -20246,6 +34625,7 @@ export class GamificationLevelingApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -20275,6 +34655,7 @@ export class GamificationLevelingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<BreTriggerResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -20300,20 +34681,21 @@ export class GamificationLevelingApi {
 
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -20342,6 +34724,7 @@ export class GamificationLevelingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceLevelingResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -20376,6 +34759,7 @@ export class GamificationLevelingApi {
             throw new Error('Required parameter name was null or undefined when calling getUserLevel.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -20403,6 +34787,7 @@ export class GamificationLevelingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserLevelingResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -20435,20 +34820,21 @@ export class GamificationLevelingApi {
         }
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -20477,6 +34863,7 @@ export class GamificationLevelingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUserLevelingResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -20493,7 +34880,7 @@ export class GamificationLevelingApi {
      * @param name The level schema name
      * @param progress The amount of progress to add
      */
-    public incrementProgress (userId: number, name: string, progress?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public incrementProgress (userId: number, name: string, progress?: IntWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/users/{user_id}/leveling/{name}/progress'
             .replace('{' + 'user_id' + '}', String(userId))
             .replace('{' + 'name' + '}', String(name));
@@ -20512,6 +34899,7 @@ export class GamificationLevelingApi {
             throw new Error('Required parameter name was null or undefined when calling incrementProgress.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -20521,7 +34909,7 @@ export class GamificationLevelingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: progress,
+            body: ObjectSerializer.serialize(progress, "IntWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -20556,7 +34944,7 @@ export class GamificationLevelingApi {
      * @param name The level schema name
      * @param progress The new progress amount
      */
-    public setProgress (userId: number, name: string, progress?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setProgress (userId: number, name: string, progress?: IntWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/users/{user_id}/leveling/{name}/progress'
             .replace('{' + 'user_id' + '}', String(userId))
             .replace('{' + 'name' + '}', String(name));
@@ -20575,6 +34963,7 @@ export class GamificationLevelingApi {
             throw new Error('Required parameter name was null or undefined when calling setProgress.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -20584,7 +34973,7 @@ export class GamificationLevelingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: progress,
+            body: ObjectSerializer.serialize(progress, "IntWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -20631,6 +35020,7 @@ export class GamificationLevelingApi {
             throw new Error('Required parameter name was null or undefined when calling updateLevel.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -20640,7 +35030,7 @@ export class GamificationLevelingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: newLevel,
+            body: ObjectSerializer.serialize(newLevel, "LevelingResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -20659,6 +35049,7 @@ export class GamificationLevelingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "LevelingResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -20730,6 +35121,7 @@ export class GamificationMetricsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -20739,7 +35131,7 @@ export class GamificationMetricsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: metric,
+            body: ObjectSerializer.serialize(metric, "MetricResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -20836,6 +35228,7 @@ export class GamificationTriviaApi {
             throw new Error('Required parameter questionId was null or undefined when calling addQuestionAnswers.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -20845,7 +35238,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: answer,
+            body: ObjectSerializer.serialize(answer, "AnswerResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -20864,6 +35257,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "AnswerResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -20879,7 +35273,7 @@ export class GamificationTriviaApi {
      * @param id The id of the question
      * @param tag The new tag
      */
-    public addQuestionTag (id: string, tag?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public addQuestionTag (id: string, tag?: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/trivia/questions/{id}/tags'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -20892,6 +35286,7 @@ export class GamificationTriviaApi {
             throw new Error('Required parameter id was null or undefined when calling addQuestionTag.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -20901,7 +35296,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: tag,
+            body: ObjectSerializer.serialize(tag, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -20942,7 +35337,7 @@ export class GamificationTriviaApi {
      * @param filterPublished Filter for questions currenctly published or not
      * @param filterImportId Filter for questions from a specific import job
      */
-    public addTagToQuestionsBatch (tag?: string, filterSearch?: string, filterIdset?: string, filterCategory?: string, filterTag?: string, filterTagset?: string, filterType?: string, filterPublished?: boolean, filterImportId?: number) : Promise<{ response: http.ClientResponse; body: number;  }> {
+    public addTagToQuestionsBatch (tag?: StringWrapper, filterSearch?: string, filterIdset?: string, filterCategory?: string, filterTag?: string, filterTagset?: string, filterType?: string, filterPublished?: boolean, filterImportId?: number) : Promise<{ response: http.ClientResponse; body: number;  }> {
         const localVarPath = this.basePath + '/trivia/questions/tags';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
@@ -20950,36 +35345,37 @@ export class GamificationTriviaApi {
 
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
 
         if (filterIdset !== undefined) {
-            queryParameters['filter_idset'] = filterIdset;
+            queryParameters['filter_idset'] = ObjectSerializer.serialize(filterIdset, "string");
         }
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterTag !== undefined) {
-            queryParameters['filter_tag'] = filterTag;
+            queryParameters['filter_tag'] = ObjectSerializer.serialize(filterTag, "string");
         }
 
         if (filterTagset !== undefined) {
-            queryParameters['filter_tagset'] = filterTagset;
+            queryParameters['filter_tagset'] = ObjectSerializer.serialize(filterTagset, "string");
         }
 
         if (filterType !== undefined) {
-            queryParameters['filter_type'] = filterType;
+            queryParameters['filter_type'] = ObjectSerializer.serialize(filterType, "string");
         }
 
         if (filterPublished !== undefined) {
-            queryParameters['filter_published'] = filterPublished;
+            queryParameters['filter_published'] = ObjectSerializer.serialize(filterPublished, "boolean");
         }
 
         if (filterImportId !== undefined) {
-            queryParameters['filter_import_id'] = filterImportId;
+            queryParameters['filter_import_id'] = ObjectSerializer.serialize(filterImportId, "number");
         }
+
 
         let useFormData = false;
 
@@ -20990,7 +35386,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: tag,
+            body: ObjectSerializer.serialize(tag, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -21009,6 +35405,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "number");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21030,6 +35427,7 @@ export class GamificationTriviaApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -21039,7 +35437,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "ImportJobResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -21058,6 +35456,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ImportJobResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21079,6 +35478,7 @@ export class GamificationTriviaApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -21088,7 +35488,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: question,
+            body: ObjectSerializer.serialize(question, "QuestionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -21107,6 +35507,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "QuestionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21128,6 +35529,7 @@ export class GamificationTriviaApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -21137,7 +35539,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: questionTemplateResource,
+            body: ObjectSerializer.serialize(questionTemplateResource, "QuestionTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -21156,6 +35558,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "QuestionTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21182,6 +35585,7 @@ export class GamificationTriviaApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteImportJob.');
         }
+
 
         let useFormData = false;
 
@@ -21236,6 +35640,7 @@ export class GamificationTriviaApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteQuestion.');
         }
+
 
         let useFormData = false;
 
@@ -21298,6 +35703,7 @@ export class GamificationTriviaApi {
             throw new Error('Required parameter id was null or undefined when calling deleteQuestionAnswers.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -21354,8 +35760,9 @@ export class GamificationTriviaApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -21411,6 +35818,7 @@ export class GamificationTriviaApi {
             throw new Error('Required parameter id was null or undefined when calling getImportJob.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -21438,6 +35846,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ImportJobResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21466,32 +35875,33 @@ export class GamificationTriviaApi {
 
 
         if (filterVendor !== undefined) {
-            queryParameters['filter_vendor'] = filterVendor;
+            queryParameters['filter_vendor'] = ObjectSerializer.serialize(filterVendor, "string");
         }
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (filterStatus !== undefined) {
-            queryParameters['filter_status'] = filterStatus;
+            queryParameters['filter_status'] = ObjectSerializer.serialize(filterStatus, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -21520,6 +35930,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceImportJobResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21546,6 +35957,7 @@ export class GamificationTriviaApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getQuestion.');
         }
+
 
         let useFormData = false;
 
@@ -21574,6 +35986,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "QuestionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21608,6 +36021,7 @@ export class GamificationTriviaApi {
             throw new Error('Required parameter id was null or undefined when calling getQuestionAnswer.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -21635,6 +36049,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "AnswerResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21661,6 +36076,7 @@ export class GamificationTriviaApi {
         if (questionId === null || questionId === undefined) {
             throw new Error('Required parameter questionId was null or undefined when calling getQuestionAnswers.');
         }
+
 
         let useFormData = false;
 
@@ -21689,6 +36105,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<AnswerResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21711,8 +36128,9 @@ export class GamificationTriviaApi {
 
 
         if (since !== undefined) {
-            queryParameters['since'] = since;
+            queryParameters['since'] = ObjectSerializer.serialize(since, "number");
         }
+
 
         let useFormData = false;
 
@@ -21741,6 +36159,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<DeltaResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21767,6 +36186,7 @@ export class GamificationTriviaApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getQuestionTags.');
         }
+
 
         let useFormData = false;
 
@@ -21795,6 +36215,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<string>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21821,6 +36242,7 @@ export class GamificationTriviaApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getQuestionTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -21849,6 +36271,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "QuestionTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21873,16 +36296,17 @@ export class GamificationTriviaApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -21911,6 +36335,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceQuestionTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -21943,48 +36368,49 @@ export class GamificationTriviaApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
 
         if (filterIdset !== undefined) {
-            queryParameters['filter_idset'] = filterIdset;
+            queryParameters['filter_idset'] = ObjectSerializer.serialize(filterIdset, "string");
         }
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterTagset !== undefined) {
-            queryParameters['filter_tagset'] = filterTagset;
+            queryParameters['filter_tagset'] = ObjectSerializer.serialize(filterTagset, "string");
         }
 
         if (filterTag !== undefined) {
-            queryParameters['filter_tag'] = filterTag;
+            queryParameters['filter_tag'] = ObjectSerializer.serialize(filterTag, "string");
         }
 
         if (filterType !== undefined) {
-            queryParameters['filter_type'] = filterType;
+            queryParameters['filter_type'] = ObjectSerializer.serialize(filterType, "string");
         }
 
         if (filterPublished !== undefined) {
-            queryParameters['filter_published'] = filterPublished;
+            queryParameters['filter_published'] = ObjectSerializer.serialize(filterPublished, "boolean");
         }
 
         if (filterImportId !== undefined) {
-            queryParameters['filter_import_id'] = filterImportId;
+            queryParameters['filter_import_id'] = ObjectSerializer.serialize(filterImportId, "number");
         }
+
 
         let useFormData = false;
 
@@ -22013,6 +36439,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceQuestionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22041,32 +36468,33 @@ export class GamificationTriviaApi {
 
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
 
         if (filterIdset !== undefined) {
-            queryParameters['filter_idset'] = filterIdset;
+            queryParameters['filter_idset'] = ObjectSerializer.serialize(filterIdset, "string");
         }
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterTag !== undefined) {
-            queryParameters['filter_tag'] = filterTag;
+            queryParameters['filter_tag'] = ObjectSerializer.serialize(filterTag, "string");
         }
 
         if (filterTagset !== undefined) {
-            queryParameters['filter_tagset'] = filterTagset;
+            queryParameters['filter_tagset'] = ObjectSerializer.serialize(filterTagset, "string");
         }
 
         if (filterType !== undefined) {
-            queryParameters['filter_type'] = filterType;
+            queryParameters['filter_type'] = ObjectSerializer.serialize(filterType, "string");
         }
 
         if (filterPublished !== undefined) {
-            queryParameters['filter_published'] = filterPublished;
+            queryParameters['filter_published'] = ObjectSerializer.serialize(filterPublished, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -22095,6 +36523,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "number");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22129,8 +36558,9 @@ export class GamificationTriviaApi {
         }
 
         if (publishNow !== undefined) {
-            queryParameters['publish_now'] = publishNow;
+            queryParameters['publish_now'] = ObjectSerializer.serialize(publishNow, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -22159,6 +36589,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ImportJobResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22192,6 +36623,7 @@ export class GamificationTriviaApi {
         if (tag === null || tag === undefined) {
             throw new Error('Required parameter tag was null or undefined when calling removeQuestionTag.');
         }
+
 
         let useFormData = false;
 
@@ -22256,36 +36688,37 @@ export class GamificationTriviaApi {
         }
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
 
         if (filterIdset !== undefined) {
-            queryParameters['filter_idset'] = filterIdset;
+            queryParameters['filter_idset'] = ObjectSerializer.serialize(filterIdset, "string");
         }
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterTag !== undefined) {
-            queryParameters['filter_tag'] = filterTag;
+            queryParameters['filter_tag'] = ObjectSerializer.serialize(filterTag, "string");
         }
 
         if (filterTagset !== undefined) {
-            queryParameters['filter_tagset'] = filterTagset;
+            queryParameters['filter_tagset'] = ObjectSerializer.serialize(filterTagset, "string");
         }
 
         if (filterType !== undefined) {
-            queryParameters['filter_type'] = filterType;
+            queryParameters['filter_type'] = ObjectSerializer.serialize(filterType, "string");
         }
 
         if (filterPublished !== undefined) {
-            queryParameters['filter_published'] = filterPublished;
+            queryParameters['filter_published'] = ObjectSerializer.serialize(filterPublished, "boolean");
         }
 
         if (filterImportId !== undefined) {
-            queryParameters['filter_import_id'] = filterImportId;
+            queryParameters['filter_import_id'] = ObjectSerializer.serialize(filterImportId, "number");
         }
+
 
         let useFormData = false;
 
@@ -22314,6 +36747,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "number");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22338,16 +36772,17 @@ export class GamificationTriviaApi {
 
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterImportId !== undefined) {
-            queryParameters['filter_import_id'] = filterImportId;
+            queryParameters['filter_import_id'] = ObjectSerializer.serialize(filterImportId, "number");
         }
+
 
         let useFormData = false;
 
@@ -22376,6 +36811,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Collectionstring");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22404,6 +36840,7 @@ export class GamificationTriviaApi {
             throw new Error('Required parameter id was null or undefined when calling updateImportJob.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -22413,7 +36850,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "ImportJobResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -22432,6 +36869,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ImportJobResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22460,6 +36898,7 @@ export class GamificationTriviaApi {
             throw new Error('Required parameter id was null or undefined when calling updateQuestion.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -22469,7 +36908,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: question,
+            body: ObjectSerializer.serialize(question, "QuestionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -22488,6 +36927,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "QuestionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22523,6 +36963,7 @@ export class GamificationTriviaApi {
             throw new Error('Required parameter id was null or undefined when calling updateQuestionAnswer.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -22532,7 +36973,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: answer,
+            body: ObjectSerializer.serialize(answer, "AnswerResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -22579,6 +37020,7 @@ export class GamificationTriviaApi {
             throw new Error('Required parameter id was null or undefined when calling updateQuestionTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -22588,7 +37030,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: questionTemplateResource,
+            body: ObjectSerializer.serialize(questionTemplateResource, "QuestionTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -22607,6 +37049,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "QuestionTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22636,32 +37079,33 @@ export class GamificationTriviaApi {
 
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
 
         if (filterIdset !== undefined) {
-            queryParameters['filter_idset'] = filterIdset;
+            queryParameters['filter_idset'] = ObjectSerializer.serialize(filterIdset, "string");
         }
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterTagset !== undefined) {
-            queryParameters['filter_tagset'] = filterTagset;
+            queryParameters['filter_tagset'] = ObjectSerializer.serialize(filterTagset, "string");
         }
 
         if (filterType !== undefined) {
-            queryParameters['filter_type'] = filterType;
+            queryParameters['filter_type'] = ObjectSerializer.serialize(filterType, "string");
         }
 
         if (filterPublished !== undefined) {
-            queryParameters['filter_published'] = filterPublished;
+            queryParameters['filter_published'] = ObjectSerializer.serialize(filterPublished, "boolean");
         }
 
         if (filterImportId !== undefined) {
-            queryParameters['filter_import_id'] = filterImportId;
+            queryParameters['filter_import_id'] = ObjectSerializer.serialize(filterImportId, "number");
         }
+
 
         let useFormData = false;
 
@@ -22672,7 +37116,7 @@ export class GamificationTriviaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: question,
+            body: ObjectSerializer.serialize(question, "QuestionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -22691,6 +37135,7 @@ export class GamificationTriviaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "number");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22762,6 +37207,7 @@ export class InvoicesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -22771,7 +37217,7 @@ export class InvoicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: req,
+            body: ObjectSerializer.serialize(req, "InvoiceCreateRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -22790,6 +37236,7 @@ export class InvoicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<InvoiceResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22808,6 +37255,7 @@ export class InvoicesApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -22835,6 +37283,7 @@ export class InvoicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<string>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22861,6 +37310,7 @@ export class InvoicesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getInvoice.');
         }
+
 
         let useFormData = false;
 
@@ -22889,6 +37339,7 @@ export class InvoicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "InvoiceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22919,12 +37370,13 @@ export class InvoicesApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -22953,6 +37405,7 @@ export class InvoicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceInvoiceLogEntry");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -22991,72 +37444,73 @@ export class InvoicesApi {
 
 
         if (filterUser !== undefined) {
-            queryParameters['filter_user'] = filterUser;
+            queryParameters['filter_user'] = ObjectSerializer.serialize(filterUser, "number");
         }
 
         if (filterEmail !== undefined) {
-            queryParameters['filter_email'] = filterEmail;
+            queryParameters['filter_email'] = ObjectSerializer.serialize(filterEmail, "string");
         }
 
         if (filterFulfillmentStatus !== undefined) {
-            queryParameters['filter_fulfillment_status'] = filterFulfillmentStatus;
+            queryParameters['filter_fulfillment_status'] = ObjectSerializer.serialize(filterFulfillmentStatus, "string");
         }
 
         if (filterPaymentStatus !== undefined) {
-            queryParameters['filter_payment_status'] = filterPaymentStatus;
+            queryParameters['filter_payment_status'] = ObjectSerializer.serialize(filterPaymentStatus, "string");
         }
 
         if (filterItemName !== undefined) {
-            queryParameters['filter_item_name'] = filterItemName;
+            queryParameters['filter_item_name'] = ObjectSerializer.serialize(filterItemName, "string");
         }
 
         if (filterExternalRef !== undefined) {
-            queryParameters['filter_external_ref'] = filterExternalRef;
+            queryParameters['filter_external_ref'] = ObjectSerializer.serialize(filterExternalRef, "string");
         }
 
         if (filterCreatedDate !== undefined) {
-            queryParameters['filter_created_date'] = filterCreatedDate;
+            queryParameters['filter_created_date'] = ObjectSerializer.serialize(filterCreatedDate, "string");
         }
 
         if (filterVendorIds !== undefined) {
-            queryParameters['filter_vendor_ids'] = filterVendorIds;
+            queryParameters['filter_vendor_ids'] = ObjectSerializer.serialize(filterVendorIds, "string");
         }
 
         if (filterCurrency !== undefined) {
-            queryParameters['filter_currency'] = filterCurrency;
+            queryParameters['filter_currency'] = ObjectSerializer.serialize(filterCurrency, "string");
         }
 
         if (filterShippingStateName !== undefined) {
-            queryParameters['filter_shipping_state_name'] = filterShippingStateName;
+            queryParameters['filter_shipping_state_name'] = ObjectSerializer.serialize(filterShippingStateName, "string");
         }
 
         if (filterShippingCountryName !== undefined) {
-            queryParameters['filter_shipping_country_name'] = filterShippingCountryName;
+            queryParameters['filter_shipping_country_name'] = ObjectSerializer.serialize(filterShippingCountryName, "string");
         }
 
         if (filterShipping !== undefined) {
-            queryParameters['filter_shipping'] = filterShipping;
+            queryParameters['filter_shipping'] = ObjectSerializer.serialize(filterShipping, "string");
         }
 
         if (filterVendorName !== undefined) {
-            queryParameters['filter_vendor_name'] = filterVendorName;
+            queryParameters['filter_vendor_name'] = ObjectSerializer.serialize(filterVendorName, "string");
         }
 
         if (filterSku !== undefined) {
-            queryParameters['filter_sku'] = filterSku;
+            queryParameters['filter_sku'] = ObjectSerializer.serialize(filterSku, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -23085,6 +37539,7 @@ export class InvoicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceInvoiceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -23103,6 +37558,7 @@ export class InvoicesApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -23130,6 +37586,7 @@ export class InvoicesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<string>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -23141,9 +37598,9 @@ export class InvoicesApi {
     }
     /**
      * 
-     * @summary Trigger payment of an invoice
+     * @summary Pay an invoice using a saved payment method
      * @param id The id of the invoice
-     * @param request Payment info
+     * @param request The payment method details. Will default to the appropriate user&#39;s wallet in the invoice currency if ommited.
      */
     public payInvoice (id: number, request?: PayBySavedMethodRequest) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/invoices/{id}/payments'
@@ -23158,6 +37615,7 @@ export class InvoicesApi {
             throw new Error('Required parameter id was null or undefined when calling payInvoice.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23167,7 +37625,7 @@ export class InvoicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "PayBySavedMethodRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -23203,7 +37661,7 @@ export class InvoicesApi {
      * @param sku The sku of an item in the bundle in the invoice
      * @param status The new fulfillment status for the item. Additional options may be available based on configuration.  Allowable values:  &#39;unfulfilled&#39;, &#39;fulfilled&#39;, &#39;not fulfillable&#39;, &#39;failed&#39;, &#39;processing&#39;, &#39;failed_permanent&#39;, &#39;delayed&#39;
      */
-    public setBundledInvoiceItemFulfillmentStatus (id: number, bundleSku: string, sku: string, status: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setBundledInvoiceItemFulfillmentStatus (id: number, bundleSku: string, sku: string, status: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/invoices/{id}/items/{bundleSku}/bundled-skus/{sku}/fulfillment-status'
             .replace('{' + 'id' + '}', String(id))
             .replace('{' + 'bundleSku' + '}', String(bundleSku))
@@ -23233,6 +37691,7 @@ export class InvoicesApi {
             throw new Error('Required parameter status was null or undefined when calling setBundledInvoiceItemFulfillmentStatus.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23242,7 +37701,7 @@ export class InvoicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: status,
+            body: ObjectSerializer.serialize(status, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -23276,7 +37735,7 @@ export class InvoicesApi {
      * @param id The id of the invoice
      * @param externalRef External reference info
      */
-    public setExternalRef (id: number, externalRef?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setExternalRef (id: number, externalRef?: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/invoices/{id}/external-ref'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -23289,6 +37748,7 @@ export class InvoicesApi {
             throw new Error('Required parameter id was null or undefined when calling setExternalRef.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23298,7 +37758,7 @@ export class InvoicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: externalRef,
+            body: ObjectSerializer.serialize(externalRef, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -23333,7 +37793,7 @@ export class InvoicesApi {
      * @param sku The sku of an item in the invoice
      * @param status The new fulfillment status for the item. Additional options may be available based on configuration.  Allowable values:  &#39;unfulfilled&#39;, &#39;fulfilled&#39;, &#39;not fulfillable&#39;, &#39;failed&#39;, &#39;processing&#39;, &#39;failed_permanent&#39;, &#39;delayed&#39;
      */
-    public setInvoiceItemFulfillmentStatus (id: number, sku: string, status: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setInvoiceItemFulfillmentStatus (id: number, sku: string, status: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/invoices/{id}/items/{sku}/fulfillment-status'
             .replace('{' + 'id' + '}', String(id))
             .replace('{' + 'sku' + '}', String(sku));
@@ -23357,6 +37817,7 @@ export class InvoicesApi {
             throw new Error('Required parameter status was null or undefined when calling setInvoiceItemFulfillmentStatus.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23366,7 +37827,7 @@ export class InvoicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: status,
+            body: ObjectSerializer.serialize(status, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -23400,7 +37861,7 @@ export class InvoicesApi {
      * @param id The id of the invoice
      * @param orderNotes Payment status info
      */
-    public setOrderNotes (id: number, orderNotes?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setOrderNotes (id: number, orderNotes?: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/invoices/{id}/order-notes'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -23413,6 +37874,7 @@ export class InvoicesApi {
             throw new Error('Required parameter id was null or undefined when calling setOrderNotes.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23422,7 +37884,7 @@ export class InvoicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: orderNotes,
+            body: ObjectSerializer.serialize(orderNotes, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -23469,6 +37931,7 @@ export class InvoicesApi {
             throw new Error('Required parameter id was null or undefined when calling setPaymentStatus.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23478,7 +37941,7 @@ export class InvoicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "InvoicePaymentStatusRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -23525,6 +37988,7 @@ export class InvoicesApi {
             throw new Error('Required parameter id was null or undefined when calling updateBillingInfo.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23534,7 +37998,7 @@ export class InvoicesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: billingInfoRequest,
+            body: ObjectSerializer.serialize(billingInfoRequest, "AddressResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -23623,6 +38087,7 @@ export class LocationsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23648,6 +38113,7 @@ export class LocationsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<CountryResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -23666,6 +38132,7 @@ export class LocationsApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -23693,6 +38160,7 @@ export class LocationsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "string");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -23720,6 +38188,7 @@ export class LocationsApi {
             throw new Error('Required parameter countryCodeIso3 was null or undefined when calling getCountryStates.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23745,6 +38214,7 @@ export class LocationsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<StateResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -23763,6 +38233,7 @@ export class LocationsApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -23790,6 +38261,7 @@ export class LocationsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CurrencyResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -23861,6 +38333,7 @@ export class LogsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23870,7 +38343,7 @@ export class LogsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: logEntry,
+            body: ObjectSerializer.serialize(logEntry, "UserActionLog")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -23916,6 +38389,7 @@ export class LogsApi {
             throw new Error('Required parameter id was null or undefined when calling getBREEventLog.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -23943,6 +38417,7 @@ export class LogsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BreEventLog");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -23970,28 +38445,29 @@ export class LogsApi {
 
 
         if (filterStartDate !== undefined) {
-            queryParameters['filter_start_date'] = filterStartDate;
+            queryParameters['filter_start_date'] = ObjectSerializer.serialize(filterStartDate, "string");
         }
 
         if (filterEventName !== undefined) {
-            queryParameters['filter_event_name'] = filterEventName;
+            queryParameters['filter_event_name'] = ObjectSerializer.serialize(filterEventName, "string");
         }
 
         if (filterEventId !== undefined) {
-            queryParameters['filter_event_id'] = filterEventId;
+            queryParameters['filter_event_id'] = ObjectSerializer.serialize(filterEventId, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -24020,6 +38496,7 @@ export class LogsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceBreEventLog");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24046,6 +38523,7 @@ export class LogsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getBREForwardLog.');
         }
+
 
         let useFormData = false;
 
@@ -24074,6 +38552,7 @@ export class LogsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ForwardLog");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24101,28 +38580,29 @@ export class LogsApi {
 
 
         if (filterStartDate !== undefined) {
-            queryParameters['filter_start_date'] = filterStartDate;
+            queryParameters['filter_start_date'] = ObjectSerializer.serialize(filterStartDate, "string");
         }
 
         if (filterEndDate !== undefined) {
-            queryParameters['filter_end_date'] = filterEndDate;
+            queryParameters['filter_end_date'] = ObjectSerializer.serialize(filterEndDate, "string");
         }
 
         if (filterStatusCode !== undefined) {
-            queryParameters['filter_status_code'] = filterStatusCode;
+            queryParameters['filter_status_code'] = ObjectSerializer.serialize(filterStatusCode, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -24151,6 +38631,7 @@ export class LogsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceForwardLog");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24177,6 +38658,7 @@ export class LogsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getUserLog.');
         }
+
 
         let useFormData = false;
 
@@ -24205,6 +38687,7 @@ export class LogsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserActionLog");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24231,24 +38714,25 @@ export class LogsApi {
 
 
         if (filterUser !== undefined) {
-            queryParameters['filter_user'] = filterUser;
+            queryParameters['filter_user'] = ObjectSerializer.serialize(filterUser, "number");
         }
 
         if (filterActionName !== undefined) {
-            queryParameters['filter_action_name'] = filterActionName;
+            queryParameters['filter_action_name'] = ObjectSerializer.serialize(filterActionName, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -24277,6 +38761,7 @@ export class LogsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUserActionLog");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24348,6 +38833,7 @@ export class MediaArtistsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -24357,7 +38843,7 @@ export class MediaArtistsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: artistResource,
+            body: ObjectSerializer.serialize(artistResource, "ArtistResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -24376,6 +38862,7 @@ export class MediaArtistsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ArtistResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24397,6 +38884,7 @@ export class MediaArtistsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -24406,7 +38894,7 @@ export class MediaArtistsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: artistTemplateResource,
+            body: ObjectSerializer.serialize(artistTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -24425,6 +38913,7 @@ export class MediaArtistsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24451,6 +38940,7 @@ export class MediaArtistsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteArtist.');
         }
+
 
         let useFormData = false;
 
@@ -24508,8 +38998,9 @@ export class MediaArtistsApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -24567,8 +39058,9 @@ export class MediaArtistsApi {
         }
 
         if (showContributions !== undefined) {
-            queryParameters['show_contributions'] = showContributions;
+            queryParameters['show_contributions'] = ObjectSerializer.serialize(showContributions, "number");
         }
+
 
         let useFormData = false;
 
@@ -24595,6 +39087,7 @@ export class MediaArtistsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ArtistResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24621,6 +39114,7 @@ export class MediaArtistsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getArtistTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -24649,6 +39143,7 @@ export class MediaArtistsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24673,16 +39168,17 @@ export class MediaArtistsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -24711,6 +39207,7 @@ export class MediaArtistsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24736,20 +39233,21 @@ export class MediaArtistsApi {
 
 
         if (filterArtistsByName !== undefined) {
-            queryParameters['filter_artists_by_name'] = filterArtistsByName;
+            queryParameters['filter_artists_by_name'] = ObjectSerializer.serialize(filterArtistsByName, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -24776,6 +39274,7 @@ export class MediaArtistsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceArtistResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24804,6 +39303,7 @@ export class MediaArtistsApi {
             throw new Error('Required parameter id was null or undefined when calling updateArtist.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -24813,7 +39313,7 @@ export class MediaArtistsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: artistResource,
+            body: ObjectSerializer.serialize(artistResource, "ArtistResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -24860,6 +39360,7 @@ export class MediaArtistsApi {
             throw new Error('Required parameter id was null or undefined when calling updateArtistTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -24869,7 +39370,7 @@ export class MediaArtistsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: artistTemplateResource,
+            body: ObjectSerializer.serialize(artistTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -24888,6 +39389,7 @@ export class MediaArtistsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -24965,6 +39467,7 @@ export class MediaModerationApi {
             throw new Error('Required parameter id was null or undefined when calling getModerationReport.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -24992,6 +39495,7 @@ export class MediaModerationApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "FlagReportResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -25017,20 +39521,21 @@ export class MediaModerationApi {
 
 
         if (excludeResolved !== undefined) {
-            queryParameters['exclude_resolved'] = excludeResolved;
+            queryParameters['exclude_resolved'] = ObjectSerializer.serialize(excludeResolved, "boolean");
         }
 
         if (filterContext !== undefined) {
-            queryParameters['filter_context'] = filterContext;
+            queryParameters['filter_context'] = ObjectSerializer.serialize(filterContext, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -25059,6 +39564,7 @@ export class MediaModerationApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceFlagReportResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -25087,6 +39593,7 @@ export class MediaModerationApi {
             throw new Error('Required parameter id was null or undefined when calling updateModerationReport.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25096,7 +39603,7 @@ export class MediaModerationApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: flagReportResource,
+            body: ObjectSerializer.serialize(flagReportResource, "FlagReportResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -25180,7 +39687,7 @@ export class MediaVideosApi {
      * @param id The video id
      * @param userId The user id
      */
-    public addUserToVideoWhitelist (id: number, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public addUserToVideoWhitelist (id: number, userId?: IntWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/media/videos/{id}/whitelist'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -25193,6 +39700,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter id was null or undefined when calling addUserToVideoWhitelist.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25202,7 +39710,7 @@ export class MediaVideosApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: userId,
+            body: ObjectSerializer.serialize(userId, "IntWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -25242,6 +39750,7 @@ export class MediaVideosApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25251,7 +39760,7 @@ export class MediaVideosApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: videoResource,
+            body: ObjectSerializer.serialize(videoResource, "VideoResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -25270,6 +39779,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "VideoResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -25298,6 +39808,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter videoId was null or undefined when calling addVideoComment.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25307,7 +39818,7 @@ export class MediaVideosApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: commentResource,
+            body: ObjectSerializer.serialize(commentResource, "CommentResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -25326,6 +39837,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CommentResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -25354,6 +39866,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter videoId was null or undefined when calling addVideoContributor.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25363,7 +39876,7 @@ export class MediaVideosApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: contributionResource,
+            body: ObjectSerializer.serialize(contributionResource, "ContributionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -25397,7 +39910,7 @@ export class MediaVideosApi {
      * @param videoId The video id
      * @param reason The flag reason
      */
-    public addVideoFlag (videoId: number, reason?: string) : Promise<{ response: http.ClientResponse; body: FlagResource;  }> {
+    public addVideoFlag (videoId: number, reason?: StringWrapper) : Promise<{ response: http.ClientResponse; body: FlagResource;  }> {
         const localVarPath = this.basePath + '/media/videos/{video_id}/moderation'
             .replace('{' + 'video_id' + '}', String(videoId));
         let queryParameters: any = {};
@@ -25410,6 +39923,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter videoId was null or undefined when calling addVideoFlag.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25419,7 +39933,7 @@ export class MediaVideosApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: reason,
+            body: ObjectSerializer.serialize(reason, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -25438,6 +39952,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "FlagResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -25466,6 +39981,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter videoId was null or undefined when calling addVideoRelationships.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25475,7 +39991,7 @@ export class MediaVideosApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: videoRelationshipResource,
+            body: ObjectSerializer.serialize(videoRelationshipResource, "VideoRelationshipResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -25494,6 +40010,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "VideoRelationshipResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -25522,6 +40039,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter videoId was null or undefined when calling createVideoDisposition.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25531,7 +40049,7 @@ export class MediaVideosApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: dispositionResource,
+            body: ObjectSerializer.serialize(dispositionResource, "DispositionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -25550,6 +40068,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "DispositionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -25576,6 +40095,7 @@ export class MediaVideosApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteVideo.');
         }
+
 
         let useFormData = false;
 
@@ -25638,6 +40158,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter id was null or undefined when calling deleteVideoComment.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25692,6 +40213,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter dispositionId was null or undefined when calling deleteVideoDisposition.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25745,6 +40267,7 @@ export class MediaVideosApi {
         if (videoId === null || videoId === undefined) {
             throw new Error('Required parameter videoId was null or undefined when calling deleteVideoFlag.');
         }
+
 
         let useFormData = false;
 
@@ -25807,6 +40330,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter id was null or undefined when calling deleteVideoRelationship.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -25865,16 +40389,17 @@ export class MediaVideosApi {
         }
 
         if (excludeFlagged !== undefined) {
-            queryParameters['exclude_flagged'] = excludeFlagged;
+            queryParameters['exclude_flagged'] = ObjectSerializer.serialize(excludeFlagged, "boolean");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -25903,6 +40428,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceVideoResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -25929,6 +40455,7 @@ export class MediaVideosApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getVideo.');
         }
+
 
         let useFormData = false;
 
@@ -25957,6 +40484,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "VideoResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -25987,12 +40515,13 @@ export class MediaVideosApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -26019,6 +40548,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceCommentResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -26049,12 +40579,13 @@ export class MediaVideosApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -26081,6 +40612,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceDispositionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -26111,12 +40643,13 @@ export class MediaVideosApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -26143,6 +40676,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceVideoRelationshipResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -26179,64 +40713,65 @@ export class MediaVideosApi {
 
 
         if (excludeFlagged !== undefined) {
-            queryParameters['exclude_flagged'] = excludeFlagged;
+            queryParameters['exclude_flagged'] = ObjectSerializer.serialize(excludeFlagged, "boolean");
         }
 
         if (filterVideosByUploader !== undefined) {
-            queryParameters['filter_videos_by_uploader'] = filterVideosByUploader;
+            queryParameters['filter_videos_by_uploader'] = ObjectSerializer.serialize(filterVideosByUploader, "number");
         }
 
         if (filterCategory !== undefined) {
-            queryParameters['filter_category'] = filterCategory;
+            queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
         }
 
         if (filterTagset !== undefined) {
-            queryParameters['filter_tagset'] = filterTagset;
+            queryParameters['filter_tagset'] = ObjectSerializer.serialize(filterTagset, "string");
         }
 
         if (filterVideosByName !== undefined) {
-            queryParameters['filter_videos_by_name'] = filterVideosByName;
+            queryParameters['filter_videos_by_name'] = ObjectSerializer.serialize(filterVideosByName, "string");
         }
 
         if (filterVideosByContributor !== undefined) {
-            queryParameters['filter_videos_by_contributor'] = filterVideosByContributor;
+            queryParameters['filter_videos_by_contributor'] = ObjectSerializer.serialize(filterVideosByContributor, "number");
         }
 
         if (filterVideosByAuthor !== undefined) {
-            queryParameters['filter_videos_by_author'] = filterVideosByAuthor;
+            queryParameters['filter_videos_by_author'] = ObjectSerializer.serialize(filterVideosByAuthor, "number");
         }
 
         if (filterHasAuthor !== undefined) {
-            queryParameters['filter_has_author'] = filterHasAuthor;
+            queryParameters['filter_has_author'] = ObjectSerializer.serialize(filterHasAuthor, "boolean");
         }
 
         if (filterHasUploader !== undefined) {
-            queryParameters['filter_has_uploader'] = filterHasUploader;
+            queryParameters['filter_has_uploader'] = ObjectSerializer.serialize(filterHasUploader, "boolean");
         }
 
         if (filterRelatedTo !== undefined) {
-            queryParameters['filter_related_to'] = filterRelatedTo;
+            queryParameters['filter_related_to'] = ObjectSerializer.serialize(filterRelatedTo, "string");
         }
 
         if (filterFriends !== undefined) {
-            queryParameters['filter_friends'] = filterFriends;
+            queryParameters['filter_friends'] = ObjectSerializer.serialize(filterFriends, "boolean");
         }
 
         if (filterDisposition !== undefined) {
-            queryParameters['filter_disposition'] = filterDisposition;
+            queryParameters['filter_disposition'] = ObjectSerializer.serialize(filterDisposition, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -26263,6 +40798,7 @@ export class MediaVideosApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceVideoResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -26296,6 +40832,7 @@ export class MediaVideosApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling removeUserFromVideoWhitelist.');
         }
+
 
         let useFormData = false;
 
@@ -26358,6 +40895,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter id was null or undefined when calling removeVideoContributor.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -26413,6 +40951,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter id was null or undefined when calling updateVideo.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -26422,7 +40961,7 @@ export class MediaVideosApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: videoResource,
+            body: ObjectSerializer.serialize(videoResource, "VideoResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -26457,7 +40996,7 @@ export class MediaVideosApi {
      * @param id The comment id
      * @param content The comment content
      */
-    public updateVideoComment (videoId: number, id: number, content?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public updateVideoComment (videoId: number, id: number, content?: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/media/videos/{video_id}/comments/{id}/content'
             .replace('{' + 'video_id' + '}', String(videoId))
             .replace('{' + 'id' + '}', String(id));
@@ -26476,6 +41015,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter id was null or undefined when calling updateVideoComment.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -26485,7 +41025,7 @@ export class MediaVideosApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: content,
+            body: ObjectSerializer.serialize(content, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -26520,7 +41060,7 @@ export class MediaVideosApi {
      * @param relationshipId The relationship id
      * @param details The video relationship details
      */
-    public updateVideoRelationship (videoId: number, relationshipId: number, details?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public updateVideoRelationship (videoId: number, relationshipId: number, details?: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/media/videos/{video_id}/related/{id}/relationship_details'
             .replace('{' + 'video_id' + '}', String(videoId))
             .replace('{' + 'relationship_id' + '}', String(relationshipId));
@@ -26539,6 +41079,7 @@ export class MediaVideosApi {
             throw new Error('Required parameter relationshipId was null or undefined when calling updateVideoRelationship.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -26548,7 +41089,7 @@ export class MediaVideosApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: details,
+            body: ObjectSerializer.serialize(details, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -26593,6 +41134,7 @@ export class MediaVideosApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling viewVideo.');
         }
+
 
         let useFormData = false;
 
@@ -26690,6 +41232,7 @@ export class MessagingApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -26699,7 +41242,7 @@ export class MessagingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: rawEmailResource,
+            body: ObjectSerializer.serialize(rawEmailResource, "RawEmailResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -26739,6 +41282,7 @@ export class MessagingApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -26748,7 +41292,7 @@ export class MessagingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: rawSMSResource,
+            body: ObjectSerializer.serialize(rawSMSResource, "RawSMSResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -26788,6 +41332,7 @@ export class MessagingApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -26797,7 +41342,7 @@ export class MessagingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: messageResource,
+            body: ObjectSerializer.serialize(messageResource, "TemplateEmailResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -26837,6 +41382,7 @@ export class MessagingApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -26846,7 +41392,7 @@ export class MessagingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: templateSMSResource,
+            body: ObjectSerializer.serialize(templateSMSResource, "TemplateSMSResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -26943,6 +41489,7 @@ export class PaymentsApi {
             throw new Error('Required parameter userId was null or undefined when calling createPaymentMethod.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -26952,7 +41499,7 @@ export class PaymentsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: paymentMethod,
+            body: ObjectSerializer.serialize(paymentMethod, "PaymentMethodResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -26971,6 +41518,7 @@ export class PaymentsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PaymentMethodResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27004,6 +41552,7 @@ export class PaymentsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deletePaymentMethod.');
         }
+
 
         let useFormData = false;
 
@@ -27066,6 +41615,7 @@ export class PaymentsApi {
             throw new Error('Required parameter id was null or undefined when calling getPaymentMethod.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27093,6 +41643,7 @@ export class PaymentsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PaymentMethodResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27128,32 +41679,33 @@ export class PaymentsApi {
         }
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (filterPaymentType !== undefined) {
-            queryParameters['filter_payment_type'] = filterPaymentType;
+            queryParameters['filter_payment_type'] = ObjectSerializer.serialize(filterPaymentType, "string");
         }
 
         if (filterPaymentMethodTypeId !== undefined) {
-            queryParameters['filter_payment_method_type_id'] = filterPaymentMethodTypeId;
+            queryParameters['filter_payment_method_type_id'] = ObjectSerializer.serialize(filterPaymentMethodTypeId, "number");
         }
 
         if (filterPaymentMethodTypeName !== undefined) {
-            queryParameters['filter_payment_method_type_name'] = filterPaymentMethodTypeName;
+            queryParameters['filter_payment_method_type_name'] = ObjectSerializer.serialize(filterPaymentMethodTypeName, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -27182,6 +41734,7 @@ export class PaymentsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<PaymentMethodResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27203,6 +41756,7 @@ export class PaymentsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27212,7 +41766,7 @@ export class PaymentsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "PaymentAuthorizationResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -27231,6 +41785,7 @@ export class PaymentsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PaymentAuthorizationResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27257,6 +41812,7 @@ export class PaymentsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling paymentCapture.');
         }
+
 
         let useFormData = false;
 
@@ -27320,6 +41876,7 @@ export class PaymentsApi {
             throw new Error('Required parameter id was null or undefined when calling updatePaymentMethod.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27329,7 +41886,7 @@ export class PaymentsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: paymentMethod,
+            body: ObjectSerializer.serialize(paymentMethod, "PaymentMethodResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -27348,6 +41905,7 @@ export class PaymentsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PaymentMethodResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27419,6 +41977,7 @@ export class PaymentsAppleApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27428,7 +41987,7 @@ export class PaymentsAppleApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "ApplyPaymentRequest")
         };
 
         this.authentications.default.applyToRequest(requestOptions);
@@ -27445,6 +42004,108 @@ export class PaymentsAppleApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "string");
+                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+}
+export enum PaymentsFattMerchantApiApiKeys {
+}
+
+export class PaymentsFattMerchantApi {
+    protected _basePath = defaultBasePath;
+    protected defaultHeaders : any = {};
+    protected _useQuerystring : boolean = false;
+
+    protected authentications = {
+        'default': <Authentication>new VoidAuth(),
+        'OAuth2': new OAuth(),
+    }
+
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
+        if (password) {
+            if (basePath) {
+                this.basePath = basePath;
+            }
+        } else {
+            if (basePathOrUsername) {
+                this.basePath = basePathOrUsername
+            }
+        }
+    }
+
+    set useQuerystring(value: boolean) {
+        this._useQuerystring = value;
+    }
+
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
+    public setApiKey(key: PaymentsFattMerchantApiApiKeys, value: string) {
+        this.authentications[PaymentsFattMerchantApiApiKeys[key]].apiKey = value;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.OAuth2.accessToken = token;
+    }
+    /**
+     * Stores customer information and creates a payment method that can be used to pay invoices through the payments endpoints.
+     * @summary Create or update a FattMerchant payment method for a user
+     * @param request Request containing payment method information for user
+     */
+    public createOrUpdateFattMerchantPaymentMethod (request?: FattMerchantPaymentMethodRequest) : Promise<{ response: http.ClientResponse; body: PaymentMethodResource;  }> {
+        const localVarPath = this.basePath + '/payment/provider/fattmerchant/payment-methods';
+        let queryParameters: any = {};
+        let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+
+        let useFormData = false;
+
+        let requestOptions: request.Options = {
+            method: 'PUT',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: ObjectSerializer.serialize(request, "FattMerchantPaymentMethodRequest")
+        };
+
+        this.authentications.OAuth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: PaymentMethodResource;  }>((resolve, reject) => {
+            request(requestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "PaymentMethodResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27516,6 +42177,7 @@ export class PaymentsGoogleApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27525,7 +42187,7 @@ export class PaymentsGoogleApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "GooglePaymentRequest")
         };
 
         this.authentications.default.applyToRequest(requestOptions);
@@ -27542,6 +42204,7 @@ export class PaymentsGoogleApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "number");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27613,6 +42276,7 @@ export class PaymentsOptimalApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27622,7 +42286,7 @@ export class PaymentsOptimalApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "OptimalPaymentRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -27641,6 +42305,7 @@ export class PaymentsOptimalApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "string");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27712,6 +42377,7 @@ export class PaymentsPayPalClassicApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27721,7 +42387,7 @@ export class PaymentsPayPalClassicApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "CreateBillingAgreementRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -27740,6 +42406,7 @@ export class PaymentsPayPalClassicApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "string");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27761,6 +42428,7 @@ export class PaymentsPayPalClassicApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27770,7 +42438,7 @@ export class PaymentsPayPalClassicApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "CreatePayPalPaymentRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -27789,6 +42457,7 @@ export class PaymentsPayPalClassicApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "string");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27810,6 +42479,7 @@ export class PaymentsPayPalClassicApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27819,7 +42489,7 @@ export class PaymentsPayPalClassicApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "FinalizeBillingAgreementRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -27838,6 +42508,7 @@ export class PaymentsPayPalClassicApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "number");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -27859,6 +42530,7 @@ export class PaymentsPayPalClassicApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27868,7 +42540,7 @@ export class PaymentsPayPalClassicApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "FinalizePayPalPaymentRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -27958,6 +42630,7 @@ export class PaymentsStripeApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -27967,7 +42640,7 @@ export class PaymentsStripeApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "StripeCreatePaymentMethod")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -27986,6 +42659,7 @@ export class PaymentsStripeApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PaymentMethodResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28007,6 +42681,7 @@ export class PaymentsStripeApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -28016,7 +42691,7 @@ export class PaymentsStripeApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "StripePaymentRequest")
         };
 
         this.authentications.default.applyToRequest(requestOptions);
@@ -28110,6 +42785,7 @@ export class PaymentsTransactionsApi {
             throw new Error('Required parameter id was null or undefined when calling getTransaction.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -28137,6 +42813,7 @@ export class PaymentsTransactionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TransactionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28162,20 +42839,21 @@ export class PaymentsTransactionsApi {
 
 
         if (filterInvoice !== undefined) {
-            queryParameters['filter_invoice'] = filterInvoice;
+            queryParameters['filter_invoice'] = ObjectSerializer.serialize(filterInvoice, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -28204,6 +42882,7 @@ export class PaymentsTransactionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTransactionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28232,6 +42911,7 @@ export class PaymentsTransactionsApi {
             throw new Error('Required parameter id was null or undefined when calling refundTransaction.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -28241,7 +42921,7 @@ export class PaymentsTransactionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "RefundRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -28260,6 +42940,7 @@ export class PaymentsTransactionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RefundResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28344,6 +43025,7 @@ export class PaymentsWalletsApi {
             throw new Error('Required parameter currencyCode was null or undefined when calling getUserWallet.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -28371,6 +43053,7 @@ export class PaymentsWalletsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "SimpleWallet");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28413,32 +43096,33 @@ export class PaymentsWalletsApi {
         }
 
         if (filterType !== undefined) {
-            queryParameters['filter_type'] = filterType;
+            queryParameters['filter_type'] = ObjectSerializer.serialize(filterType, "string");
         }
 
         if (filterMaxDate !== undefined) {
-            queryParameters['filter_max_date'] = filterMaxDate;
+            queryParameters['filter_max_date'] = ObjectSerializer.serialize(filterMaxDate, "number");
         }
 
         if (filterMinDate !== undefined) {
-            queryParameters['filter_min_date'] = filterMinDate;
+            queryParameters['filter_min_date'] = ObjectSerializer.serialize(filterMinDate, "number");
         }
 
         if (filterSign !== undefined) {
-            queryParameters['filter_sign'] = filterSign;
+            queryParameters['filter_sign'] = ObjectSerializer.serialize(filterSign, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -28467,6 +43151,7 @@ export class PaymentsWalletsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceWalletTransactionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28493,6 +43178,7 @@ export class PaymentsWalletsApi {
         if (userId === null || userId === undefined) {
             throw new Error('Required parameter userId was null or undefined when calling getUserWallets.');
         }
+
 
         let useFormData = false;
 
@@ -28521,6 +43207,7 @@ export class PaymentsWalletsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<SimpleWallet>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28539,6 +43226,7 @@ export class PaymentsWalletsApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -28568,6 +43256,7 @@ export class PaymentsWalletsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceWalletTotalResponse");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28600,48 +43289,49 @@ export class PaymentsWalletsApi {
 
 
         if (filterInvoice !== undefined) {
-            queryParameters['filter_invoice'] = filterInvoice;
+            queryParameters['filter_invoice'] = ObjectSerializer.serialize(filterInvoice, "number");
         }
 
         if (filterType !== undefined) {
-            queryParameters['filter_type'] = filterType;
+            queryParameters['filter_type'] = ObjectSerializer.serialize(filterType, "string");
         }
 
         if (filterDate !== undefined) {
-            queryParameters['filter_date'] = filterDate;
+            queryParameters['filter_date'] = ObjectSerializer.serialize(filterDate, "string");
         }
 
         if (filterSign !== undefined) {
-            queryParameters['filter_sign'] = filterSign;
+            queryParameters['filter_sign'] = ObjectSerializer.serialize(filterSign, "string");
         }
 
         if (filterUserId !== undefined) {
-            queryParameters['filter_user_id'] = filterUserId;
+            queryParameters['filter_user_id'] = ObjectSerializer.serialize(filterUserId, "number");
         }
 
         if (filterUsername !== undefined) {
-            queryParameters['filter_username'] = filterUsername;
+            queryParameters['filter_username'] = ObjectSerializer.serialize(filterUsername, "string");
         }
 
         if (filterDetails !== undefined) {
-            queryParameters['filter_details'] = filterDetails;
+            queryParameters['filter_details'] = ObjectSerializer.serialize(filterDetails, "string");
         }
 
         if (filterCurrencyCode !== undefined) {
-            queryParameters['filter_currency_code'] = filterCurrencyCode;
+            queryParameters['filter_currency_code'] = ObjectSerializer.serialize(filterCurrencyCode, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -28670,6 +43360,7 @@ export class PaymentsWalletsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceWalletTransactionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28694,16 +43385,17 @@ export class PaymentsWalletsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -28732,6 +43424,7 @@ export class PaymentsWalletsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceSimpleWallet");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28767,6 +43460,7 @@ export class PaymentsWalletsApi {
             throw new Error('Required parameter currencyCode was null or undefined when calling updateWalletBalance.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -28776,7 +43470,7 @@ export class PaymentsWalletsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "WalletAlterRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -28795,6 +43489,7 @@ export class PaymentsWalletsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "WalletTransactionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28866,6 +43561,7 @@ export class PaymentsXsollaApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -28875,7 +43571,7 @@ export class PaymentsXsollaApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: request,
+            body: ObjectSerializer.serialize(request, "XsollaPaymentRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -28894,6 +43590,7 @@ export class PaymentsXsollaApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "string");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -28912,6 +43609,7 @@ export class PaymentsXsollaApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -29014,20 +43712,21 @@ export class ReportingChallengesApi {
 
 
         if (filterEvent !== undefined) {
-            queryParameters['filter_event'] = filterEvent;
+            queryParameters['filter_event'] = ObjectSerializer.serialize(filterEvent, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -29056,6 +43755,7 @@ export class ReportingChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceChallengeEventParticipantResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -29081,20 +43781,21 @@ export class ReportingChallengesApi {
 
 
         if (filterEvent !== undefined) {
-            queryParameters['filter_event'] = filterEvent;
+            queryParameters['filter_event'] = ObjectSerializer.serialize(filterEvent, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -29123,6 +43824,7 @@ export class ReportingChallengesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceChallengeEventParticipantResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -29208,32 +43910,33 @@ export class ReportingOrdersApi {
         }
 
         if (granularity !== undefined) {
-            queryParameters['granularity'] = granularity;
+            queryParameters['granularity'] = ObjectSerializer.serialize(granularity, "string");
         }
 
         if (filterPaymentStatus !== undefined) {
-            queryParameters['filter_payment_status'] = filterPaymentStatus;
+            queryParameters['filter_payment_status'] = ObjectSerializer.serialize(filterPaymentStatus, "string");
         }
 
         if (filterFulfillmentStatus !== undefined) {
-            queryParameters['filter_fulfillment_status'] = filterFulfillmentStatus;
+            queryParameters['filter_fulfillment_status'] = ObjectSerializer.serialize(filterFulfillmentStatus, "string");
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -29262,6 +43965,7 @@ export class ReportingOrdersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceAggregateInvoiceReportResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -29342,12 +44046,13 @@ export class ReportingRevenueApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
+
 
         let useFormData = false;
 
@@ -29376,6 +44081,7 @@ export class ReportingRevenueApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RevenueReportResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -29406,12 +44112,13 @@ export class ReportingRevenueApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
+
 
         let useFormData = false;
 
@@ -29440,6 +44147,7 @@ export class ReportingRevenueApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RevenueReportResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -29472,20 +44180,21 @@ export class ReportingRevenueApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -29514,6 +44223,7 @@ export class ReportingRevenueApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceRevenueCountryReportResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -29546,20 +44256,21 @@ export class ReportingRevenueApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -29588,6 +44299,7 @@ export class ReportingRevenueApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceRevenueProductReportResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -29618,12 +44330,13 @@ export class ReportingRevenueApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
+
 
         let useFormData = false;
 
@@ -29652,6 +44365,7 @@ export class ReportingRevenueApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "RevenueReportResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -29725,12 +44439,13 @@ export class ReportingSubscriptionsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -29759,6 +44474,7 @@ export class ReportingSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceBillingReport");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -29847,32 +44563,33 @@ export class ReportingUsageApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
 
         if (combineEndpoints !== undefined) {
-            queryParameters['combine_endpoints'] = combineEndpoints;
+            queryParameters['combine_endpoints'] = ObjectSerializer.serialize(combineEndpoints, "boolean");
         }
 
         if (method !== undefined) {
-            queryParameters['method'] = method;
+            queryParameters['method'] = ObjectSerializer.serialize(method, "string");
         }
 
         if (url !== undefined) {
-            queryParameters['url'] = url;
+            queryParameters['url'] = ObjectSerializer.serialize(url, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -29901,6 +44618,7 @@ export class ReportingUsageApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUsageInfo");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -29939,32 +44657,33 @@ export class ReportingUsageApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
 
         if (combineEndpoints !== undefined) {
-            queryParameters['combine_endpoints'] = combineEndpoints;
+            queryParameters['combine_endpoints'] = ObjectSerializer.serialize(combineEndpoints, "boolean");
         }
 
         if (method !== undefined) {
-            queryParameters['method'] = method;
+            queryParameters['method'] = ObjectSerializer.serialize(method, "string");
         }
 
         if (url !== undefined) {
-            queryParameters['url'] = url;
+            queryParameters['url'] = ObjectSerializer.serialize(url, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -29993,6 +44712,7 @@ export class ReportingUsageApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUsageInfo");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -30031,32 +44751,33 @@ export class ReportingUsageApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
 
         if (combineEndpoints !== undefined) {
-            queryParameters['combine_endpoints'] = combineEndpoints;
+            queryParameters['combine_endpoints'] = ObjectSerializer.serialize(combineEndpoints, "boolean");
         }
 
         if (method !== undefined) {
-            queryParameters['method'] = method;
+            queryParameters['method'] = ObjectSerializer.serialize(method, "string");
         }
 
         if (url !== undefined) {
-            queryParameters['url'] = url;
+            queryParameters['url'] = ObjectSerializer.serialize(url, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -30085,6 +44806,7 @@ export class ReportingUsageApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUsageInfo");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -30123,32 +44845,33 @@ export class ReportingUsageApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
 
         if (combineEndpoints !== undefined) {
-            queryParameters['combine_endpoints'] = combineEndpoints;
+            queryParameters['combine_endpoints'] = ObjectSerializer.serialize(combineEndpoints, "boolean");
         }
 
         if (method !== undefined) {
-            queryParameters['method'] = method;
+            queryParameters['method'] = ObjectSerializer.serialize(method, "string");
         }
 
         if (url !== undefined) {
-            queryParameters['url'] = url;
+            queryParameters['url'] = ObjectSerializer.serialize(url, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -30177,6 +44900,7 @@ export class ReportingUsageApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUsageInfo");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -30215,32 +44939,33 @@ export class ReportingUsageApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
 
         if (combineEndpoints !== undefined) {
-            queryParameters['combine_endpoints'] = combineEndpoints;
+            queryParameters['combine_endpoints'] = ObjectSerializer.serialize(combineEndpoints, "boolean");
         }
 
         if (method !== undefined) {
-            queryParameters['method'] = method;
+            queryParameters['method'] = ObjectSerializer.serialize(method, "string");
         }
 
         if (url !== undefined) {
-            queryParameters['url'] = url;
+            queryParameters['url'] = ObjectSerializer.serialize(url, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -30269,6 +44994,7 @@ export class ReportingUsageApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUsageInfo");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -30302,12 +45028,13 @@ export class ReportingUsageApi {
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
+
 
         let useFormData = false;
 
@@ -30336,6 +45063,7 @@ export class ReportingUsageApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<string>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -30412,24 +45140,25 @@ export class ReportingUsersApi {
 
 
         if (granularity !== undefined) {
-            queryParameters['granularity'] = granularity;
+            queryParameters['granularity'] = ObjectSerializer.serialize(granularity, "string");
         }
 
         if (startDate !== undefined) {
-            queryParameters['start_date'] = startDate;
+            queryParameters['start_date'] = ObjectSerializer.serialize(startDate, "number");
         }
 
         if (endDate !== undefined) {
-            queryParameters['end_date'] = endDate;
+            queryParameters['end_date'] = ObjectSerializer.serialize(endDate, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -30458,6 +45187,7 @@ export class ReportingUsersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceAggregateCountResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -30543,6 +45273,7 @@ export class SearchApi {
             throw new Error('Required parameter id was null or undefined when calling addSearchIndex.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -30552,7 +45283,7 @@ export class SearchApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: object,
+            body: ObjectSerializer.serialize(object, "any")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -30592,6 +45323,7 @@ export class SearchApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -30601,7 +45333,7 @@ export class SearchApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: mappings,
+            body: ObjectSerializer.serialize(mappings, "Array<SearchReferenceMapping>")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -30653,6 +45385,7 @@ export class SearchApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteSearchIndex.');
         }
+
 
         let useFormData = false;
 
@@ -30707,6 +45440,7 @@ export class SearchApi {
         if (type === null || type === undefined) {
             throw new Error('Required parameter type was null or undefined when calling deleteSearchIndexes.');
         }
+
 
         let useFormData = false;
 
@@ -30766,12 +45500,13 @@ export class SearchApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -30782,7 +45517,7 @@ export class SearchApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: query,
+            body: ObjectSerializer.serialize(query, "any")
         };
 
         this.authentications.default.applyToRequest(requestOptions);
@@ -30799,6 +45534,7 @@ export class SearchApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceMapstringobject");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -30870,6 +45606,7 @@ export class SocialFacebookApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -30879,7 +45616,7 @@ export class SocialFacebookApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: facebookToken,
+            body: ObjectSerializer.serialize(facebookToken, "FacebookToken")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -30969,6 +45706,7 @@ export class SocialGoogleApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -30978,7 +45716,7 @@ export class SocialGoogleApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: googleToken,
+            body: ObjectSerializer.serialize(googleToken, "GoogleToken")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -31068,6 +45806,7 @@ export class StoreApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -31077,7 +45816,7 @@ export class StoreApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: itemTemplateResource,
+            body: ObjectSerializer.serialize(itemTemplateResource, "StoreItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -31096,6 +45835,7 @@ export class StoreApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "StoreItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31119,8 +45859,9 @@ export class StoreApi {
 
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -31131,7 +45872,7 @@ export class StoreApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: storeItem,
+            body: ObjectSerializer.serialize(storeItem, "StoreItem")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -31150,6 +45891,7 @@ export class StoreApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "StoreItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31179,8 +45921,9 @@ export class StoreApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -31236,6 +45979,7 @@ export class StoreApi {
             throw new Error('Required parameter id was null or undefined when calling deleteStoreItem.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -31283,6 +46027,7 @@ export class StoreApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -31310,6 +46055,7 @@ export class StoreApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<BehaviorDefinitionResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31336,6 +46082,7 @@ export class StoreApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getItemTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -31364,6 +46111,7 @@ export class StoreApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "StoreItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31388,16 +46136,17 @@ export class StoreApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -31426,6 +46175,7 @@ export class StoreApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceStoreItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31452,24 +46202,25 @@ export class StoreApi {
 
 
         if (limit !== undefined) {
-            queryParameters['limit'] = limit;
+            queryParameters['limit'] = ObjectSerializer.serialize(limit, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (useCatalog !== undefined) {
-            queryParameters['use_catalog'] = useCatalog;
+            queryParameters['use_catalog'] = ObjectSerializer.serialize(useCatalog, "boolean");
         }
 
         if (ignoreLocation !== undefined) {
-            queryParameters['ignore_location'] = ignoreLocation;
+            queryParameters['ignore_location'] = ObjectSerializer.serialize(ignoreLocation, "boolean");
         }
 
         if (inStockOnly !== undefined) {
-            queryParameters['in_stock_only'] = inStockOnly;
+            queryParameters['in_stock_only'] = ObjectSerializer.serialize(inStockOnly, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -31496,6 +46247,7 @@ export class StoreApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceStoreItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31523,6 +46275,7 @@ export class StoreApi {
             throw new Error('Required parameter id was null or undefined when calling getStoreItem.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -31548,6 +46301,7 @@ export class StoreApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "StoreItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31586,72 +46340,73 @@ export class StoreApi {
 
 
         if (filterNameSearch !== undefined) {
-            queryParameters['filter_name_search'] = filterNameSearch;
+            queryParameters['filter_name_search'] = ObjectSerializer.serialize(filterNameSearch, "string");
         }
 
         if (filterUniqueKey !== undefined) {
-            queryParameters['filter_unique_key'] = filterUniqueKey;
+            queryParameters['filter_unique_key'] = ObjectSerializer.serialize(filterUniqueKey, "string");
         }
 
         if (filterPublished !== undefined) {
-            queryParameters['filter_published'] = filterPublished;
+            queryParameters['filter_published'] = ObjectSerializer.serialize(filterPublished, "boolean");
         }
 
         if (filterDisplayable !== undefined) {
-            queryParameters['filter_displayable'] = filterDisplayable;
+            queryParameters['filter_displayable'] = ObjectSerializer.serialize(filterDisplayable, "boolean");
         }
 
         if (filterStart !== undefined) {
-            queryParameters['filter_start'] = filterStart;
+            queryParameters['filter_start'] = ObjectSerializer.serialize(filterStart, "string");
         }
 
         if (filterEnd !== undefined) {
-            queryParameters['filter_end'] = filterEnd;
+            queryParameters['filter_end'] = ObjectSerializer.serialize(filterEnd, "string");
         }
 
         if (filterStartDate !== undefined) {
-            queryParameters['filter_start_date'] = filterStartDate;
+            queryParameters['filter_start_date'] = ObjectSerializer.serialize(filterStartDate, "string");
         }
 
         if (filterStopDate !== undefined) {
-            queryParameters['filter_stop_date'] = filterStopDate;
+            queryParameters['filter_stop_date'] = ObjectSerializer.serialize(filterStopDate, "string");
         }
 
         if (filterSku !== undefined) {
-            queryParameters['filter_sku'] = filterSku;
+            queryParameters['filter_sku'] = ObjectSerializer.serialize(filterSku, "string");
         }
 
         if (filterPrice !== undefined) {
-            queryParameters['filter_price'] = filterPrice;
+            queryParameters['filter_price'] = ObjectSerializer.serialize(filterPrice, "string");
         }
 
         if (filterTag !== undefined) {
-            queryParameters['filter_tag'] = filterTag;
+            queryParameters['filter_tag'] = ObjectSerializer.serialize(filterTag, "string");
         }
 
         if (filterItemsByType !== undefined) {
-            queryParameters['filter_items_by_type'] = filterItemsByType;
+            queryParameters['filter_items_by_type'] = ObjectSerializer.serialize(filterItemsByType, "string");
         }
 
         if (filterBundledSkus !== undefined) {
-            queryParameters['filter_bundled_skus'] = filterBundledSkus;
+            queryParameters['filter_bundled_skus'] = ObjectSerializer.serialize(filterBundledSkus, "string");
         }
 
         if (filterVendor !== undefined) {
-            queryParameters['filter_vendor'] = filterVendor;
+            queryParameters['filter_vendor'] = ObjectSerializer.serialize(filterVendor, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -31678,6 +46433,58 @@ export class StoreApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceStoreItem");
+                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Used to create and automatically pay an invoice for a single unit of a single SKU from a user's wallet. SKU must be priced in virtual currency and must not be an item that requires shipping. PAYMENTS_ADMIN permission is required if user ID is specified and is not the ID of the currently logged in user. If invoice price does not match expected price, purchase is aborted
+     * @summary One-step purchase and pay for a single SKU item from a user's wallet
+     * @param quickBuyRequest Quick buy details
+     */
+    public quickBuy (quickBuyRequest?: QuickBuyRequest) : Promise<{ response: http.ClientResponse; body: InvoiceResource;  }> {
+        const localVarPath = this.basePath + '/store/quick-buy';
+        let queryParameters: any = {};
+        let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+
+        let useFormData = false;
+
+        let requestOptions: request.Options = {
+            method: 'POST',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: ObjectSerializer.serialize(quickBuyRequest, "QuickBuyRequest")
+        };
+
+        this.authentications.OAuth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: InvoiceResource;  }>((resolve, reject) => {
+            request(requestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "InvoiceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31706,6 +46513,7 @@ export class StoreApi {
             throw new Error('Required parameter id was null or undefined when calling updateItemTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -31715,7 +46523,7 @@ export class StoreApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: itemTemplateResource,
+            body: ObjectSerializer.serialize(itemTemplateResource, "StoreItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -31734,6 +46542,7 @@ export class StoreApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "StoreItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31764,8 +46573,9 @@ export class StoreApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -31776,7 +46586,7 @@ export class StoreApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: storeItem,
+            body: ObjectSerializer.serialize(storeItem, "StoreItem")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -31795,6 +46605,7 @@ export class StoreApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "StoreItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31868,8 +46679,9 @@ export class StoreBundlesApi {
 
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -31880,7 +46692,7 @@ export class StoreBundlesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: bundleItem,
+            body: ObjectSerializer.serialize(bundleItem, "BundleItem")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -31899,6 +46711,7 @@ export class StoreBundlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BundleItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31920,6 +46733,7 @@ export class StoreBundlesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -31929,7 +46743,7 @@ export class StoreBundlesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: bundleTemplateResource,
+            body: ObjectSerializer.serialize(bundleTemplateResource, "ItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -31948,6 +46762,7 @@ export class StoreBundlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -31974,6 +46789,7 @@ export class StoreBundlesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteBundleItem.');
         }
+
 
         let useFormData = false;
 
@@ -32031,8 +46847,9 @@ export class StoreBundlesApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -32088,6 +46905,7 @@ export class StoreBundlesApi {
             throw new Error('Required parameter id was null or undefined when calling getBundleItem.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -32113,6 +46931,7 @@ export class StoreBundlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BundleItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32140,6 +46959,7 @@ export class StoreBundlesApi {
             throw new Error('Required parameter id was null or undefined when calling getBundleTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -32165,6 +46985,7 @@ export class StoreBundlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32189,16 +47010,17 @@ export class StoreBundlesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -32225,6 +47047,7 @@ export class StoreBundlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32255,8 +47078,9 @@ export class StoreBundlesApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -32267,7 +47091,7 @@ export class StoreBundlesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: bundleItem,
+            body: ObjectSerializer.serialize(bundleItem, "BundleItem")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -32286,6 +47110,7 @@ export class StoreBundlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "BundleItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32314,6 +47139,7 @@ export class StoreBundlesApi {
             throw new Error('Required parameter id was null or undefined when calling updateBundleTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -32323,7 +47149,7 @@ export class StoreBundlesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: bundleTemplateResource,
+            body: ObjectSerializer.serialize(bundleTemplateResource, "ItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -32342,6 +47168,7 @@ export class StoreBundlesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32415,8 +47242,9 @@ export class StoreCouponsApi {
 
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -32427,7 +47255,7 @@ export class StoreCouponsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: couponItem,
+            body: ObjectSerializer.serialize(couponItem, "CouponItem")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -32446,6 +47274,7 @@ export class StoreCouponsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CouponItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32467,6 +47296,7 @@ export class StoreCouponsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -32476,7 +47306,7 @@ export class StoreCouponsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: couponTemplateResource,
+            body: ObjectSerializer.serialize(couponTemplateResource, "ItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -32495,6 +47325,7 @@ export class StoreCouponsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32521,6 +47352,7 @@ export class StoreCouponsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteCouponItem.');
         }
+
 
         let useFormData = false;
 
@@ -32578,8 +47410,9 @@ export class StoreCouponsApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -32635,6 +47468,7 @@ export class StoreCouponsApi {
             throw new Error('Required parameter id was null or undefined when calling getCouponItem.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -32662,6 +47496,7 @@ export class StoreCouponsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CouponItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32688,6 +47523,7 @@ export class StoreCouponsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getCouponTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -32716,6 +47552,7 @@ export class StoreCouponsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32740,16 +47577,17 @@ export class StoreCouponsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -32778,6 +47616,7 @@ export class StoreCouponsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32808,8 +47647,9 @@ export class StoreCouponsApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -32820,7 +47660,7 @@ export class StoreCouponsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: couponItem,
+            body: ObjectSerializer.serialize(couponItem, "CouponItem")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -32839,6 +47679,7 @@ export class StoreCouponsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CouponItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32867,6 +47708,7 @@ export class StoreCouponsApi {
             throw new Error('Required parameter id was null or undefined when calling updateCouponTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -32876,7 +47718,7 @@ export class StoreCouponsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: couponTemplateResource,
+            body: ObjectSerializer.serialize(couponTemplateResource, "ItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -32895,6 +47737,7 @@ export class StoreCouponsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -32966,6 +47809,7 @@ export class StoreSalesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -32975,7 +47819,7 @@ export class StoreSalesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: catalogSale,
+            body: ObjectSerializer.serialize(catalogSale, "CatalogSale")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -32994,6 +47838,7 @@ export class StoreSalesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CatalogSale");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33020,6 +47865,7 @@ export class StoreSalesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteCatalogSale.');
         }
+
 
         let useFormData = false;
 
@@ -33075,6 +47921,7 @@ export class StoreSalesApi {
             throw new Error('Required parameter id was null or undefined when calling getCatalogSale.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -33102,6 +47949,7 @@ export class StoreSalesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CatalogSale");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33126,16 +47974,17 @@ export class StoreSalesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -33164,6 +48013,7 @@ export class StoreSalesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceCatalogSale");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33192,6 +48042,7 @@ export class StoreSalesApi {
             throw new Error('Required parameter id was null or undefined when calling updateCatalogSale.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -33201,7 +48052,7 @@ export class StoreSalesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: catalogSale,
+            body: ObjectSerializer.serialize(catalogSale, "CatalogSale")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -33220,6 +48071,7 @@ export class StoreSalesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CatalogSale");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33293,8 +48145,9 @@ export class StoreShippingApi {
 
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -33305,7 +48158,7 @@ export class StoreShippingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: shippingItem,
+            body: ObjectSerializer.serialize(shippingItem, "ShippingItem")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -33324,6 +48177,7 @@ export class StoreShippingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ShippingItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33345,6 +48199,7 @@ export class StoreShippingApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -33354,7 +48209,7 @@ export class StoreShippingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: shippingTemplateResource,
+            body: ObjectSerializer.serialize(shippingTemplateResource, "ItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -33373,6 +48228,7 @@ export class StoreShippingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33399,6 +48255,7 @@ export class StoreShippingApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteShippingItem.');
         }
+
 
         let useFormData = false;
 
@@ -33456,8 +48313,9 @@ export class StoreShippingApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -33513,6 +48371,7 @@ export class StoreShippingApi {
             throw new Error('Required parameter id was null or undefined when calling getShippingItem.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -33538,6 +48397,7 @@ export class StoreShippingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ShippingItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33564,6 +48424,7 @@ export class StoreShippingApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getShippingTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -33592,6 +48453,7 @@ export class StoreShippingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33616,16 +48478,17 @@ export class StoreShippingApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -33654,6 +48517,7 @@ export class StoreShippingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33684,8 +48548,9 @@ export class StoreShippingApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -33696,7 +48561,7 @@ export class StoreShippingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: shippingItem,
+            body: ObjectSerializer.serialize(shippingItem, "ShippingItem")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -33715,6 +48580,7 @@ export class StoreShippingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ShippingItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33743,6 +48609,7 @@ export class StoreShippingApi {
             throw new Error('Required parameter id was null or undefined when calling updateShippingTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -33752,7 +48619,7 @@ export class StoreShippingApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: shippingTemplateResource,
+            body: ObjectSerializer.serialize(shippingTemplateResource, "ItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -33771,6 +48638,7 @@ export class StoreShippingApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -33849,6 +48717,7 @@ export class StoreShoppingCartsApi {
             throw new Error('Required parameter id was null or undefined when calling addCustomDiscount.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -33858,7 +48727,7 @@ export class StoreShoppingCartsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: customDiscount,
+            body: ObjectSerializer.serialize(customDiscount, "CouponDefinition")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -33905,6 +48774,7 @@ export class StoreShoppingCartsApi {
             throw new Error('Required parameter id was null or undefined when calling addDiscountToCart.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -33914,7 +48784,7 @@ export class StoreShoppingCartsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: skuRequest,
+            body: ObjectSerializer.serialize(skuRequest, "SkuRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -33961,6 +48831,7 @@ export class StoreShoppingCartsApi {
             throw new Error('Required parameter id was null or undefined when calling addItemToCart.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -33970,7 +48841,7 @@ export class StoreShoppingCartsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: cartItemRequest,
+            body: ObjectSerializer.serialize(cartItemRequest, "CartItemRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -34012,12 +48883,13 @@ export class StoreShoppingCartsApi {
 
 
         if (owner !== undefined) {
-            queryParameters['owner'] = owner;
+            queryParameters['owner'] = ObjectSerializer.serialize(owner, "number");
         }
 
         if (currencyCode !== undefined) {
-            queryParameters['currency_code'] = currencyCode;
+            queryParameters['currency_code'] = ObjectSerializer.serialize(currencyCode, "string");
         }
+
 
         let useFormData = false;
 
@@ -34046,6 +48918,7 @@ export class StoreShoppingCartsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "string");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -34072,6 +48945,7 @@ export class StoreShoppingCartsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getCart.');
         }
+
 
         let useFormData = false;
 
@@ -34100,6 +48974,7 @@ export class StoreShoppingCartsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Cart");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -34125,20 +49000,21 @@ export class StoreShoppingCartsApi {
 
 
         if (filterOwnerId !== undefined) {
-            queryParameters['filter_owner_id'] = filterOwnerId;
+            queryParameters['filter_owner_id'] = ObjectSerializer.serialize(filterOwnerId, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -34167,6 +49043,7 @@ export class StoreShoppingCartsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceCartSummary");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -34193,6 +49070,7 @@ export class StoreShoppingCartsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getShippable.');
         }
+
 
         let useFormData = false;
 
@@ -34221,6 +49099,7 @@ export class StoreShoppingCartsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CartShippableResponse");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -34247,6 +49126,7 @@ export class StoreShoppingCartsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getShippingCountries.');
         }
+
 
         let useFormData = false;
 
@@ -34275,6 +49155,7 @@ export class StoreShoppingCartsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "SampleCountriesResponse");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -34308,6 +49189,7 @@ export class StoreShoppingCartsApi {
         if (code === null || code === undefined) {
             throw new Error('Required parameter code was null or undefined when calling removeDiscountFromCart.');
         }
+
 
         let useFormData = false;
 
@@ -34351,7 +49233,7 @@ export class StoreShoppingCartsApi {
      * @param id The id of the cart
      * @param currencyCode The code of the currency
      */
-    public setCartCurrency (id: string, currencyCode?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setCartCurrency (id: string, currencyCode?: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/carts/{id}/currency'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -34364,6 +49246,7 @@ export class StoreShoppingCartsApi {
             throw new Error('Required parameter id was null or undefined when calling setCartCurrency.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -34373,7 +49256,7 @@ export class StoreShoppingCartsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: currencyCode,
+            body: ObjectSerializer.serialize(currencyCode, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -34407,7 +49290,7 @@ export class StoreShoppingCartsApi {
      * @param id The id of the cart
      * @param userId The id of the user
      */
-    public setCartOwner (id: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setCartOwner (id: string, userId?: IntWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/carts/{id}/owner'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -34420,6 +49303,7 @@ export class StoreShoppingCartsApi {
             throw new Error('Required parameter id was null or undefined when calling setCartOwner.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -34429,7 +49313,7 @@ export class StoreShoppingCartsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: userId,
+            body: ObjectSerializer.serialize(userId, "IntWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -34476,6 +49360,7 @@ export class StoreShoppingCartsApi {
             throw new Error('Required parameter id was null or undefined when calling updateItemInCart.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -34485,7 +49370,7 @@ export class StoreShoppingCartsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: cartItemRequest,
+            body: ObjectSerializer.serialize(cartItemRequest, "CartItemRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -34532,6 +49417,7 @@ export class StoreShoppingCartsApi {
             throw new Error('Required parameter id was null or undefined when calling updateShippingAddress.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -34541,7 +49427,7 @@ export class StoreShoppingCartsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: cartShippingAddressRequest,
+            body: ObjectSerializer.serialize(cartShippingAddressRequest, "CartShippingAddressRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -34631,6 +49517,7 @@ export class StoreSubscriptionsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -34640,7 +49527,7 @@ export class StoreSubscriptionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: subscriptionResource,
+            body: ObjectSerializer.serialize(subscriptionResource, "SubscriptionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -34659,6 +49546,7 @@ export class StoreSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "SubscriptionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -34680,6 +49568,7 @@ export class StoreSubscriptionsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -34689,7 +49578,7 @@ export class StoreSubscriptionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: subscriptionTemplateResource,
+            body: ObjectSerializer.serialize(subscriptionTemplateResource, "SubscriptionTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -34708,6 +49597,7 @@ export class StoreSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "SubscriptionTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -34741,6 +49631,7 @@ export class StoreSubscriptionsApi {
         if (planId === null || planId === undefined) {
             throw new Error('Required parameter planId was null or undefined when calling deleteSubscription.');
         }
+
 
         let useFormData = false;
 
@@ -34798,8 +49689,9 @@ export class StoreSubscriptionsApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -34855,6 +49747,7 @@ export class StoreSubscriptionsApi {
             throw new Error('Required parameter id was null or undefined when calling getSubscription.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -34880,6 +49773,7 @@ export class StoreSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "SubscriptionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -34906,6 +49800,7 @@ export class StoreSubscriptionsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getSubscriptionTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -34934,6 +49829,7 @@ export class StoreSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "SubscriptionTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -34958,16 +49854,17 @@ export class StoreSubscriptionsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -34996,6 +49893,7 @@ export class StoreSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceSubscriptionTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35020,16 +49918,17 @@ export class StoreSubscriptionsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -35056,6 +49955,7 @@ export class StoreSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceSubscriptionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35074,6 +49974,7 @@ export class StoreSubscriptionsApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -35131,6 +50032,7 @@ export class StoreSubscriptionsApi {
             throw new Error('Required parameter id was null or undefined when calling updateSubscription.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -35140,7 +50042,7 @@ export class StoreSubscriptionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: subscriptionResource,
+            body: ObjectSerializer.serialize(subscriptionResource, "SubscriptionResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -35187,6 +50089,7 @@ export class StoreSubscriptionsApi {
             throw new Error('Required parameter id was null or undefined when calling updateSubscriptionTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -35196,7 +50099,7 @@ export class StoreSubscriptionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: subscriptionTemplateResource,
+            body: ObjectSerializer.serialize(subscriptionTemplateResource, "SubscriptionTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -35215,6 +50118,7 @@ export class StoreSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "SubscriptionTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35286,6 +50190,7 @@ export class StoreVendorsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -35295,7 +50200,7 @@ export class StoreVendorsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: vendor,
+            body: ObjectSerializer.serialize(vendor, "VendorResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -35314,6 +50219,7 @@ export class StoreVendorsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "VendorResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35335,6 +50241,7 @@ export class StoreVendorsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -35344,7 +50251,7 @@ export class StoreVendorsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: vendorTemplateResource,
+            body: ObjectSerializer.serialize(vendorTemplateResource, "ItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -35363,6 +50270,7 @@ export class StoreVendorsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35389,6 +50297,7 @@ export class StoreVendorsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteVendor.');
         }
+
 
         let useFormData = false;
 
@@ -35446,8 +50355,9 @@ export class StoreVendorsApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -35503,6 +50413,7 @@ export class StoreVendorsApi {
             throw new Error('Required parameter id was null or undefined when calling getVendor.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -35528,6 +50439,7 @@ export class StoreVendorsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "VendorResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35554,6 +50466,7 @@ export class StoreVendorsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getVendorTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -35582,6 +50495,7 @@ export class StoreVendorsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35606,16 +50520,17 @@ export class StoreVendorsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -35644,6 +50559,7 @@ export class StoreVendorsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35669,20 +50585,21 @@ export class StoreVendorsApi {
 
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -35709,6 +50626,7 @@ export class StoreVendorsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceVendorResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35737,6 +50655,7 @@ export class StoreVendorsApi {
             throw new Error('Required parameter id was null or undefined when calling updateVendor.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -35746,7 +50665,7 @@ export class StoreVendorsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: vendor,
+            body: ObjectSerializer.serialize(vendor, "VendorResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -35765,6 +50684,7 @@ export class StoreVendorsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "VendorResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35793,6 +50713,7 @@ export class StoreVendorsApi {
             throw new Error('Required parameter id was null or undefined when calling updateVendorTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -35802,7 +50723,7 @@ export class StoreVendorsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: vendorTemplateResource,
+            body: ObjectSerializer.serialize(vendorTemplateResource, "ItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -35821,6 +50742,7 @@ export class StoreVendorsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35892,6 +50814,7 @@ export class TaxesApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -35901,7 +50824,7 @@ export class TaxesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: taxResource,
+            body: ObjectSerializer.serialize(taxResource, "CountryTaxResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -35920,6 +50843,7 @@ export class TaxesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CountryTaxResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -35948,6 +50872,7 @@ export class TaxesApi {
             throw new Error('Required parameter countryCodeIso3 was null or undefined when calling createStateTax.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -35957,7 +50882,7 @@ export class TaxesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: taxResource,
+            body: ObjectSerializer.serialize(taxResource, "StateTaxResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -35976,6 +50901,7 @@ export class TaxesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "StateTaxResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36002,6 +50928,7 @@ export class TaxesApi {
         if (countryCodeIso3 === null || countryCodeIso3 === undefined) {
             throw new Error('Required parameter countryCodeIso3 was null or undefined when calling deleteCountryTax.');
         }
+
 
         let useFormData = false;
 
@@ -36064,6 +50991,7 @@ export class TaxesApi {
             throw new Error('Required parameter stateCode was null or undefined when calling deleteStateTax.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -36118,6 +51046,7 @@ export class TaxesApi {
             throw new Error('Required parameter countryCodeIso3 was null or undefined when calling getCountryTax.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -36143,6 +51072,7 @@ export class TaxesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CountryTaxResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36167,16 +51097,17 @@ export class TaxesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -36203,6 +51134,7 @@ export class TaxesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceCountryTaxResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36237,6 +51169,7 @@ export class TaxesApi {
             throw new Error('Required parameter stateCode was null or undefined when calling getStateTax.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -36262,6 +51195,7 @@ export class TaxesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "StateTaxResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36286,16 +51220,17 @@ export class TaxesApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -36322,6 +51257,7 @@ export class TaxesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceStateTaxResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36353,16 +51289,17 @@ export class TaxesApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -36389,6 +51326,7 @@ export class TaxesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceStateTaxResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36417,6 +51355,7 @@ export class TaxesApi {
             throw new Error('Required parameter countryCodeIso3 was null or undefined when calling updateCountryTax.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -36426,7 +51365,7 @@ export class TaxesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: taxResource,
+            body: ObjectSerializer.serialize(taxResource, "CountryTaxResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -36445,6 +51384,7 @@ export class TaxesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "CountryTaxResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36480,6 +51420,7 @@ export class TaxesApi {
             throw new Error('Required parameter stateCode was null or undefined when calling updateStateTax.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -36489,7 +51430,7 @@ export class TaxesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: taxResource,
+            body: ObjectSerializer.serialize(taxResource, "StateTaxResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -36508,6 +51449,7 @@ export class TaxesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "StateTaxResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36585,6 +51527,7 @@ export class TemplatesPropertiesApi {
             throw new Error('Required parameter type was null or undefined when calling getTemplatePropertyType.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -36610,6 +51553,7 @@ export class TemplatesPropertiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PropertyFieldListResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36628,6 +51572,7 @@ export class TemplatesPropertiesApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -36655,6 +51600,7 @@ export class TemplatesPropertiesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<PropertyFieldListResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36720,7 +51666,7 @@ export class UsersApi {
      * @param userId The id of the user
      * @param tag tag
      */
-    public addUserTag (userId: number, tag: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public addUserTag (userId: number, tag: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/users/{user_id}/tags'
             .replace('{' + 'user_id' + '}', String(userId));
         let queryParameters: any = {};
@@ -36738,6 +51684,7 @@ export class UsersApi {
             throw new Error('Required parameter tag was null or undefined when calling addUserTag.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -36747,7 +51694,7 @@ export class UsersApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: tag,
+            body: ObjectSerializer.serialize(tag, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -36787,6 +51734,7 @@ export class UsersApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -36796,7 +51744,7 @@ export class UsersApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: userTemplateResource,
+            body: ObjectSerializer.serialize(userTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -36815,6 +51763,7 @@ export class UsersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36844,8 +51793,9 @@ export class UsersApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -36901,6 +51851,7 @@ export class UsersApi {
             throw new Error('Required parameter id was null or undefined when calling getUser.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -36928,6 +51879,7 @@ export class UsersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -36954,6 +51906,7 @@ export class UsersApi {
         if (userId === null || userId === undefined) {
             throw new Error('Required parameter userId was null or undefined when calling getUserTags.');
         }
+
 
         let useFormData = false;
 
@@ -36982,6 +51935,7 @@ export class UsersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<string>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -37008,6 +51962,7 @@ export class UsersApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getUserTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -37036,6 +51991,7 @@ export class UsersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -37060,16 +52016,17 @@ export class UsersApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -37098,6 +52055,7 @@ export class UsersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -37132,56 +52090,57 @@ export class UsersApi {
 
 
         if (filterDisplayname !== undefined) {
-            queryParameters['filter_displayname'] = filterDisplayname;
+            queryParameters['filter_displayname'] = ObjectSerializer.serialize(filterDisplayname, "string");
         }
 
         if (filterEmail !== undefined) {
-            queryParameters['filter_email'] = filterEmail;
+            queryParameters['filter_email'] = ObjectSerializer.serialize(filterEmail, "string");
         }
 
         if (filterFirstname !== undefined) {
-            queryParameters['filter_firstname'] = filterFirstname;
+            queryParameters['filter_firstname'] = ObjectSerializer.serialize(filterFirstname, "string");
         }
 
         if (filterFullname !== undefined) {
-            queryParameters['filter_fullname'] = filterFullname;
+            queryParameters['filter_fullname'] = ObjectSerializer.serialize(filterFullname, "string");
         }
 
         if (filterLastname !== undefined) {
-            queryParameters['filter_lastname'] = filterLastname;
+            queryParameters['filter_lastname'] = ObjectSerializer.serialize(filterLastname, "string");
         }
 
         if (filterUsername !== undefined) {
-            queryParameters['filter_username'] = filterUsername;
+            queryParameters['filter_username'] = ObjectSerializer.serialize(filterUsername, "string");
         }
 
         if (filterTag !== undefined) {
-            queryParameters['filter_tag'] = filterTag;
+            queryParameters['filter_tag'] = ObjectSerializer.serialize(filterTag, "string");
         }
 
         if (filterGroup !== undefined) {
-            queryParameters['filter_group'] = filterGroup;
+            queryParameters['filter_group'] = ObjectSerializer.serialize(filterGroup, "string");
         }
 
         if (filterRole !== undefined) {
-            queryParameters['filter_role'] = filterRole;
+            queryParameters['filter_role'] = ObjectSerializer.serialize(filterRole, "string");
         }
 
         if (filterSearch !== undefined) {
-            queryParameters['filter_search'] = filterSearch;
+            queryParameters['filter_search'] = ObjectSerializer.serialize(filterSearch, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -37210,6 +52169,7 @@ export class UsersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUserBaseResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -37238,6 +52198,7 @@ export class UsersApi {
             throw new Error('Required parameter id was null or undefined when calling passwordReset.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -37247,7 +52208,7 @@ export class UsersApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: newPasswordRequest,
+            body: ObjectSerializer.serialize(newPasswordRequest, "NewPasswordRequest")
         };
 
         this.authentications.default.applyToRequest(requestOptions);
@@ -37285,6 +52246,7 @@ export class UsersApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -37294,7 +52256,7 @@ export class UsersApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: userResource,
+            body: ObjectSerializer.serialize(userResource, "UserResource")
         };
 
         this.authentications.default.applyToRequest(requestOptions);
@@ -37311,6 +52273,7 @@ export class UsersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -37344,6 +52307,7 @@ export class UsersApi {
         if (tag === null || tag === undefined) {
             throw new Error('Required parameter tag was null or undefined when calling removeUserTag.');
         }
+
 
         let useFormData = false;
 
@@ -37387,7 +52351,7 @@ export class UsersApi {
      * @param id The id of the user
      * @param password The new plain text password
      */
-    public setPassword (id: number, password?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setPassword (id: number, password?: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/users/{id}/password'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -37400,6 +52364,7 @@ export class UsersApi {
             throw new Error('Required parameter id was null or undefined when calling setPassword.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -37409,7 +52374,7 @@ export class UsersApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: password,
+            body: ObjectSerializer.serialize(password, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -37454,6 +52419,7 @@ export class UsersApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling startPasswordReset.');
         }
+
 
         let useFormData = false;
 
@@ -37501,6 +52467,7 @@ export class UsersApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -37510,7 +52477,7 @@ export class UsersApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: passwordReset,
+            body: ObjectSerializer.serialize(passwordReset, "PasswordResetRequest")
         };
 
         this.authentications.default.applyToRequest(requestOptions);
@@ -37555,6 +52522,7 @@ export class UsersApi {
             throw new Error('Required parameter id was null or undefined when calling updateUser.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -37564,7 +52532,7 @@ export class UsersApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: userResource,
+            body: ObjectSerializer.serialize(userResource, "UserResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -37611,6 +52579,7 @@ export class UsersApi {
             throw new Error('Required parameter id was null or undefined when calling updateUserTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -37620,7 +52589,7 @@ export class UsersApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: userTemplateResource,
+            body: ObjectSerializer.serialize(userTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -37639,6 +52608,7 @@ export class UsersApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -37717,6 +52687,7 @@ export class UsersAddressesApi {
             throw new Error('Required parameter userId was null or undefined when calling createAddress.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -37726,7 +52697,7 @@ export class UsersAddressesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: savedAddressResource,
+            body: ObjectSerializer.serialize(savedAddressResource, "SavedAddressResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -37745,6 +52716,7 @@ export class UsersAddressesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "SavedAddressResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -37778,6 +52750,7 @@ export class UsersAddressesApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteAddress.');
         }
+
 
         let useFormData = false;
 
@@ -37840,6 +52813,7 @@ export class UsersAddressesApi {
             throw new Error('Required parameter id was null or undefined when calling getAddress.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -37867,6 +52841,7 @@ export class UsersAddressesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "SavedAddressResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -37898,16 +52873,17 @@ export class UsersAddressesApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -37936,6 +52912,7 @@ export class UsersAddressesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceSavedAddressResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -37971,6 +52948,7 @@ export class UsersAddressesApi {
             throw new Error('Required parameter id was null or undefined when calling updateAddress.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -37980,7 +52958,7 @@ export class UsersAddressesApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: savedAddressResource,
+            body: ObjectSerializer.serialize(savedAddressResource, "SavedAddressResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -37999,6 +52977,7 @@ export class UsersAddressesApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "SavedAddressResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38083,6 +53062,7 @@ export class UsersFriendshipsApi {
             throw new Error('Required parameter id was null or undefined when calling addFriend.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -38140,12 +53120,13 @@ export class UsersFriendshipsApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -38174,6 +53155,7 @@ export class UsersFriendshipsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceSimpleUserResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38200,6 +53182,7 @@ export class UsersFriendshipsApi {
         if (userId === null || userId === undefined) {
             throw new Error('Required parameter userId was null or undefined when calling getInviteToken.');
         }
+
 
         let useFormData = false;
 
@@ -38228,6 +53211,7 @@ export class UsersFriendshipsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "string");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38258,12 +53242,13 @@ export class UsersFriendshipsApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -38292,6 +53277,7 @@ export class UsersFriendshipsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceSimpleUserResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38307,7 +53293,7 @@ export class UsersFriendshipsApi {
      * @param userId The id of the user or &#39;me&#39; if logged in
      * @param token The invite token
      */
-    public redeemFriendshipToken (userId: string, token?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public redeemFriendshipToken (userId: string, token?: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/users/{user_id}/friends/tokens'
             .replace('{' + 'user_id' + '}', String(userId));
         let queryParameters: any = {};
@@ -38320,6 +53306,7 @@ export class UsersFriendshipsApi {
             throw new Error('Required parameter userId was null or undefined when calling redeemFriendshipToken.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -38329,7 +53316,7 @@ export class UsersFriendshipsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: token,
+            body: ObjectSerializer.serialize(token, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -38381,6 +53368,7 @@ export class UsersFriendshipsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling removeOrDeclineFriend.');
         }
+
 
         let useFormData = false;
 
@@ -38492,6 +53480,7 @@ export class UsersGroupsApi {
             throw new Error('Required parameter user was null or undefined when calling addMemberToGroup.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -38501,7 +53490,7 @@ export class UsersGroupsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: user,
+            body: ObjectSerializer.serialize(user, "GroupMemberResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -38520,6 +53509,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "GroupMemberResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38553,6 +53543,7 @@ export class UsersGroupsApi {
             throw new Error('Required parameter users was null or undefined when calling addMembersToGroup.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -38562,7 +53553,7 @@ export class UsersGroupsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: users,
+            body: ObjectSerializer.serialize(users, "Array<GroupMemberResource>")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -38581,6 +53572,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<GroupMemberResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38602,6 +53594,7 @@ export class UsersGroupsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -38611,7 +53604,7 @@ export class UsersGroupsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: groupResource,
+            body: ObjectSerializer.serialize(groupResource, "GroupResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -38630,6 +53623,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "GroupResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38651,6 +53645,7 @@ export class UsersGroupsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -38660,7 +53655,7 @@ export class UsersGroupsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: groupTemplateResource,
+            body: ObjectSerializer.serialize(groupTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -38679,6 +53674,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38705,6 +53701,7 @@ export class UsersGroupsApi {
         if (uniqueName === null || uniqueName === undefined) {
             throw new Error('Required parameter uniqueName was null or undefined when calling deleteGroup.');
         }
+
 
         let useFormData = false;
 
@@ -38762,8 +53759,9 @@ export class UsersGroupsApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -38819,6 +53817,7 @@ export class UsersGroupsApi {
             throw new Error('Required parameter uniqueName was null or undefined when calling getGroup.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -38844,6 +53843,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "GroupResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38878,6 +53878,7 @@ export class UsersGroupsApi {
             throw new Error('Required parameter userId was null or undefined when calling getGroupMember.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -38903,6 +53904,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "GroupMemberResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38934,16 +53936,17 @@ export class UsersGroupsApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -38970,6 +53973,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceGroupMemberResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -38996,6 +54000,7 @@ export class UsersGroupsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getGroupTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -39024,6 +54029,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -39048,16 +54054,17 @@ export class UsersGroupsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -39086,6 +54093,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -39113,6 +54121,7 @@ export class UsersGroupsApi {
             throw new Error('Required parameter userId was null or undefined when calling getGroupsForUser.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -39138,6 +54147,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<string>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -39171,6 +54181,7 @@ export class UsersGroupsApi {
         if (userId === null || userId === undefined) {
             throw new Error('Required parameter userId was null or undefined when calling removeGroupMember.');
         }
+
 
         let useFormData = false;
 
@@ -39227,6 +54238,7 @@ export class UsersGroupsApi {
             throw new Error('Required parameter uniqueName was null or undefined when calling updateGroup.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -39236,7 +54248,7 @@ export class UsersGroupsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: groupResource,
+            body: ObjectSerializer.serialize(groupResource, "GroupResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -39295,6 +54307,7 @@ export class UsersGroupsApi {
             throw new Error('Required parameter status was null or undefined when calling updateGroupMemberStatus.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -39304,7 +54317,7 @@ export class UsersGroupsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: status,
+            body: ObjectSerializer.serialize(status, "string")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -39351,6 +54364,7 @@ export class UsersGroupsApi {
             throw new Error('Required parameter id was null or undefined when calling updateGroupTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -39360,7 +54374,7 @@ export class UsersGroupsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: groupTemplateResource,
+            body: ObjectSerializer.serialize(groupTemplateResource, "TemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -39379,6 +54393,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -39409,40 +54424,41 @@ export class UsersGroupsApi {
 
 
         if (filterTemplate !== undefined) {
-            queryParameters['filter_template'] = filterTemplate;
+            queryParameters['filter_template'] = ObjectSerializer.serialize(filterTemplate, "string");
         }
 
         if (filterMemberCount !== undefined) {
-            queryParameters['filter_member_count'] = filterMemberCount;
+            queryParameters['filter_member_count'] = ObjectSerializer.serialize(filterMemberCount, "string");
         }
 
         if (filterName !== undefined) {
-            queryParameters['filter_name'] = filterName;
+            queryParameters['filter_name'] = ObjectSerializer.serialize(filterName, "string");
         }
 
         if (filterUniqueName !== undefined) {
-            queryParameters['filter_unique_name'] = filterUniqueName;
+            queryParameters['filter_unique_name'] = ObjectSerializer.serialize(filterUniqueName, "string");
         }
 
         if (filterParent !== undefined) {
-            queryParameters['filter_parent'] = filterParent;
+            queryParameters['filter_parent'] = ObjectSerializer.serialize(filterParent, "string");
         }
 
         if (filterStatus !== undefined) {
-            queryParameters['filter_status'] = filterStatus;
+            queryParameters['filter_status'] = ObjectSerializer.serialize(filterStatus, "string");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -39469,6 +54485,7 @@ export class UsersGroupsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceGroupResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -39547,6 +54564,7 @@ export class UsersInventoryApi {
             throw new Error('Required parameter id was null or undefined when calling addItemToUserInventory.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -39556,7 +54574,7 @@ export class UsersInventoryApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: userInventoryAddRequest,
+            body: ObjectSerializer.serialize(userInventoryAddRequest, "UserInventoryAddRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -39575,6 +54593,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "InvoiceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -39611,8 +54630,9 @@ export class UsersInventoryApi {
         }
 
         if (sku !== undefined) {
-            queryParameters['sku'] = sku;
+            queryParameters['sku'] = ObjectSerializer.serialize(sku, "string");
         }
+
 
         let useFormData = false;
 
@@ -39664,8 +54684,9 @@ export class UsersInventoryApi {
 
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -39676,7 +54697,7 @@ export class UsersInventoryApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: entitlementItem,
+            body: ObjectSerializer.serialize(entitlementItem, "EntitlementItem")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -39695,6 +54716,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "EntitlementItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -39716,6 +54738,7 @@ export class UsersInventoryApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -39725,7 +54748,7 @@ export class UsersInventoryApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: template,
+            body: ObjectSerializer.serialize(template, "ItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -39744,6 +54767,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -39770,6 +54794,7 @@ export class UsersInventoryApi {
         if (entitlementId === null || entitlementId === undefined) {
             throw new Error('Required parameter entitlementId was null or undefined when calling deleteEntitlementItem.');
         }
+
 
         let useFormData = false;
 
@@ -39827,8 +54852,9 @@ export class UsersInventoryApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "string");
         }
+
 
         let useFormData = false;
 
@@ -39884,6 +54910,7 @@ export class UsersInventoryApi {
             throw new Error('Required parameter entitlementId was null or undefined when calling getEntitlementItem.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -39909,6 +54936,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "EntitlementItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -39933,16 +54961,17 @@ export class UsersInventoryApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -39969,6 +54998,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceEntitlementItem");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -39995,6 +55025,7 @@ export class UsersInventoryApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling getEntitlementTemplate.');
         }
+
 
         let useFormData = false;
 
@@ -40023,6 +55054,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -40047,16 +55079,17 @@ export class UsersInventoryApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -40085,6 +55118,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -40121,36 +55155,37 @@ export class UsersInventoryApi {
         }
 
         if (inactive !== undefined) {
-            queryParameters['inactive'] = inactive;
+            queryParameters['inactive'] = ObjectSerializer.serialize(inactive, "boolean");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (filterItemName !== undefined) {
-            queryParameters['filter_item_name'] = filterItemName;
+            queryParameters['filter_item_name'] = ObjectSerializer.serialize(filterItemName, "string");
         }
 
         if (filterItemId !== undefined) {
-            queryParameters['filter_item_id'] = filterItemId;
+            queryParameters['filter_item_id'] = ObjectSerializer.serialize(filterItemId, "number");
         }
 
         if (filterUsername !== undefined) {
-            queryParameters['filter_username'] = filterUsername;
+            queryParameters['filter_username'] = ObjectSerializer.serialize(filterUsername, "string");
         }
 
         if (filterGroup !== undefined) {
-            queryParameters['filter_group'] = filterGroup;
+            queryParameters['filter_group'] = ObjectSerializer.serialize(filterGroup, "string");
         }
 
         if (filterDate !== undefined) {
-            queryParameters['filter_date'] = filterDate;
+            queryParameters['filter_date'] = ObjectSerializer.serialize(filterDate, "string");
         }
+
 
         let useFormData = false;
 
@@ -40179,6 +55214,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUserInventoryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -40213,6 +55249,7 @@ export class UsersInventoryApi {
             throw new Error('Required parameter id was null or undefined when calling getUserInventory.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -40240,6 +55277,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserInventoryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -40277,12 +55315,13 @@ export class UsersInventoryApi {
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
+
 
         let useFormData = false;
 
@@ -40311,6 +55350,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUserItemLogResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -40340,36 +55380,37 @@ export class UsersInventoryApi {
 
 
         if (inactive !== undefined) {
-            queryParameters['inactive'] = inactive;
+            queryParameters['inactive'] = ObjectSerializer.serialize(inactive, "boolean");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (filterItemName !== undefined) {
-            queryParameters['filter_item_name'] = filterItemName;
+            queryParameters['filter_item_name'] = ObjectSerializer.serialize(filterItemName, "string");
         }
 
         if (filterItemId !== undefined) {
-            queryParameters['filter_item_id'] = filterItemId;
+            queryParameters['filter_item_id'] = ObjectSerializer.serialize(filterItemId, "number");
         }
 
         if (filterUsername !== undefined) {
-            queryParameters['filter_username'] = filterUsername;
+            queryParameters['filter_username'] = ObjectSerializer.serialize(filterUsername, "string");
         }
 
         if (filterGroup !== undefined) {
-            queryParameters['filter_group'] = filterGroup;
+            queryParameters['filter_group'] = ObjectSerializer.serialize(filterGroup, "string");
         }
 
         if (filterDate !== undefined) {
-            queryParameters['filter_date'] = filterDate;
+            queryParameters['filter_date'] = ObjectSerializer.serialize(filterDate, "string");
         }
+
 
         let useFormData = false;
 
@@ -40398,6 +55439,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUserInventoryResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -40431,6 +55473,7 @@ export class UsersInventoryApi {
             throw new Error('Required parameter grantRequest was null or undefined when calling grantUserEntitlement.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -40440,7 +55483,7 @@ export class UsersInventoryApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: grantRequest,
+            body: ObjectSerializer.serialize(grantRequest, "EntitlementGrantRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -40489,8 +55532,9 @@ export class UsersInventoryApi {
         }
 
         if (cascade !== undefined) {
-            queryParameters['cascade'] = cascade;
+            queryParameters['cascade'] = ObjectSerializer.serialize(cascade, "boolean");
         }
+
 
         let useFormData = false;
 
@@ -40501,7 +55545,7 @@ export class UsersInventoryApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: entitlementItem,
+            body: ObjectSerializer.serialize(entitlementItem, "EntitlementItem")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -40548,6 +55592,7 @@ export class UsersInventoryApi {
             throw new Error('Required parameter id was null or undefined when calling updateEntitlementTemplate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -40557,7 +55602,7 @@ export class UsersInventoryApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: template,
+            body: ObjectSerializer.serialize(template, "ItemTemplateResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -40576,6 +55621,7 @@ export class UsersInventoryApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "ItemTemplateResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -40611,6 +55657,7 @@ export class UsersInventoryApi {
             throw new Error('Required parameter id was null or undefined when calling updateUserInventoryBehaviorData.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -40620,7 +55667,7 @@ export class UsersInventoryApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: data,
+            body: ObjectSerializer.serialize(data, "any")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -40674,6 +55721,7 @@ export class UsersInventoryApi {
             throw new Error('Required parameter id was null or undefined when calling updateUserInventoryExpires.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -40683,7 +55731,7 @@ export class UsersInventoryApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: timestamp,
+            body: ObjectSerializer.serialize(timestamp, "number")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -40737,6 +55785,7 @@ export class UsersInventoryApi {
             throw new Error('Required parameter id was null or undefined when calling updateUserInventoryStatus.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -40746,7 +55795,7 @@ export class UsersInventoryApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: inventoryStatus,
+            body: ObjectSerializer.serialize(inventoryStatus, "string")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -40802,12 +55851,13 @@ export class UsersInventoryApi {
         }
 
         if (sku !== undefined) {
-            queryParameters['sku'] = sku;
+            queryParameters['sku'] = ObjectSerializer.serialize(sku, "string");
         }
 
         if (info !== undefined) {
-            queryParameters['info'] = info;
+            queryParameters['info'] = ObjectSerializer.serialize(info, "string");
         }
+
 
         let useFormData = false;
 
@@ -40907,6 +55957,7 @@ export class UsersRelationshipsApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -40916,7 +55967,7 @@ export class UsersRelationshipsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: relationship,
+            body: ObjectSerializer.serialize(relationship, "UserRelationshipResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -40935,6 +55986,7 @@ export class UsersRelationshipsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserRelationshipResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -40961,6 +56013,7 @@ export class UsersRelationshipsApi {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling deleteUserRelationship.');
         }
+
 
         let useFormData = false;
 
@@ -41016,6 +56069,7 @@ export class UsersRelationshipsApi {
             throw new Error('Required parameter id was null or undefined when calling getUserRelationship.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41043,6 +56097,7 @@ export class UsersRelationshipsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserRelationshipResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -41067,16 +56122,17 @@ export class UsersRelationshipsApi {
 
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -41105,6 +56161,7 @@ export class UsersRelationshipsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceUserRelationshipResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -41133,6 +56190,7 @@ export class UsersRelationshipsApi {
             throw new Error('Required parameter id was null or undefined when calling updateUserRelationship.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41142,7 +56200,7 @@ export class UsersRelationshipsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: relationship,
+            body: ObjectSerializer.serialize(relationship, "UserRelationshipResource")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -41161,6 +56219,7 @@ export class UsersRelationshipsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "UserRelationshipResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -41245,6 +56304,7 @@ export class UsersSubscriptionsApi {
             throw new Error('Required parameter inventoryId was null or undefined when calling getUserSubscriptionDetails.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41272,6 +56332,7 @@ export class UsersSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "InventorySubscriptionResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -41298,6 +56359,7 @@ export class UsersSubscriptionsApi {
         if (userId === null || userId === undefined) {
             throw new Error('Required parameter userId was null or undefined when calling getUsersSubscriptionDetails.');
         }
+
 
         let useFormData = false;
 
@@ -41326,6 +56388,7 @@ export class UsersSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<InventorySubscriptionResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -41361,6 +56424,7 @@ export class UsersSubscriptionsApi {
             throw new Error('Required parameter inventoryId was null or undefined when calling reactivateUserSubscription.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41370,7 +56434,7 @@ export class UsersSubscriptionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: reactivateSubscriptionRequest,
+            body: ObjectSerializer.serialize(reactivateSubscriptionRequest, "ReactivateSubscriptionRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -41389,6 +56453,7 @@ export class UsersSubscriptionsApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "InvoiceResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -41429,6 +56494,7 @@ export class UsersSubscriptionsApi {
             throw new Error('Required parameter billDate was null or undefined when calling setSubscriptionBillDate.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41438,7 +56504,7 @@ export class UsersSubscriptionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: billDate,
+            body: ObjectSerializer.serialize(billDate, "number")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -41473,7 +56539,7 @@ export class UsersSubscriptionsApi {
      * @param inventoryId The id of the user&#39;s inventory
      * @param paymentMethodId The id of the payment method
      */
-    public setSubscriptionPaymentMethod (userId: number, inventoryId: number, paymentMethodId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setSubscriptionPaymentMethod (userId: number, inventoryId: number, paymentMethodId?: IntWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/users/{user_id}/subscriptions/{inventory_id}/payment-method'
             .replace('{' + 'user_id' + '}', String(userId))
             .replace('{' + 'inventory_id' + '}', String(inventoryId));
@@ -41492,6 +56558,7 @@ export class UsersSubscriptionsApi {
             throw new Error('Required parameter inventoryId was null or undefined when calling setSubscriptionPaymentMethod.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41501,7 +56568,7 @@ export class UsersSubscriptionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: paymentMethodId,
+            body: ObjectSerializer.serialize(paymentMethodId, "IntWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -41530,13 +56597,13 @@ export class UsersSubscriptionsApi {
         });
     }
     /**
-     * The body is a json string (put in quotes) that should match a desired invoice status type. Note that the new status may be blocked if the system is not configured to allow the current status to be changed to the new, to enforce proper flow. The default options for statuses are shown below but may be altered for special use cases
+     * Note that the new status may be blocked if the system is not configured to allow the current status to be changed to the new, to enforce proper flow. The default options for statuses are shown below but may be altered for special use cases
      * @summary Set the status of a subscription
      * @param userId The id of the user
      * @param inventoryId The id of the user&#39;s inventory
      * @param status The new status for the subscription. Actual options may differ from the indicated set if the invoice status type data has been altered.  Allowable values: (&#39;current&#39;, &#39;canceled&#39;, &#39;stopped&#39;, &#39;payment_failed&#39;, &#39;suspended&#39;)
      */
-    public setSubscriptionStatus (userId: number, inventoryId: number, status: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setSubscriptionStatus (userId: number, inventoryId: number, status: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/users/{user_id}/subscriptions/{inventory_id}/status'
             .replace('{' + 'user_id' + '}', String(userId))
             .replace('{' + 'inventory_id' + '}', String(inventoryId));
@@ -41560,6 +56627,7 @@ export class UsersSubscriptionsApi {
             throw new Error('Required parameter status was null or undefined when calling setSubscriptionStatus.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41569,7 +56637,7 @@ export class UsersSubscriptionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: status,
+            body: ObjectSerializer.serialize(status, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -41604,7 +56672,7 @@ export class UsersSubscriptionsApi {
      * @param inventoryId The id of the user&#39;s inventory
      * @param planId The id of the new plan. Must be from the same subscription
      */
-    public setUserSubscriptionPlan (userId: number, inventoryId: number, planId?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public setUserSubscriptionPlan (userId: number, inventoryId: number, planId?: StringWrapper) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/users/{user_id}/subscriptions/{inventory_id}/plan'
             .replace('{' + 'user_id' + '}', String(userId))
             .replace('{' + 'inventory_id' + '}', String(inventoryId));
@@ -41623,6 +56691,7 @@ export class UsersSubscriptionsApi {
             throw new Error('Required parameter inventoryId was null or undefined when calling setUserSubscriptionPlan.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41632,7 +56701,7 @@ export class UsersSubscriptionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: planId,
+            body: ObjectSerializer.serialize(planId, "StringWrapper")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -41686,6 +56755,7 @@ export class UsersSubscriptionsApi {
             throw new Error('Required parameter inventoryId was null or undefined when calling setUserSubscriptionPrice.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41695,7 +56765,7 @@ export class UsersSubscriptionsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: the override details,
+            body: ObjectSerializer.serialize(the override details, "SubscriptionPriceOverrideRequest")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -41791,6 +56861,7 @@ export class UtilBatchApi {
             throw new Error('Required parameter token was null or undefined when calling getBatch.');
         }
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41816,6 +56887,7 @@ export class UtilBatchApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<BatchReturn>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -41837,6 +56909,7 @@ export class UtilBatchApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41846,7 +56919,7 @@ export class UtilBatchApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: batch,
+            body: ObjectSerializer.serialize(batch, "Batch")
         };
 
         this.authentications.default.applyToRequest(requestOptions);
@@ -41863,6 +56936,7 @@ export class UtilBatchApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Array<BatchReturn>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -41933,6 +57007,7 @@ export class UtilHealthApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -41958,6 +57033,7 @@ export class UtilHealthApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "any");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -42028,6 +57104,7 @@ export class UtilMaintenanceApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -42075,6 +57152,7 @@ export class UtilMaintenanceApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -42100,6 +57178,7 @@ export class UtilMaintenanceApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Maintenance");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -42121,6 +57200,7 @@ export class UtilMaintenanceApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -42130,7 +57210,7 @@ export class UtilMaintenanceApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: maintenance,
+            body: ObjectSerializer.serialize(maintenance, "Maintenance")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -42170,6 +57250,7 @@ export class UtilMaintenanceApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -42179,7 +57260,7 @@ export class UtilMaintenanceApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: maintenance,
+            body: ObjectSerializer.serialize(maintenance, "Maintenance")
         };
 
         this.authentications.OAuth2.applyToRequest(requestOptions);
@@ -42273,20 +57354,21 @@ export class UtilSecurityApi {
 
 
         if (userId !== undefined) {
-            queryParameters['user_id'] = userId;
+            queryParameters['user_id'] = ObjectSerializer.serialize(userId, "number");
         }
 
         if (size !== undefined) {
-            queryParameters['size'] = size;
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
         }
 
         if (page !== undefined) {
-            queryParameters['page'] = page;
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
         }
 
         if (order !== undefined) {
-            queryParameters['order'] = order;
+            queryParameters['order'] = ObjectSerializer.serialize(order, "string");
         }
+
 
         let useFormData = false;
 
@@ -42315,6 +57397,7 @@ export class UtilSecurityApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceLocationLogResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -42333,6 +57416,7 @@ export class UtilSecurityApi {
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
+
 
 
         let useFormData = false;
@@ -42362,6 +57446,7 @@ export class UtilSecurityApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "TokenDetailsResource");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -42432,6 +57517,7 @@ export class UtilVersionApi {
         let formParams: any = {};
 
 
+
         let useFormData = false;
 
         let requestOptions: request.Options = {
@@ -42457,6 +57543,7 @@ export class UtilVersionApi {
                 if (error) {
                     reject(error);
                 } else {
+                    body = ObjectSerializer.deserialize(body, "Version");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
