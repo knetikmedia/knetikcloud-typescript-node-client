@@ -21180,10 +21180,12 @@ export class AccessTokenApi {
      * @param grantType Grant type
      * @param clientId The id of the client
      * @param clientSecret The secret key of the client.  Used only with a grant_type of client_credentials
-     * @param username The username of the client.  Used only with a grant_type of password
-     * @param password The password of the client.  Used only with a grant_type of password
+     * @param username The username of the client. Used only with a grant_type of password
+     * @param password The password of the client. Used only with a grant_type of password
+     * @param token The 3rd party authentication token. Used only with a grant_type of facebook, google, etc (social plugins)
+     * @param refreshToken The refresh token obtained during prior authentication. Used only with a grant_type of refresh_token
      */
-    public getOAuthToken (grantType: string, clientId: string, clientSecret?: string, username?: string, password?: string) : Promise<{ response: http.ClientResponse; body: OAuth2Resource;  }> {
+    public getOAuthToken (grantType: string, clientId: string, clientSecret?: string, username?: string, password?: string, token?: string, refreshToken?: string) : Promise<{ response: http.ClientResponse; body: OAuth2Resource;  }> {
         const localVarPath = this.basePath + '/oauth/token';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
@@ -21221,6 +21223,14 @@ export class AccessTokenApi {
 
         if (password !== undefined) {
             formParams['password'] = ObjectSerializer.serialize(password, "string");
+        }
+
+        if (token !== undefined) {
+            formParams['token'] = ObjectSerializer.serialize(token, "string");
+        }
+
+        if (refreshToken !== undefined) {
+            formParams['refresh_token'] = ObjectSerializer.serialize(refreshToken, "string");
         }
 
         let requestOptions: request.Options = {
