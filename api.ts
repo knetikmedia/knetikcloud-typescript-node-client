@@ -16482,6 +16482,10 @@ export class SubscriptionResource {
     */
     'availability': SubscriptionResource.AvailabilityEnum;
     /**
+    * The behaviors linked to the item, describing various options and interactions. May not be included in item lists
+    */
+    'behaviors': Array<Behavior>;
+    /**
     * A category for filtering items
     */
     'category': string;
@@ -16566,6 +16570,11 @@ export class SubscriptionResource {
             "name": "availability",
             "baseName": "availability",
             "type": "SubscriptionResource.AvailabilityEnum"
+        },
+        {
+            "name": "behaviors",
+            "baseName": "behaviors",
+            "type": "Array<Behavior>"
         },
         {
             "name": "category",
@@ -21121,7 +21130,8 @@ export class AccessTokenApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -21158,7 +21168,11 @@ export class AccessTokenApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -21253,7 +21267,8 @@ export class ActivitiesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -21290,7 +21305,11 @@ export class ActivitiesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -21316,8 +21335,6 @@ export class ActivitiesApi {
             json: true,
             body: ObjectSerializer.serialize(activityResource, "ActivityResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -21373,8 +21390,6 @@ export class ActivitiesApi {
             body: ObjectSerializer.serialize(activityOccurrenceResource, "ActivityOccurrenceResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -21423,8 +21438,6 @@ export class ActivitiesApi {
             json: true,
             body: ObjectSerializer.serialize(activityTemplateResource, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -21479,8 +21492,6 @@ export class ActivitiesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -21539,8 +21550,6 @@ export class ActivitiesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -21726,8 +21735,6 @@ export class ActivitiesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -21790,8 +21797,6 @@ export class ActivitiesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -21847,8 +21852,6 @@ export class ActivitiesApi {
             json: true,
             body: ObjectSerializer.serialize(activityOccurrenceResults, "ActivityOccurrenceResultsResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -21906,8 +21909,6 @@ export class ActivitiesApi {
             body: ObjectSerializer.serialize(activityResource, "ActivityResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -21964,8 +21965,6 @@ export class ActivitiesApi {
             body: ObjectSerializer.serialize(activityCccurrenceStatus, "string")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -22021,8 +22020,6 @@ export class ActivitiesApi {
             body: ObjectSerializer.serialize(activityTemplateResource, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -22058,7 +22055,8 @@ export class AmazonWebServicesS3Api {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -22095,11 +22093,77 @@ export class AmazonWebServicesS3Api {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
-     * Requires the file name and file content type (i.e., 'video/mpeg')
-     * @summary Get a signed S3 URL
+     * To give access to files in your own S3 account, you will need to grant KnetikcCloud access to the file by adjusting your bucket policy accordingly. See S3 documentation for details.
+     * @summary Get a temporary signed S3 URL for download
+     * @param bucket S3 bucket name
+     * @param path The path to the file relative the bucket (the s3 object key)
+     * @param expiration The number of seconds this URL will be valid. Default to 60
+     */
+    public getDownloadURL (bucket?: string, path?: string, expiration?: number) : Promise<{ response: http.ClientResponse; body: string;  }> {
+        const localVarPath = this.basePath + '/amazon/s3/downloadurl';
+        let queryParameters: any = {};
+        let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (bucket !== undefined) {
+            queryParameters['bucket'] = ObjectSerializer.serialize(bucket, "string");
+        }
+
+        if (path !== undefined) {
+            queryParameters['path'] = ObjectSerializer.serialize(path, "string");
+        }
+
+        if (expiration !== undefined) {
+            queryParameters['expiration'] = ObjectSerializer.serialize(expiration, "number");
+        }
+
+
+        let useFormData = false;
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: string;  }>((resolve, reject) => {
+            request(requestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "string");
+                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Requires the file name and file content type (i.e., 'video/mpeg'). Make a PUT to the resulting url to upload the file and use the cdn_url to retrieve it after.
+     * @summary Get a signed S3 URL for upload
      * @param filename The file name
      * @param contentType The content type
      */
@@ -22129,8 +22193,6 @@ export class AmazonWebServicesS3Api {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -22167,7 +22229,8 @@ export class AuthClientsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -22204,7 +22267,11 @@ export class AuthClientsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -22230,8 +22297,6 @@ export class AuthClientsApi {
             json: true,
             body: ObjectSerializer.serialize(clientResource, "ClientResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -22287,8 +22352,6 @@ export class AuthClientsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -22342,8 +22405,6 @@ export class AuthClientsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -22390,8 +22451,6 @@ export class AuthClientsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -22455,8 +22514,6 @@ export class AuthClientsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -22513,8 +22570,6 @@ export class AuthClientsApi {
             body: ObjectSerializer.serialize(grantList, "Array<string>")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -22569,8 +22624,6 @@ export class AuthClientsApi {
             json: true,
             body: ObjectSerializer.serialize(redirectList, "Array<string>")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -22627,8 +22680,6 @@ export class AuthClientsApi {
             body: ObjectSerializer.serialize(clientResource, "ClientResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -22664,7 +22715,8 @@ export class AuthPermissionsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -22701,7 +22753,11 @@ export class AuthPermissionsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -22727,8 +22783,6 @@ export class AuthPermissionsApi {
             json: true,
             body: ObjectSerializer.serialize(permissionResource, "PermissionResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -22789,8 +22843,6 @@ export class AuthPermissionsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -22843,8 +22895,6 @@ export class AuthPermissionsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -22908,8 +22958,6 @@ export class AuthPermissionsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -22966,8 +23014,6 @@ export class AuthPermissionsApi {
             body: ObjectSerializer.serialize(permissionResource, "PermissionResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -23003,7 +23049,8 @@ export class AuthRolesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -23040,7 +23087,11 @@ export class AuthRolesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -23066,8 +23117,6 @@ export class AuthRolesApi {
             json: true,
             body: ObjectSerializer.serialize(roleResource, "RoleResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -23128,8 +23177,6 @@ export class AuthRolesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -23182,8 +23229,6 @@ export class AuthRolesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -23238,8 +23283,6 @@ export class AuthRolesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -23313,8 +23356,6 @@ export class AuthRolesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -23368,8 +23409,6 @@ export class AuthRolesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -23427,8 +23466,6 @@ export class AuthRolesApi {
             body: ObjectSerializer.serialize(rolesList, "Array<string>")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -23484,8 +23521,6 @@ export class AuthRolesApi {
             json: true,
             body: ObjectSerializer.serialize(permissionsList, "Array<string>")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -23543,8 +23578,6 @@ export class AuthRolesApi {
             body: ObjectSerializer.serialize(rolesList, "Array<string>")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -23601,8 +23634,6 @@ export class AuthRolesApi {
             body: ObjectSerializer.serialize(roleResource, "RoleResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -23638,7 +23669,8 @@ export class AuthTokensApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -23675,7 +23707,11 @@ export class AuthTokensApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -23709,8 +23745,6 @@ export class AuthTokensApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -23771,8 +23805,6 @@ export class AuthTokensApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -23846,8 +23878,6 @@ export class AuthTokensApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -23883,7 +23913,8 @@ export class BRERuleEngineActionsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -23920,7 +23951,11 @@ export class BRERuleEngineActionsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -23965,8 +24000,6 @@ export class BRERuleEngineActionsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -24002,7 +24035,8 @@ export class BRERuleEngineCategoriesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -24039,7 +24073,11 @@ export class BRERuleEngineCategoriesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Templates define a type of BRE category and the properties they have
@@ -24065,8 +24103,6 @@ export class BRERuleEngineCategoriesApi {
             json: true,
             body: ObjectSerializer.serialize(template, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -24127,8 +24163,6 @@ export class BRERuleEngineCategoriesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -24185,8 +24219,6 @@ export class BRERuleEngineCategoriesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -24241,8 +24273,6 @@ export class BRERuleEngineCategoriesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -24296,8 +24326,6 @@ export class BRERuleEngineCategoriesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -24361,8 +24389,6 @@ export class BRERuleEngineCategoriesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -24418,8 +24444,6 @@ export class BRERuleEngineCategoriesApi {
             json: true,
             body: ObjectSerializer.serialize(category, "BreCategoryResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -24477,8 +24501,6 @@ export class BRERuleEngineCategoriesApi {
             body: ObjectSerializer.serialize(template, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -24514,7 +24536,8 @@ export class BRERuleEngineEventsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -24551,7 +24574,11 @@ export class BRERuleEngineEventsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Parameters within the event must match names and types from the trigger. Actual rule execution is asynchornous.  Returns request id, which will be used as the event id
@@ -24577,8 +24604,6 @@ export class BRERuleEngineEventsApi {
             json: true,
             body: ObjectSerializer.serialize(breEvent, "BreEvent")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -24615,7 +24640,8 @@ export class BRERuleEngineExpressionsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -24652,7 +24678,11 @@ export class BRERuleEngineExpressionsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * These are expression types that take a second expression as input and produce a value. These can be used in addition to the standard types, like parameter, global and constant (see BRE documentation for details).
@@ -24676,8 +24706,6 @@ export class BRERuleEngineExpressionsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -24714,7 +24742,8 @@ export class BRERuleEngineGlobalsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -24751,7 +24780,11 @@ export class BRERuleEngineGlobalsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Once created you can then use in a custom rule. Note that global definitions cannot be modified or deleted if in use.
@@ -24777,8 +24810,6 @@ export class BRERuleEngineGlobalsApi {
             json: true,
             body: ObjectSerializer.serialize(breGlobalResource, "BreGlobalResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -24834,8 +24865,6 @@ export class BRERuleEngineGlobalsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -24888,8 +24917,6 @@ export class BRERuleEngineGlobalsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -24953,8 +24980,6 @@ export class BRERuleEngineGlobalsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -25011,8 +25036,6 @@ export class BRERuleEngineGlobalsApi {
             body: ObjectSerializer.serialize(breGlobalResource, "BreGlobalResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -25048,7 +25071,8 @@ export class BRERuleEngineRulesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -25085,7 +25109,11 @@ export class BRERuleEngineRulesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Rules define which actions to run when a given event verifies the specified conditions. Conditions and actions are defined by binding event or context parameters to arguments. Conditions also known as Predicates are logical expressions that result in a boolean. Operators are used to describe rules between arguments to form that condition. There are 3 families of operators: Boolean, Math and String. Math and String operators are functions that transform arguments into numbers or strings...<h1>Boolean Operators</h1><br /><br />1 arg:<br />======<br /><br /><ul> <li>IS_NULL</li> <li>IS_NOT_NULL</li> <li>STRING_IS_EMPTY</li> <li>NOT </li> <li>MAP_IS_EMPTY</li></ul><br />2 args:<br />=======<br /><br /><ul> <li>EQ</li> <li>NE (Not Equals)</li> <li>GT (Greater Than)</li> <li>GOE (Greater Or Equals)</li> <li>LT (Lesser Than)</li> <li>LOE (Lesser Or Equals)</li> <li>OR</li> <li>AND</li> <li>XNOR</li> <li>XOR</li> <li>CONTAINS_KEY (for maps only)</li> <li>CONTAINS_VALUE (for maps only)</li> <li>MATCHES (regex)</li> <li>MATCHES_IC (regex ignore case)</li> <li>STARTS_WITH</li> <li>STARTS_WITH_IC</li> <li>EQ_IGNORE_CASE</li> <li>ENDS_WITH</li> <li>ENDS_WITH_IC</li> <li>STRING_CONTAINS</li> <li>STRING_CONTAINS_IC</li> <li>LIKE (SQL like)</li></ul><br />3 args exceptions:<br />=================<br /><br /><ul> <li>BETWEEN</li></ul><br />n args:<br />=======<br /><br /><ul> <li>IN</li> <li>NOT_INT</li></ul><h1>Math Operators</h1>1 arg:<br />=====<br /><br /><ul> <li>NEGATE</li> <li>MAP_SIZE</li> <li>STRING_LENGTH</li> <li>CEIL</li> <li>ABS</li> <li>FLOOR</li> <li>ROUND</li> <li>RANDOM (no arg)</li> <li>RANDOM2 (seed arg)</li> <li>NUMCAST</li> <li>HOUR</li> <li>MINUTE</li> <li>SECOND</li> <li>MILLISECOND</li> <li>YEAR</li> <li>WEEK</li> <li>YEAR_MONTH</li> <li>YEAR_WEEK</li> <li>DAY_OF_WEEK</li> <li>DAY_OF_MONTH</li> <li>DAY_OF_YEAR</li> <li>WEEK</li> <li>WEEK</li> <li>WEEK</li></ul><br /><br />2 args:<br />======<br /><br /><ul> <li>ADD</li> <li>DIV</li> <li>MULT</li> <li>SUB</li> <li>POWER</li> <li>MOD</li> <li>LOCATE (index of (string, char))</li> <li>DIFF_YEARS</li> <li>DIFF_MONTHS</li> <li>DIFF_WEEKS</li> <li>DIFF_DAYS</li> <li>DIFF_HOURS</li> <li>DIFF_MINUTES</li> <li>DIFF_SECONDS</li></ul><br /><br />2 args:<br />======<br /><br /><ul> <li>MIN</li> <li>MAX</li></ul><h1>String Operators</h1>0 arg:<br />=====<br /><br /><ul> <li>CURRENT_TIME</li></ul><br /><br />1 arg:<br />=====<br /><br /><ul> <li>CURRENT_TIME</li> <li>LOWER</li> <li>UPPER</li> <li>TRIM</li> <li>STRING_CAST</li></ul><br /><br />2 args:<br />=====<br /><br /><ul> <li>CHAR_AT</li> <li>SUBSTR_1ARG (substr(string, start))</li> <li>CONCAT</li> <li>TRIM</li> <li>STRING_CAST</li></ul><br /><br />3 args:<br />=====<br /><br /><ul> <li>SUBSTR_2ARGS (substr(string, start, length))</li></ul>
@@ -25111,8 +25139,6 @@ export class BRERuleEngineRulesApi {
             json: true,
             body: ObjectSerializer.serialize(breRule, "BreRule")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -25168,8 +25194,6 @@ export class BRERuleEngineRulesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -25217,8 +25241,6 @@ export class BRERuleEngineRulesApi {
             json: true,
             body: ObjectSerializer.serialize(expression, "Expressionobject")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -25273,8 +25295,6 @@ export class BRERuleEngineRulesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -25363,8 +25383,6 @@ export class BRERuleEngineRulesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -25421,8 +25439,6 @@ export class BRERuleEngineRulesApi {
             body: ObjectSerializer.serialize(enabled, "BooleanResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -25478,8 +25494,6 @@ export class BRERuleEngineRulesApi {
             body: ObjectSerializer.serialize(breRule, "BreRule")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -25515,7 +25529,8 @@ export class BRERuleEngineTriggersApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -25552,7 +25567,11 @@ export class BRERuleEngineTriggersApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Customer added triggers will not be fired automatically or have rules associated with them by default. Custom rules must be added to get use from the trigger and it must then be fired from the outside. See the Bre Event services
@@ -25578,8 +25597,6 @@ export class BRERuleEngineTriggersApi {
             json: true,
             body: ObjectSerializer.serialize(breTriggerResource, "BreTriggerResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -25635,8 +25652,6 @@ export class BRERuleEngineTriggersApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -25689,8 +25704,6 @@ export class BRERuleEngineTriggersApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -25774,8 +25787,6 @@ export class BRERuleEngineTriggersApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -25832,8 +25843,6 @@ export class BRERuleEngineTriggersApi {
             body: ObjectSerializer.serialize(breTriggerResource, "BreTriggerResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -25869,7 +25878,8 @@ export class BRERuleEngineVariablesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -25906,7 +25916,11 @@ export class BRERuleEngineVariablesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Types include integer, string, user and invoice. These are used to qualify trigger parameters and action variables with strong typing.
@@ -25930,8 +25944,6 @@ export class BRERuleEngineVariablesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -26002,8 +26014,6 @@ export class BRERuleEngineVariablesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -26039,7 +26049,8 @@ export class CampaignsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -26076,7 +26087,11 @@ export class CampaignsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -26109,8 +26124,6 @@ export class CampaignsApi {
             json: true,
             body: ObjectSerializer.serialize(challengeId, "number")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -26160,8 +26173,6 @@ export class CampaignsApi {
             body: ObjectSerializer.serialize(campaignResource, "CampaignResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -26210,8 +26221,6 @@ export class CampaignsApi {
             json: true,
             body: ObjectSerializer.serialize(campaignTemplateResource, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -26266,8 +26275,6 @@ export class CampaignsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -26326,8 +26333,6 @@ export class CampaignsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -26515,8 +26520,6 @@ export class CampaignsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -26578,8 +26581,6 @@ export class CampaignsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -26709,8 +26710,6 @@ export class CampaignsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -26765,8 +26764,6 @@ export class CampaignsApi {
             json: true,
             body: ObjectSerializer.serialize(campaignResource, "CampaignResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -26824,8 +26821,6 @@ export class CampaignsApi {
             body: ObjectSerializer.serialize(campaignTemplateResource, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -26861,7 +26856,8 @@ export class CampaignsChallengesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -26898,7 +26894,11 @@ export class CampaignsChallengesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Challenges do not run on their own.  They must be added to a campaign before events will spawn.
@@ -26924,8 +26924,6 @@ export class CampaignsChallengesApi {
             json: true,
             body: ObjectSerializer.serialize(challengeResource, "ChallengeResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -26988,8 +26986,6 @@ export class CampaignsChallengesApi {
             body: ObjectSerializer.serialize(challengeActivityResource, "ChallengeActivityResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -27039,8 +27035,6 @@ export class CampaignsChallengesApi {
             body: ObjectSerializer.serialize(challengeActivityTemplateResource, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -27089,8 +27083,6 @@ export class CampaignsChallengesApi {
             json: true,
             body: ObjectSerializer.serialize(challengeTemplateResource, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -27145,8 +27137,6 @@ export class CampaignsChallengesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -27208,8 +27198,6 @@ export class CampaignsChallengesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -27268,8 +27256,6 @@ export class CampaignsChallengesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -27322,8 +27308,6 @@ export class CampaignsChallengesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -27382,8 +27366,6 @@ export class CampaignsChallengesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -27622,8 +27604,6 @@ export class CampaignsChallengesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -27685,8 +27665,6 @@ export class CampaignsChallengesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -27878,8 +27856,6 @@ export class CampaignsChallengesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -27941,8 +27917,6 @@ export class CampaignsChallengesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -28082,8 +28056,6 @@ export class CampaignsChallengesApi {
             body: ObjectSerializer.serialize(challengeResource, "ChallengeResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -28147,8 +28119,6 @@ export class CampaignsChallengesApi {
             body: ObjectSerializer.serialize(challengeActivityResource, "ChallengeActivityResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -28204,8 +28174,6 @@ export class CampaignsChallengesApi {
             json: true,
             body: ObjectSerializer.serialize(challengeActivityTemplateResource, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -28263,8 +28231,6 @@ export class CampaignsChallengesApi {
             body: ObjectSerializer.serialize(challengeTemplateResource, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -28300,7 +28266,8 @@ export class CampaignsRewardsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -28337,7 +28304,11 @@ export class CampaignsRewardsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -28363,8 +28334,6 @@ export class CampaignsRewardsApi {
             json: true,
             body: ObjectSerializer.serialize(rewardSetResource, "RewardSetResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -28419,8 +28388,6 @@ export class CampaignsRewardsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -28593,8 +28560,6 @@ export class CampaignsRewardsApi {
             body: ObjectSerializer.serialize(rewardSetResource, "RewardSetResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -28630,7 +28595,8 @@ export class CategoriesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -28667,7 +28633,11 @@ export class CategoriesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -28693,8 +28663,6 @@ export class CategoriesApi {
             json: true,
             body: ObjectSerializer.serialize(category, "CategoryResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -28744,8 +28712,6 @@ export class CategoriesApi {
             json: true,
             body: ObjectSerializer.serialize(template, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -28800,8 +28766,6 @@ export class CategoriesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -28860,8 +28824,6 @@ export class CategoriesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -29042,8 +29004,6 @@ export class CategoriesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -29105,8 +29065,6 @@ export class CategoriesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -29221,8 +29179,6 @@ export class CategoriesApi {
             body: ObjectSerializer.serialize(category, "CategoryResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -29279,8 +29235,6 @@ export class CategoriesApi {
             body: ObjectSerializer.serialize(template, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -29316,7 +29270,8 @@ export class ConfigsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -29353,7 +29308,11 @@ export class ConfigsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -29379,8 +29338,6 @@ export class ConfigsApi {
             json: true,
             body: ObjectSerializer.serialize(config, "Config")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -29436,8 +29393,6 @@ export class ConfigsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -29490,8 +29445,6 @@ export class ConfigsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -29560,8 +29513,6 @@ export class ConfigsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -29618,8 +29569,6 @@ export class ConfigsApi {
             body: ObjectSerializer.serialize(config, "Config")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -29654,7 +29603,8 @@ export class ContentArticlesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -29691,7 +29641,11 @@ export class ContentArticlesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Articles are blobs of text with titles, a category and assets. Formatting and display of the text is in the hands of the front end.
@@ -29717,8 +29671,6 @@ export class ContentArticlesApi {
             json: true,
             body: ObjectSerializer.serialize(articleResource, "ArticleResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -29768,8 +29720,6 @@ export class ContentArticlesApi {
             json: true,
             body: ObjectSerializer.serialize(articleTemplateResource, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -29824,8 +29774,6 @@ export class ContentArticlesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -29884,8 +29832,6 @@ export class ContentArticlesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -29994,8 +29940,6 @@ export class ContentArticlesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -30058,8 +30002,6 @@ export class ContentArticlesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -30087,6 +30029,7 @@ export class ContentArticlesApi {
     /**
      * Get a list of articles with optional filtering. Assets will not be filled in on the resources returned. Use 'Get a single article' to retrieve the full resource with assets for a given item as needed.
      * @summary List and search articles
+     * @param filterActiveOnly Filter for articles that are active (true) or inactive (false)
      * @param filterCategory Filter for articles from a specific category by id
      * @param filterTagset Filter for articles with at least one of a specified set of tags (separated by comma)
      * @param filterTagIntersection Filter for articles with all of a specified set of tags (separated by comma)
@@ -30096,12 +30039,16 @@ export class ContentArticlesApi {
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
      */
-    public getArticles (filterCategory?: string, filterTagset?: string, filterTagIntersection?: string, filterTagExclusion?: string, filterTitle?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceArticleResource;  }> {
+    public getArticles (filterActiveOnly?: boolean, filterCategory?: string, filterTagset?: string, filterTagIntersection?: string, filterTagExclusion?: string, filterTitle?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceArticleResource;  }> {
         const localVarPath = this.basePath + '/content/articles';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (filterActiveOnly !== undefined) {
+            queryParameters['filter_active_only'] = ObjectSerializer.serialize(filterActiveOnly, "boolean");
+        }
 
         if (filterCategory !== undefined) {
             queryParameters['filter_category'] = ObjectSerializer.serialize(filterCategory, "string");
@@ -30203,8 +30150,6 @@ export class ContentArticlesApi {
             body: ObjectSerializer.serialize(articleResource, "ArticleResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -30261,8 +30206,6 @@ export class ContentArticlesApi {
             body: ObjectSerializer.serialize(articleTemplateResource, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -30298,7 +30241,8 @@ export class ContentCommentsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -30335,7 +30279,11 @@ export class ContentCommentsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -30361,8 +30309,6 @@ export class ContentCommentsApi {
             json: true,
             body: ObjectSerializer.serialize(commentResource, "CommentResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -30417,8 +30363,6 @@ export class ContentCommentsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -30665,8 +30609,6 @@ export class ContentCommentsApi {
             body: ObjectSerializer.serialize(content, "StringWrapper")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -30701,7 +30643,8 @@ export class ContentPollsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -30738,7 +30681,11 @@ export class ContentPollsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -30771,8 +30718,6 @@ export class ContentPollsApi {
             json: true,
             body: ObjectSerializer.serialize(answerKey, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -30823,8 +30768,6 @@ export class ContentPollsApi {
             body: ObjectSerializer.serialize(pollResource, "PollResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -30873,8 +30816,6 @@ export class ContentPollsApi {
             json: true,
             body: ObjectSerializer.serialize(pollTemplateResource, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -30929,8 +30870,6 @@ export class ContentPollsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -30989,8 +30928,6 @@ export class ContentPollsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -31099,8 +31036,6 @@ export class ContentPollsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -31154,8 +31089,6 @@ export class ContentPollsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -31218,8 +31151,6 @@ export class ContentPollsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -31354,8 +31285,6 @@ export class ContentPollsApi {
             body: ObjectSerializer.serialize(pollResource, "PollResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -31412,8 +31341,6 @@ export class ContentPollsApi {
             body: ObjectSerializer.serialize(pollTemplateResource, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -31449,7 +31376,8 @@ export class CurrenciesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -31486,7 +31414,11 @@ export class CurrenciesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -31512,8 +31444,6 @@ export class CurrenciesApi {
             json: true,
             body: ObjectSerializer.serialize(currency, "CurrencyResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -31568,8 +31498,6 @@ export class CurrenciesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -31752,8 +31680,6 @@ export class CurrenciesApi {
             body: ObjectSerializer.serialize(currency, "CurrencyResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -31788,7 +31714,8 @@ export class DevicesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -31825,7 +31752,11 @@ export class DevicesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -31863,8 +31794,6 @@ export class DevicesApi {
             json: true,
             body: ObjectSerializer.serialize(userResources, "Array<SimpleUserResource>")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -31920,8 +31849,6 @@ export class DevicesApi {
             body: ObjectSerializer.serialize(device, "DeviceResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -31975,8 +31902,6 @@ export class DevicesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -32038,8 +31963,6 @@ export class DevicesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -32098,8 +32021,6 @@ export class DevicesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -32152,8 +32073,6 @@ export class DevicesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -32227,8 +32146,6 @@ export class DevicesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -32290,8 +32207,6 @@ export class DevicesApi {
             body: ObjectSerializer.serialize(device, "DeviceResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -32327,7 +32242,8 @@ export class DispositionsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -32364,7 +32280,11 @@ export class DispositionsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -32390,8 +32310,6 @@ export class DispositionsApi {
             json: true,
             body: ObjectSerializer.serialize(disposition, "DispositionResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -32446,8 +32364,6 @@ export class DispositionsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -32666,7 +32582,8 @@ export class FulfillmentApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -32703,7 +32620,11 @@ export class FulfillmentApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -32729,8 +32650,6 @@ export class FulfillmentApi {
             json: true,
             body: ObjectSerializer.serialize(type, "FulfillmentType")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -32785,8 +32704,6 @@ export class FulfillmentApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -32959,8 +32876,6 @@ export class FulfillmentApi {
             body: ObjectSerializer.serialize(fulfillmentType, "FulfillmentType")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -32995,7 +32910,8 @@ export class GamificationAchievementsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -33032,7 +32948,11 @@ export class GamificationAchievementsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * If the definition contains a trigger event name, a BRE rule is created, so that tracking logic is executed when the triggering event occurs. If no trigger event name is specified, the user's achievement status must manually be updated via the API.
@@ -33058,8 +32978,6 @@ export class GamificationAchievementsApi {
             json: true,
             body: ObjectSerializer.serialize(achievement, "AchievementDefinitionResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -33109,8 +33027,6 @@ export class GamificationAchievementsApi {
             json: true,
             body: ObjectSerializer.serialize(template, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -33165,8 +33081,6 @@ export class GamificationAchievementsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -33226,8 +33140,6 @@ export class GamificationAchievementsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -33280,8 +33192,6 @@ export class GamificationAchievementsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -33336,8 +33246,6 @@ export class GamificationAchievementsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -33401,8 +33309,6 @@ export class GamificationAchievementsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -33449,8 +33355,6 @@ export class GamificationAchievementsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -33534,8 +33438,6 @@ export class GamificationAchievementsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -33589,8 +33491,6 @@ export class GamificationAchievementsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -33652,8 +33552,6 @@ export class GamificationAchievementsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -33734,8 +33632,6 @@ export class GamificationAchievementsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -33815,8 +33711,6 @@ export class GamificationAchievementsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -33889,8 +33783,6 @@ export class GamificationAchievementsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -33953,8 +33845,6 @@ export class GamificationAchievementsApi {
             json: true,
             body: ObjectSerializer.serialize(progress, "IntWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -34019,8 +33909,6 @@ export class GamificationAchievementsApi {
             body: ObjectSerializer.serialize(progress, "IntWrapper")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -34076,8 +33964,6 @@ export class GamificationAchievementsApi {
             json: true,
             body: ObjectSerializer.serialize(achievement, "AchievementDefinitionResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -34135,8 +34021,6 @@ export class GamificationAchievementsApi {
             body: ObjectSerializer.serialize(template, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -34172,7 +34056,8 @@ export class GamificationLeaderboardsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -34209,7 +34094,11 @@ export class GamificationLeaderboardsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * The context type identifies the type of entity (i.e., 'activity') being tracked on the leaderboard. The context ID is the unique ID of the actual entity tracked by the leaderboard. Sorting is based on the fields of LeaderboardEntryResource rather than the returned LeaderboardResource.
@@ -34331,8 +34220,6 @@ export class GamificationLeaderboardsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -34415,7 +34302,8 @@ export class GamificationLevelingApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -34452,7 +34340,11 @@ export class GamificationLevelingApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -34478,8 +34370,6 @@ export class GamificationLevelingApi {
             json: true,
             body: ObjectSerializer.serialize(level, "LevelingResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -34535,8 +34425,6 @@ export class GamificationLevelingApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -34590,8 +34478,6 @@ export class GamificationLevelingApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -34638,8 +34524,6 @@ export class GamificationLevelingApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -34708,8 +34592,6 @@ export class GamificationLevelingApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -34770,8 +34652,6 @@ export class GamificationLevelingApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -34847,8 +34727,6 @@ export class GamificationLevelingApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -34912,8 +34790,6 @@ export class GamificationLevelingApi {
             body: ObjectSerializer.serialize(progress, "IntWrapper")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -34976,8 +34852,6 @@ export class GamificationLevelingApi {
             body: ObjectSerializer.serialize(progress, "IntWrapper")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -35033,8 +34907,6 @@ export class GamificationLevelingApi {
             body: ObjectSerializer.serialize(newLevel, "LevelingResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -35070,7 +34942,8 @@ export class GamificationMetricsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -35107,7 +34980,11 @@ export class GamificationMetricsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Post a new score/stat for an activity occurrence without ending the occurrence itself
@@ -35133,8 +35010,6 @@ export class GamificationMetricsApi {
             json: true,
             body: ObjectSerializer.serialize(metric, "MetricResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -35170,7 +35045,8 @@ export class GamificationTriviaApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -35207,7 +35083,11 @@ export class GamificationTriviaApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -35240,8 +35120,6 @@ export class GamificationTriviaApi {
             json: true,
             body: ObjectSerializer.serialize(answer, "AnswerResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -35298,8 +35176,6 @@ export class GamificationTriviaApi {
             json: true,
             body: ObjectSerializer.serialize(tag, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -35389,8 +35265,6 @@ export class GamificationTriviaApi {
             body: ObjectSerializer.serialize(tag, "StringWrapper")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -35439,8 +35313,6 @@ export class GamificationTriviaApi {
             json: true,
             body: ObjectSerializer.serialize(request, "ImportJobResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -35491,8 +35363,6 @@ export class GamificationTriviaApi {
             body: ObjectSerializer.serialize(question, "QuestionResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -35541,8 +35411,6 @@ export class GamificationTriviaApi {
             json: true,
             body: ObjectSerializer.serialize(questionTemplateResource, "QuestionTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -35598,8 +35466,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -35652,8 +35518,6 @@ export class GamificationTriviaApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -35715,8 +35579,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -35775,8 +35637,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -35829,8 +35689,6 @@ export class GamificationTriviaApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -35914,8 +35772,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -35969,8 +35825,6 @@ export class GamificationTriviaApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -36033,8 +35887,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -36089,8 +35941,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -36142,8 +35992,6 @@ export class GamificationTriviaApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -36199,8 +36047,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -36254,8 +36100,6 @@ export class GamificationTriviaApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -36318,8 +36162,6 @@ export class GamificationTriviaApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -36423,8 +36265,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -36507,8 +36347,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -36573,8 +36411,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -36635,8 +36471,6 @@ export class GamificationTriviaApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -36731,8 +36565,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -36795,8 +36627,6 @@ export class GamificationTriviaApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -36853,8 +36683,6 @@ export class GamificationTriviaApi {
             body: ObjectSerializer.serialize(request, "ImportJobResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -36910,8 +36738,6 @@ export class GamificationTriviaApi {
             json: true,
             body: ObjectSerializer.serialize(question, "QuestionResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -36976,8 +36802,6 @@ export class GamificationTriviaApi {
             body: ObjectSerializer.serialize(answer, "AnswerResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -37032,8 +36856,6 @@ export class GamificationTriviaApi {
             json: true,
             body: ObjectSerializer.serialize(questionTemplateResource, "QuestionTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -37119,8 +36941,6 @@ export class GamificationTriviaApi {
             body: ObjectSerializer.serialize(question, "QuestionResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -37156,7 +36976,8 @@ export class InvoicesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -37193,7 +37014,11 @@ export class InvoicesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Create an invoice(s) by providing a cart GUID. Note that there may be multiple invoices created, one per vendor.
@@ -37219,8 +37044,6 @@ export class InvoicesApi {
             json: true,
             body: ObjectSerializer.serialize(req, "InvoiceCreateRequest")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -37323,8 +37146,6 @@ export class InvoicesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -37388,8 +37209,6 @@ export class InvoicesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -37523,8 +37342,6 @@ export class InvoicesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -37628,8 +37445,6 @@ export class InvoicesApi {
             body: ObjectSerializer.serialize(request, "PayBySavedMethodRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -37704,8 +37519,6 @@ export class InvoicesApi {
             body: ObjectSerializer.serialize(status, "StringWrapper")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -37760,8 +37573,6 @@ export class InvoicesApi {
             json: true,
             body: ObjectSerializer.serialize(externalRef, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -37830,8 +37641,6 @@ export class InvoicesApi {
             body: ObjectSerializer.serialize(status, "StringWrapper")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -37886,8 +37695,6 @@ export class InvoicesApi {
             json: true,
             body: ObjectSerializer.serialize(orderNotes, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -37944,8 +37751,6 @@ export class InvoicesApi {
             body: ObjectSerializer.serialize(request, "InvoicePaymentStatusRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -38001,8 +37806,6 @@ export class InvoicesApi {
             body: ObjectSerializer.serialize(billingInfoRequest, "AddressResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -38037,7 +37840,8 @@ export class LocationsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -38074,7 +37878,11 @@ export class LocationsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -38282,7 +38090,8 @@ export class LogsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -38319,7 +38128,11 @@ export class LogsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -38345,8 +38158,6 @@ export class LogsApi {
             json: true,
             body: ObjectSerializer.serialize(logEntry, "UserActionLog")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -38400,8 +38211,6 @@ export class LogsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -38480,8 +38289,6 @@ export class LogsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -38535,8 +38342,6 @@ export class LogsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -38615,8 +38420,6 @@ export class LogsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -38670,8 +38473,6 @@ export class LogsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -38745,8 +38546,6 @@ export class LogsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -38782,7 +38581,8 @@ export class MediaArtistsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -38819,7 +38619,11 @@ export class MediaArtistsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Adds a new artist in the system. Use specific media contributions endpoint to add contributions
@@ -38845,8 +38649,6 @@ export class MediaArtistsApi {
             json: true,
             body: ObjectSerializer.serialize(artistResource, "ArtistResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -38896,8 +38698,6 @@ export class MediaArtistsApi {
             json: true,
             body: ObjectSerializer.serialize(artistTemplateResource, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -38952,8 +38752,6 @@ export class MediaArtistsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -39012,8 +38810,6 @@ export class MediaArtistsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -39127,8 +38923,6 @@ export class MediaArtistsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -39190,8 +38984,6 @@ export class MediaArtistsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -39316,8 +39108,6 @@ export class MediaArtistsApi {
             body: ObjectSerializer.serialize(artistResource, "ArtistResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -39373,8 +39163,6 @@ export class MediaArtistsApi {
             body: ObjectSerializer.serialize(artistTemplateResource, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -39410,7 +39198,8 @@ export class MediaModerationApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -39447,7 +39236,11 @@ export class MediaModerationApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -39478,8 +39271,6 @@ export class MediaModerationApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -39548,8 +39339,6 @@ export class MediaModerationApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -39606,8 +39395,6 @@ export class MediaModerationApi {
             body: ObjectSerializer.serialize(flagReportResource, "FlagReportResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -39642,7 +39429,8 @@ export class MediaVideosApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -39679,7 +39467,11 @@ export class MediaVideosApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Whitelisted users can view video regardless of privacy setting.
@@ -39712,8 +39504,6 @@ export class MediaVideosApi {
             json: true,
             body: ObjectSerializer.serialize(userId, "IntWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -39762,8 +39552,6 @@ export class MediaVideosApi {
             json: true,
             body: ObjectSerializer.serialize(videoResource, "VideoResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -39821,8 +39609,6 @@ export class MediaVideosApi {
             body: ObjectSerializer.serialize(commentResource, "CommentResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -39879,8 +39665,6 @@ export class MediaVideosApi {
             body: ObjectSerializer.serialize(contributionResource, "ContributionResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -39935,8 +39719,6 @@ export class MediaVideosApi {
             json: true,
             body: ObjectSerializer.serialize(reason, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -39994,8 +39776,6 @@ export class MediaVideosApi {
             body: ObjectSerializer.serialize(videoRelationshipResource, "VideoRelationshipResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -40052,8 +39832,6 @@ export class MediaVideosApi {
             body: ObjectSerializer.serialize(dispositionResource, "DispositionResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -40107,8 +39885,6 @@ export class MediaVideosApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -40170,8 +39946,6 @@ export class MediaVideosApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -40225,8 +39999,6 @@ export class MediaVideosApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -40279,8 +40051,6 @@ export class MediaVideosApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -40341,8 +40111,6 @@ export class MediaVideosApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -40412,8 +40180,6 @@ export class MediaVideosApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -40467,8 +40233,6 @@ export class MediaVideosApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -40845,8 +40609,6 @@ export class MediaVideosApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -40907,8 +40669,6 @@ export class MediaVideosApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -40963,8 +40723,6 @@ export class MediaVideosApi {
             json: true,
             body: ObjectSerializer.serialize(videoResource, "VideoResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -41028,8 +40786,6 @@ export class MediaVideosApi {
             body: ObjectSerializer.serialize(content, "StringWrapper")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -41091,8 +40847,6 @@ export class MediaVideosApi {
             json: true,
             body: ObjectSerializer.serialize(details, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -41181,7 +40935,8 @@ export class MessagingApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -41218,7 +40973,11 @@ export class MessagingApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -41244,8 +41003,6 @@ export class MessagingApi {
             json: true,
             body: ObjectSerializer.serialize(rawEmailResource, "RawEmailResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -41295,8 +41052,6 @@ export class MessagingApi {
             body: ObjectSerializer.serialize(rawSMSResource, "RawSMSResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -41344,8 +41099,6 @@ export class MessagingApi {
             json: true,
             body: ObjectSerializer.serialize(messageResource, "TemplateEmailResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -41395,8 +41148,6 @@ export class MessagingApi {
             body: ObjectSerializer.serialize(templateSMSResource, "TemplateSMSResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -41431,7 +41182,8 @@ export class PaymentsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -41468,7 +41220,11 @@ export class PaymentsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -41501,8 +41257,6 @@ export class PaymentsApi {
             json: true,
             body: ObjectSerializer.serialize(paymentMethod, "PaymentMethodResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -41565,8 +41319,6 @@ export class PaymentsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -41626,8 +41378,6 @@ export class PaymentsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -41718,8 +41468,6 @@ export class PaymentsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -41768,8 +41516,6 @@ export class PaymentsApi {
             json: true,
             body: ObjectSerializer.serialize(request, "PaymentAuthorizationResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -41824,8 +41570,6 @@ export class PaymentsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -41889,8 +41633,6 @@ export class PaymentsApi {
             body: ObjectSerializer.serialize(paymentMethod, "PaymentMethodResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -41926,7 +41668,8 @@ export class PaymentsAppleApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -41963,7 +41706,11 @@ export class PaymentsAppleApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Mark an invoice paid using Apple payment receipt. A receipt will only be accepted once and the details of the transaction must match the invoice, including the product_id matching the sku text of the item in the invoice. Returns the transaction ID if successful.
@@ -42025,7 +41772,8 @@ export class PaymentsFattMerchantApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -42062,7 +41810,11 @@ export class PaymentsFattMerchantApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Stores customer information and creates a payment method that can be used to pay invoices through the payments endpoints.
@@ -42088,8 +41840,6 @@ export class PaymentsFattMerchantApi {
             json: true,
             body: ObjectSerializer.serialize(request, "FattMerchantPaymentMethodRequest")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -42126,7 +41876,8 @@ export class PaymentsGoogleApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -42163,7 +41914,11 @@ export class PaymentsGoogleApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Mark an invoice paid with Google. Verifies signature from Google and treats the developerPayload field inside the json payload as the id of the invoice to pay. Returns the transaction ID if successful.
@@ -42225,7 +41980,8 @@ export class PaymentsOptimalApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -42262,7 +42018,11 @@ export class PaymentsOptimalApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Will return the url for a hosted payment endpoint to post to. See Optimal documentation for details.
@@ -42288,8 +42048,6 @@ export class PaymentsOptimalApi {
             json: true,
             body: ObjectSerializer.serialize(request, "OptimalPaymentRequest")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -42326,7 +42084,8 @@ export class PaymentsPayPalClassicApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -42363,7 +42122,11 @@ export class PaymentsPayPalClassicApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Returns the token that should be used to forward the user to PayPal so they can accept the agreement.
@@ -42389,8 +42152,6 @@ export class PaymentsPayPalClassicApi {
             json: true,
             body: ObjectSerializer.serialize(request, "CreateBillingAgreementRequest")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -42441,8 +42202,6 @@ export class PaymentsPayPalClassicApi {
             body: ObjectSerializer.serialize(request, "CreatePayPalPaymentRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -42491,8 +42250,6 @@ export class PaymentsPayPalClassicApi {
             json: true,
             body: ObjectSerializer.serialize(request, "FinalizeBillingAgreementRequest")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -42543,8 +42300,6 @@ export class PaymentsPayPalClassicApi {
             body: ObjectSerializer.serialize(request, "FinalizePayPalPaymentRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -42579,7 +42334,8 @@ export class PaymentsStripeApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -42616,7 +42372,11 @@ export class PaymentsStripeApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Stores customer information and creates a payment method that can be used to pay invoices through the payments endpoints.
@@ -42642,8 +42402,6 @@ export class PaymentsStripeApi {
             json: true,
             body: ObjectSerializer.serialize(request, "StripeCreatePaymentMethod")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -42728,7 +42486,8 @@ export class PaymentsTransactionsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -42765,7 +42524,11 @@ export class PaymentsTransactionsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -42796,8 +42559,6 @@ export class PaymentsTransactionsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -42866,8 +42627,6 @@ export class PaymentsTransactionsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -42924,8 +42683,6 @@ export class PaymentsTransactionsApi {
             body: ObjectSerializer.serialize(request, "RefundRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -42961,7 +42718,8 @@ export class PaymentsWalletsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -42998,7 +42756,11 @@ export class PaymentsWalletsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -43036,8 +42798,6 @@ export class PaymentsWalletsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -43135,8 +42895,6 @@ export class PaymentsWalletsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -43191,8 +42949,6 @@ export class PaymentsWalletsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -43239,8 +42995,6 @@ export class PaymentsWalletsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -43344,8 +43098,6 @@ export class PaymentsWalletsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -43407,8 +43159,6 @@ export class PaymentsWalletsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -43473,8 +43223,6 @@ export class PaymentsWalletsApi {
             body: ObjectSerializer.serialize(request, "WalletAlterRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -43510,7 +43258,8 @@ export class PaymentsXsollaApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -43547,7 +43296,11 @@ export class PaymentsXsollaApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -43573,8 +43326,6 @@ export class PaymentsXsollaApi {
             json: true,
             body: ObjectSerializer.serialize(request, "XsollaPaymentRequest")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -43657,7 +43408,8 @@ export class ReportingChallengesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -43694,7 +43446,11 @@ export class ReportingChallengesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Lists all leaderboard entries with additional user details
@@ -43738,8 +43494,6 @@ export class ReportingChallengesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -43808,8 +43562,6 @@ export class ReportingChallengesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -43845,7 +43597,8 @@ export class ReportingOrdersApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -43882,7 +43635,11 @@ export class ReportingOrdersApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -43949,8 +43706,6 @@ export class ReportingOrdersApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -43986,7 +43741,8 @@ export class ReportingRevenueApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -44023,7 +43779,11 @@ export class ReportingRevenueApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Get basic info about revenue from sales of items and bundles (not subscriptions, shipping, etc), summed up within a time range
@@ -44064,8 +43824,6 @@ export class ReportingRevenueApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -44130,8 +43888,6 @@ export class ReportingRevenueApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -44207,8 +43963,6 @@ export class ReportingRevenueApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -44283,8 +44037,6 @@ export class ReportingRevenueApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -44349,8 +44101,6 @@ export class ReportingRevenueApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -44386,7 +44136,8 @@ export class ReportingSubscriptionsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -44423,7 +44174,11 @@ export class ReportingSubscriptionsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -44457,8 +44212,6 @@ export class ReportingSubscriptionsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -44495,7 +44248,8 @@ export class ReportingUsageApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -44532,7 +44286,11 @@ export class ReportingUsageApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -44601,8 +44359,6 @@ export class ReportingUsageApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -44696,8 +44452,6 @@ export class ReportingUsageApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -44789,8 +44543,6 @@ export class ReportingUsageApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -44884,8 +44636,6 @@ export class ReportingUsageApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -44978,8 +44728,6 @@ export class ReportingUsageApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -45047,8 +44795,6 @@ export class ReportingUsageApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -45084,7 +44830,8 @@ export class ReportingUsersApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -45121,7 +44868,11 @@ export class ReportingUsersApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Get user registration counts grouped by time range
@@ -45171,8 +44922,6 @@ export class ReportingUsersApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -45208,7 +44957,8 @@ export class SearchApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -45245,7 +44995,11 @@ export class SearchApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Mainly intended for internal use.
@@ -45285,8 +45039,6 @@ export class SearchApi {
             json: true,
             body: ObjectSerializer.serialize(object, "any")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -45335,8 +45087,6 @@ export class SearchApi {
             json: true,
             body: ObjectSerializer.serialize(mappings, "Array<SearchReferenceMapping>")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -45398,8 +45148,6 @@ export class SearchApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -45452,8 +45200,6 @@ export class SearchApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -45555,7 +45301,8 @@ export class SocialFacebookApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -45592,7 +45339,11 @@ export class SocialFacebookApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Links the current user account to a facebook account, using the acccess token from facebook. Can also be used to update the access token after it has expired.
@@ -45618,8 +45369,6 @@ export class SocialFacebookApi {
             json: true,
             body: ObjectSerializer.serialize(facebookToken, "FacebookToken")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -45655,7 +45404,8 @@ export class SocialGoogleApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -45692,7 +45442,11 @@ export class SocialGoogleApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Links the current user account to a google account, using the acccess token from google. Can also be used to update the access token after it has expired.
@@ -45718,8 +45472,6 @@ export class SocialGoogleApi {
             json: true,
             body: ObjectSerializer.serialize(googleToken, "GoogleToken")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -45755,7 +45507,8 @@ export class StoreApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -45792,7 +45545,11 @@ export class StoreApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Item Templates define a type of item and the properties they have.
@@ -45818,8 +45575,6 @@ export class StoreApi {
             json: true,
             body: ObjectSerializer.serialize(itemTemplateResource, "StoreItemTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -45874,8 +45629,6 @@ export class StoreApi {
             json: true,
             body: ObjectSerializer.serialize(storeItem, "StoreItem")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -45936,8 +45689,6 @@ export class StoreApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -45991,8 +45742,6 @@ export class StoreApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -46038,8 +45787,6 @@ export class StoreApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -46094,8 +45841,6 @@ export class StoreApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -46158,8 +45903,6 @@ export class StoreApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -46468,8 +46211,6 @@ export class StoreApi {
             body: ObjectSerializer.serialize(quickBuyRequest, "QuickBuyRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -46525,8 +46266,6 @@ export class StoreApi {
             json: true,
             body: ObjectSerializer.serialize(itemTemplateResource, "StoreItemTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -46589,8 +46328,6 @@ export class StoreApi {
             body: ObjectSerializer.serialize(storeItem, "StoreItem")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -46626,7 +46363,8 @@ export class StoreBundlesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -46663,7 +46401,11 @@ export class StoreBundlesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * The SKU for the bundle itself must be unique and there can only be one SKU.  Extra notes for price_override:  The price of all the items (multiplied by the quantity) must equal the price of the bundle.  With individual prices set, items will be processed individually and can be refunded as such.  However, if all prices are set to null, the price of the bundle will be used and will be treated as one item.
@@ -46694,8 +46436,6 @@ export class StoreBundlesApi {
             json: true,
             body: ObjectSerializer.serialize(bundleItem, "BundleItem")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -46745,8 +46485,6 @@ export class StoreBundlesApi {
             json: true,
             body: ObjectSerializer.serialize(bundleTemplateResource, "ItemTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -46801,8 +46539,6 @@ export class StoreBundlesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -46861,8 +46597,6 @@ export class StoreBundlesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -47094,8 +46828,6 @@ export class StoreBundlesApi {
             body: ObjectSerializer.serialize(bundleItem, "BundleItem")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -47152,8 +46884,6 @@ export class StoreBundlesApi {
             body: ObjectSerializer.serialize(bundleTemplateResource, "ItemTemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -47189,7 +46919,8 @@ export class StoreCouponsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -47226,7 +46957,11 @@ export class StoreCouponsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * SKUs have to be unique in the entire store.
@@ -47257,8 +46992,6 @@ export class StoreCouponsApi {
             json: true,
             body: ObjectSerializer.serialize(couponItem, "CouponItem")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -47308,8 +47041,6 @@ export class StoreCouponsApi {
             json: true,
             body: ObjectSerializer.serialize(couponTemplateResource, "ItemTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -47364,8 +47095,6 @@ export class StoreCouponsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -47425,8 +47154,6 @@ export class StoreCouponsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -47479,8 +47206,6 @@ export class StoreCouponsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -47535,8 +47260,6 @@ export class StoreCouponsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -47600,8 +47323,6 @@ export class StoreCouponsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -47663,8 +47384,6 @@ export class StoreCouponsApi {
             body: ObjectSerializer.serialize(couponItem, "CouponItem")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -47721,8 +47440,6 @@ export class StoreCouponsApi {
             body: ObjectSerializer.serialize(couponTemplateResource, "ItemTemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -47758,7 +47475,8 @@ export class StoreSalesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -47795,7 +47513,11 @@ export class StoreSalesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -47821,8 +47543,6 @@ export class StoreSalesApi {
             json: true,
             body: ObjectSerializer.serialize(catalogSale, "CatalogSale")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -47878,8 +47598,6 @@ export class StoreSalesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -47932,8 +47650,6 @@ export class StoreSalesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -47997,8 +47713,6 @@ export class StoreSalesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -48055,8 +47769,6 @@ export class StoreSalesApi {
             body: ObjectSerializer.serialize(catalogSale, "CatalogSale")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -48092,7 +47804,8 @@ export class StoreShippingApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -48129,7 +47842,11 @@ export class StoreShippingApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * A shipping item represents a shipping option and cost. SKUs have to be unique in the entire store.
@@ -48160,8 +47877,6 @@ export class StoreShippingApi {
             json: true,
             body: ObjectSerializer.serialize(shippingItem, "ShippingItem")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -48211,8 +47926,6 @@ export class StoreShippingApi {
             json: true,
             body: ObjectSerializer.serialize(shippingTemplateResource, "ItemTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -48267,8 +47980,6 @@ export class StoreShippingApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -48327,8 +48038,6 @@ export class StoreShippingApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -48437,8 +48146,6 @@ export class StoreShippingApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -48501,8 +48208,6 @@ export class StoreShippingApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -48564,8 +48269,6 @@ export class StoreShippingApi {
             body: ObjectSerializer.serialize(shippingItem, "ShippingItem")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -48622,8 +48325,6 @@ export class StoreShippingApi {
             body: ObjectSerializer.serialize(shippingTemplateResource, "ItemTemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -48659,7 +48360,8 @@ export class StoreShoppingCartsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -48696,7 +48398,11 @@ export class StoreShoppingCartsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -48729,8 +48435,6 @@ export class StoreShoppingCartsApi {
             json: true,
             body: ObjectSerializer.serialize(customDiscount, "CouponDefinition")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -48787,8 +48491,6 @@ export class StoreShoppingCartsApi {
             body: ObjectSerializer.serialize(skuRequest, "SkuRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -48843,8 +48545,6 @@ export class StoreShoppingCartsApi {
             json: true,
             body: ObjectSerializer.serialize(cartItemRequest, "CartItemRequest")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -48902,8 +48602,6 @@ export class StoreShoppingCartsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -48957,8 +48655,6 @@ export class StoreShoppingCartsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -49027,8 +48723,6 @@ export class StoreShoppingCartsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -49083,8 +48777,6 @@ export class StoreShoppingCartsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -49138,8 +48830,6 @@ export class StoreShoppingCartsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -49202,8 +48892,6 @@ export class StoreShoppingCartsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -49258,8 +48946,6 @@ export class StoreShoppingCartsApi {
             json: true,
             body: ObjectSerializer.serialize(currencyCode, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -49316,8 +49002,6 @@ export class StoreShoppingCartsApi {
             body: ObjectSerializer.serialize(userId, "IntWrapper")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -49372,8 +49056,6 @@ export class StoreShoppingCartsApi {
             json: true,
             body: ObjectSerializer.serialize(cartItemRequest, "CartItemRequest")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -49430,8 +49112,6 @@ export class StoreShoppingCartsApi {
             body: ObjectSerializer.serialize(cartShippingAddressRequest, "CartShippingAddressRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -49466,7 +49146,8 @@ export class StoreSubscriptionsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -49503,7 +49184,11 @@ export class StoreSubscriptionsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -49529,8 +49214,6 @@ export class StoreSubscriptionsApi {
             json: true,
             body: ObjectSerializer.serialize(subscriptionResource, "SubscriptionResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -49580,8 +49263,6 @@ export class StoreSubscriptionsApi {
             json: true,
             body: ObjectSerializer.serialize(subscriptionTemplateResource, "SubscriptionTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -49644,8 +49325,6 @@ export class StoreSubscriptionsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -49703,8 +49382,6 @@ export class StoreSubscriptionsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -49813,8 +49490,6 @@ export class StoreSubscriptionsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -49876,8 +49551,6 @@ export class StoreSubscriptionsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -49988,8 +49661,6 @@ export class StoreSubscriptionsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -50044,8 +49715,6 @@ export class StoreSubscriptionsApi {
             json: true,
             body: ObjectSerializer.serialize(subscriptionResource, "SubscriptionResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -50102,8 +49771,6 @@ export class StoreSubscriptionsApi {
             body: ObjectSerializer.serialize(subscriptionTemplateResource, "SubscriptionTemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -50139,7 +49806,8 @@ export class StoreVendorsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -50176,7 +49844,11 @@ export class StoreVendorsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -50202,8 +49874,6 @@ export class StoreVendorsApi {
             json: true,
             body: ObjectSerializer.serialize(vendor, "VendorResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -50253,8 +49923,6 @@ export class StoreVendorsApi {
             json: true,
             body: ObjectSerializer.serialize(vendorTemplateResource, "ItemTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -50309,8 +49977,6 @@ export class StoreVendorsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -50369,8 +50035,6 @@ export class StoreVendorsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -50479,8 +50143,6 @@ export class StoreVendorsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -50542,8 +50204,6 @@ export class StoreVendorsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -50668,8 +50328,6 @@ export class StoreVendorsApi {
             body: ObjectSerializer.serialize(vendor, "VendorResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -50726,8 +50384,6 @@ export class StoreVendorsApi {
             body: ObjectSerializer.serialize(vendorTemplateResource, "ItemTemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -50763,7 +50419,8 @@ export class TaxesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -50800,7 +50457,11 @@ export class TaxesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -50826,8 +50487,6 @@ export class TaxesApi {
             json: true,
             body: ObjectSerializer.serialize(taxResource, "CountryTaxResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -50885,8 +50544,6 @@ export class TaxesApi {
             body: ObjectSerializer.serialize(taxResource, "StateTaxResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -50940,8 +50597,6 @@ export class TaxesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -51002,8 +50657,6 @@ export class TaxesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -51368,8 +51021,6 @@ export class TaxesApi {
             body: ObjectSerializer.serialize(taxResource, "CountryTaxResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -51433,8 +51084,6 @@ export class TaxesApi {
             body: ObjectSerializer.serialize(taxResource, "StateTaxResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -51470,7 +51119,8 @@ export class TemplatesPropertiesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -51507,7 +51157,11 @@ export class TemplatesPropertiesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -51621,7 +51275,8 @@ export class UsersApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -51658,7 +51313,11 @@ export class UsersApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -51696,8 +51355,6 @@ export class UsersApi {
             json: true,
             body: ObjectSerializer.serialize(tag, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -51746,8 +51403,6 @@ export class UsersApi {
             json: true,
             body: ObjectSerializer.serialize(userTemplateResource, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -51808,8 +51463,6 @@ export class UsersApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -51862,8 +51515,6 @@ export class UsersApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -51919,8 +51570,6 @@ export class UsersApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -51974,8 +51623,6 @@ export class UsersApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -52038,8 +51685,6 @@ export class UsersApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -52152,8 +51797,6 @@ export class UsersApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -52320,8 +51963,6 @@ export class UsersApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -52376,8 +52017,6 @@ export class UsersApi {
             json: true,
             body: ObjectSerializer.serialize(password, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -52535,8 +52174,6 @@ export class UsersApi {
             body: ObjectSerializer.serialize(userResource, "UserResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -52592,8 +52229,6 @@ export class UsersApi {
             body: ObjectSerializer.serialize(userTemplateResource, "TemplateResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -52629,7 +52264,8 @@ export class UsersAddressesApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -52666,7 +52302,11 @@ export class UsersAddressesApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -52699,8 +52339,6 @@ export class UsersAddressesApi {
             json: true,
             body: ObjectSerializer.serialize(savedAddressResource, "SavedAddressResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -52763,8 +52401,6 @@ export class UsersAddressesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -52824,8 +52460,6 @@ export class UsersAddressesApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -52896,8 +52530,6 @@ export class UsersAddressesApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -52961,8 +52593,6 @@ export class UsersAddressesApi {
             body: ObjectSerializer.serialize(savedAddressResource, "SavedAddressResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -52998,7 +52628,8 @@ export class UsersFriendshipsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -53035,7 +52666,11 @@ export class UsersFriendshipsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * As a user, either creates or confirm a pending request. As an admin, call this endpoint twice while inverting the IDs to create a confirmed friendship.
@@ -53073,8 +52708,6 @@ export class UsersFriendshipsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -53139,8 +52772,6 @@ export class UsersFriendshipsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -53194,8 +52825,6 @@ export class UsersFriendshipsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -53261,8 +52890,6 @@ export class UsersFriendshipsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -53318,8 +52945,6 @@ export class UsersFriendshipsApi {
             json: true,
             body: ObjectSerializer.serialize(token, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -53381,8 +53006,6 @@ export class UsersFriendshipsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -53417,7 +53040,8 @@ export class UsersGroupsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -53454,7 +53078,11 @@ export class UsersGroupsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -53492,8 +53120,6 @@ export class UsersGroupsApi {
             json: true,
             body: ObjectSerializer.serialize(user, "GroupMemberResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -53556,8 +53182,6 @@ export class UsersGroupsApi {
             body: ObjectSerializer.serialize(users, "Array<GroupMemberResource>")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -53607,8 +53231,6 @@ export class UsersGroupsApi {
             body: ObjectSerializer.serialize(groupResource, "GroupResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -53657,8 +53279,6 @@ export class UsersGroupsApi {
             json: true,
             body: ObjectSerializer.serialize(groupTemplateResource, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -53713,8 +53333,6 @@ export class UsersGroupsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -53773,8 +53391,6 @@ export class UsersGroupsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -54013,8 +53629,6 @@ export class UsersGroupsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -54076,8 +53690,6 @@ export class UsersGroupsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -54194,8 +53806,6 @@ export class UsersGroupsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -54250,8 +53860,6 @@ export class UsersGroupsApi {
             json: true,
             body: ObjectSerializer.serialize(groupResource, "GroupResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -54320,8 +53928,6 @@ export class UsersGroupsApi {
             body: ObjectSerializer.serialize(status, "string")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -54376,8 +53982,6 @@ export class UsersGroupsApi {
             json: true,
             body: ObjectSerializer.serialize(groupTemplateResource, "TemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -54506,7 +54110,8 @@ export class UsersInventoryApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -54543,7 +54148,11 @@ export class UsersInventoryApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * The inventory is fulfilled asynchronously UNLESS the invoice is explicitely skipped. Depending on the use case, it might require the client to verify that the entitlement was added after the fact or configure a BRE rule to get a notification in real time
@@ -54576,8 +54185,6 @@ export class UsersInventoryApi {
             json: true,
             body: ObjectSerializer.serialize(userInventoryAddRequest, "UserInventoryAddRequest")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -54645,8 +54252,6 @@ export class UsersInventoryApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -54700,8 +54305,6 @@ export class UsersInventoryApi {
             body: ObjectSerializer.serialize(entitlementItem, "EntitlementItem")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -54750,8 +54353,6 @@ export class UsersInventoryApi {
             json: true,
             body: ObjectSerializer.serialize(template, "ItemTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -54806,8 +54407,6 @@ export class UsersInventoryApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -54866,8 +54465,6 @@ export class UsersInventoryApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -55038,8 +54635,6 @@ export class UsersInventoryApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -55101,8 +54696,6 @@ export class UsersInventoryApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -55198,8 +54791,6 @@ export class UsersInventoryApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -55260,8 +54851,6 @@ export class UsersInventoryApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -55333,8 +54922,6 @@ export class UsersInventoryApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -55423,8 +55010,6 @@ export class UsersInventoryApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -55486,8 +55071,6 @@ export class UsersInventoryApi {
             body: ObjectSerializer.serialize(grantRequest, "EntitlementGrantRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -55548,8 +55131,6 @@ export class UsersInventoryApi {
             body: ObjectSerializer.serialize(entitlementItem, "EntitlementItem")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -55604,8 +55185,6 @@ export class UsersInventoryApi {
             json: true,
             body: ObjectSerializer.serialize(template, "ItemTemplateResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -55670,8 +55249,6 @@ export class UsersInventoryApi {
             body: ObjectSerializer.serialize(data, "any")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -55734,8 +55311,6 @@ export class UsersInventoryApi {
             body: ObjectSerializer.serialize(timestamp, "number")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -55797,8 +55372,6 @@ export class UsersInventoryApi {
             json: true,
             body: ObjectSerializer.serialize(inventoryStatus, "string")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -55870,8 +55443,6 @@ export class UsersInventoryApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -55906,7 +55477,8 @@ export class UsersRelationshipsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -55943,7 +55515,11 @@ export class UsersRelationshipsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -55969,8 +55545,6 @@ export class UsersRelationshipsApi {
             json: true,
             body: ObjectSerializer.serialize(relationship, "UserRelationshipResource")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -56026,8 +55600,6 @@ export class UsersRelationshipsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -56080,8 +55652,6 @@ export class UsersRelationshipsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -56145,8 +55715,6 @@ export class UsersRelationshipsApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -56203,8 +55771,6 @@ export class UsersRelationshipsApi {
             body: ObjectSerializer.serialize(relationship, "UserRelationshipResource")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -56240,7 +55806,8 @@ export class UsersSubscriptionsApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -56277,7 +55844,11 @@ export class UsersSubscriptionsApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -56315,8 +55886,6 @@ export class UsersSubscriptionsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -56371,8 +55940,6 @@ export class UsersSubscriptionsApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -56436,8 +56003,6 @@ export class UsersSubscriptionsApi {
             json: true,
             body: ObjectSerializer.serialize(reactivateSubscriptionRequest, "ReactivateSubscriptionRequest")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -56507,8 +56072,6 @@ export class UsersSubscriptionsApi {
             body: ObjectSerializer.serialize(billDate, "number")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -56570,8 +56133,6 @@ export class UsersSubscriptionsApi {
             json: true,
             body: ObjectSerializer.serialize(paymentMethodId, "IntWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -56640,8 +56201,6 @@ export class UsersSubscriptionsApi {
             body: ObjectSerializer.serialize(status, "StringWrapper")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -56703,8 +56262,6 @@ export class UsersSubscriptionsApi {
             json: true,
             body: ObjectSerializer.serialize(planId, "StringWrapper")
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -56768,8 +56325,6 @@ export class UsersSubscriptionsApi {
             body: ObjectSerializer.serialize(the override details, "SubscriptionPriceOverrideRequest")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -56804,7 +56359,8 @@ export class UtilBatchApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -56841,7 +56397,11 @@ export class UtilBatchApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * Tokens expire in 24 hours
@@ -56957,7 +56517,8 @@ export class UtilHealthApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -56994,7 +56555,11 @@ export class UtilHealthApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -57054,7 +56619,8 @@ export class UtilMaintenanceApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -57091,7 +56657,11 @@ export class UtilMaintenanceApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
@@ -57115,8 +56685,6 @@ export class UtilMaintenanceApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -57213,8 +56781,6 @@ export class UtilMaintenanceApi {
             body: ObjectSerializer.serialize(maintenance, "Maintenance")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -57263,8 +56829,6 @@ export class UtilMaintenanceApi {
             body: ObjectSerializer.serialize(maintenance, "Maintenance")
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -57299,7 +56863,8 @@ export class UtilSecurityApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -57336,7 +56901,11 @@ export class UtilSecurityApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * A log entry is recorded everytime a user requests a new token. Standard pagination available
@@ -57380,8 +56949,6 @@ export class UtilSecurityApi {
             useQuerystring: this._useQuerystring,
             json: true,
         };
-
-        this.authentications.OAuth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -57430,8 +56997,6 @@ export class UtilSecurityApi {
             json: true,
         };
 
-        this.authentications.OAuth2.applyToRequest(requestOptions);
-
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -57467,7 +57032,8 @@ export class UtilVersionApi {
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
-        'OAuth2': new OAuth(),
+        'oauth2_client_credentials_grant': new OAuth(),
+        'oauth2_password_grant': new OAuth(),
     }
 
     constructor(basePath?: string);
@@ -57504,7 +57070,11 @@ export class UtilVersionApi {
     }
 
     set accessToken(token: string) {
-        this.authentications.OAuth2.accessToken = token;
+        this.authentications.oauth2_client_credentials_grant.accessToken = token;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.oauth2_password_grant.accessToken = token;
     }
     /**
      * 
