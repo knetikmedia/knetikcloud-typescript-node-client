@@ -13098,6 +13098,10 @@ export class PayBySavedMethodRequest {
     * The id of the payment method to use. Must belong to the caller, be public or have PAYMENTS_ADMIN permission
     */
     'paymentMethod': number;
+    /**
+    * The id of a user to bill. Must have PAYMENTS_ADMIN permission
+    */
+    'userId': number;
 
     static discriminator = undefined;
 
@@ -13105,6 +13109,11 @@ export class PayBySavedMethodRequest {
         {
             "name": "paymentMethod",
             "baseName": "payment_method",
+            "type": "number"
+        },
+        {
+            "name": "userId",
+            "baseName": "user_id",
             "type": "number"
         }    ];
 
