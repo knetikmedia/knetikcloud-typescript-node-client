@@ -2269,6 +2269,10 @@ export class BreRule {
     */
     'endDate': number;
     /**
+    * How many times the rule has been evaluated (it's conditions checked, whether it then runs or not)
+    */
+    'evaluationCount': number;
+    /**
     * The event name of the trigger this rule runs for. Affects which parameters are available
     */
     'eventName': string;
@@ -2280,6 +2284,10 @@ export class BreRule {
     * The human readable name of the rule
     */
     'name': string;
+    /**
+    * How many times the rule has run
+    */
+    'runCount': number;
     /**
     * Used to sort rules to control the order they run in. Larger numbered sort values run first.  Default 500
     */
@@ -2327,6 +2335,11 @@ export class BreRule {
             "type": "number"
         },
         {
+            "name": "evaluationCount",
+            "baseName": "evaluation_count",
+            "type": "number"
+        },
+        {
             "name": "eventName",
             "baseName": "event_name",
             "type": "string"
@@ -2340,6 +2353,11 @@ export class BreRule {
             "name": "name",
             "baseName": "name",
             "type": "string"
+        },
+        {
+            "name": "runCount",
+            "baseName": "run_count",
+            "type": "number"
         },
         {
             "name": "sort",
@@ -4815,7 +4833,11 @@ export class CurrencyResource {
     */
     'createdDate': number;
     /**
-    * The decimal to multiply the system base currency (from config 'currency') to localize to this one. Should be 1 for the base currency itself.
+    * Whether this is the default currency. All real money wallets will be in this currency, and the 'factor' on each currency is in relation to the default. There must be one default currency and the current will be changed if you set another as the default. Cannot be combined with virtual currency. Take extreme caution when changing
+    */
+    'defaultCurrency': boolean;
+    /**
+    * The decimal to multiply the default currency to localize to this one. Should be 1 for the default currency itself.
     */
     'factor': number;
     /**
@@ -4852,6 +4874,11 @@ export class CurrencyResource {
             "name": "createdDate",
             "baseName": "created_date",
             "type": "number"
+        },
+        {
+            "name": "defaultCurrency",
+            "baseName": "default_currency",
+            "type": "boolean"
         },
         {
             "name": "factor",
@@ -6335,17 +6362,17 @@ export class GroupMemberResource {
     */
     'additionalProperties': { [key: string]: Property; };
     /**
-    * The url of the user's avatar image
+    * The group. Id is the unique name
     */
-    'avatarUrl': string;
+    'group': SimpleGroupResource;
     /**
-    * The public username of the user
+    * Whether this membership is explicit (the user was added directly to the group) or implicit (the user was added only to one or more child groups)
     */
-    'displayName': string;
+    'implicit': boolean;
     /**
-    * The id of the user
+    * The id of the membership entry
     */
-    'id': number;
+    'membershipId': number;
     /**
     * The position of the member in the group if applicable. Read notes for details
     */
@@ -6359,9 +6386,9 @@ export class GroupMemberResource {
     */
     'template': string;
     /**
-    * The username of the user
+    * The user
     */
-    'username': string;
+    'user': SimpleUserResource;
 
     static discriminator = undefined;
 
@@ -6372,18 +6399,18 @@ export class GroupMemberResource {
             "type": "{ [key: string]: Property; }"
         },
         {
-            "name": "avatarUrl",
-            "baseName": "avatar_url",
-            "type": "string"
+            "name": "group",
+            "baseName": "group",
+            "type": "SimpleGroupResource"
         },
         {
-            "name": "displayName",
-            "baseName": "display_name",
-            "type": "string"
+            "name": "implicit",
+            "baseName": "implicit",
+            "type": "boolean"
         },
         {
-            "name": "id",
-            "baseName": "id",
+            "name": "membershipId",
+            "baseName": "membership_id",
             "type": "number"
         },
         {
@@ -6402,9 +6429,9 @@ export class GroupMemberResource {
             "type": "string"
         },
         {
-            "name": "username",
-            "baseName": "username",
-            "type": "string"
+            "name": "user",
+            "baseName": "user",
+            "type": "SimpleUserResource"
         }    ];
 
     static getAttributeTypeMap() {
@@ -6452,11 +6479,15 @@ export class GroupResource {
     */
     'subMemberCount': number;
     /**
+    * Tags for search
+    */
+    'tags': Array<string>;
+    /**
     * A group template this group is validated against. May be null and no validation of additional_properties will be done
     */
     'template': string;
     /**
-    * Unique name used in url and references. Uppercase, lowercase, numbers and hyphens only. Max 50 characters. Cannot be altered once created
+    * Unique name used in url and references. Uppercase, lowercase, numbers and hyphens only. Max 50 characters. Cannot be altered once created. Default: random UUID
     */
     'uniqueName': string;
 
@@ -6502,6 +6533,11 @@ export class GroupResource {
             "name": "subMemberCount",
             "baseName": "sub_member_count",
             "type": "number"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
         },
         {
             "name": "template",
@@ -14765,13 +14801,33 @@ export class Property {
 
 export class PropertyDefinitionResource {
     /**
+    * The description of the property
+    */
+    'description': string;
+    /**
     * A list of the fields on both the property definition and property of this type
     */
     'fieldList': PropertyFieldListResource;
     /**
+    * The friendly front-facing name of the property
+    */
+    'friendlyName': string;
+    /**
     * The name of the property
     */
     'name': string;
+    /**
+    * The JSON path to the option label
+    */
+    'optionLabelPath': string;
+    /**
+    * The JSON path to the option value
+    */
+    'optionValuePath': string;
+    /**
+    * URL of service containing the property options (assumed JSON array)
+    */
+    'optionsUrl': string;
     /**
     * Whether the property is required
     */
@@ -14785,13 +14841,38 @@ export class PropertyDefinitionResource {
 
     static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
         {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
             "name": "fieldList",
             "baseName": "field_list",
             "type": "PropertyFieldListResource"
         },
         {
+            "name": "friendlyName",
+            "baseName": "friendly_name",
+            "type": "string"
+        },
+        {
             "name": "name",
             "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "optionLabelPath",
+            "baseName": "option_label_path",
+            "type": "string"
+        },
+        {
+            "name": "optionValuePath",
+            "baseName": "option_value_path",
+            "type": "string"
+        },
+        {
+            "name": "optionsUrl",
+            "baseName": "options_url",
             "type": "string"
         },
         {
@@ -16211,6 +16292,35 @@ export class SettingOption {
 
     static getAttributeTypeMap() {
         return SettingOption.attributeTypeMap;
+    }
+}
+
+export class SimpleGroupResource {
+    /**
+    * The name of the group. Max 50 characters
+    */
+    'name': string;
+    /**
+    * Unique name used in url and references. Uppercase, lowercase, numbers and hyphens only. Max 50 characters. Cannot be altered once created. Default: random UUID
+    */
+    'uniqueName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "uniqueName",
+            "baseName": "unique_name",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return SimpleGroupResource.attributeTypeMap;
     }
 }
 
@@ -20352,20 +20462,14 @@ export class BooleanPropertyDefinitionResource extends PropertyDefinitionResourc
 }
 
 export class CacheClearEvent extends BroadcastableEvent {
-    'customerSetup': boolean;
-    'customerTeardown': boolean;
+    'teardown': boolean;
 
     static discriminator = undefined;
 
     static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
         {
-            "name": "customerSetup",
-            "baseName": "customer_setup",
-            "type": "boolean"
-        },
-        {
-            "name": "customerTeardown",
-            "baseName": "customer_teardown",
+            "name": "teardown",
+            "baseName": "teardown",
             "type": "boolean"
         }    ];
 
@@ -22250,6 +22354,7 @@ let typeMap = {
     "SelectedSettingRequest": SelectedSettingRequest,
     "SelectedSettingResource": SelectedSettingResource,
     "SettingOption": SettingOption,
+    "SimpleGroupResource": SimpleGroupResource,
     "SimpleReferenceResourceint": SimpleReferenceResourceint,
     "SimpleReferenceResourcelong": SimpleReferenceResourcelong,
     "SimpleReferenceResourceobject": SimpleReferenceResourceobject,
@@ -33719,18 +33824,23 @@ export class CurrenciesApi {
     /**
      * 
      * @summary List and search currencies
+     * @param filterDefault Filter for the one currency that is set as default (true), or all that are not (false)
      * @param filterEnabledCurrencies Filter for alternate currencies setup explicitely in system config
      * @param filterType Filter currencies by type.  Allowable values: (&#39;virtual&#39;, &#39;real&#39;)
      * @param size The number of objects returned per page
      * @param page The number of the page returned, starting with 1
      * @param order A comma separated list of sorting requirements in priority order, each entry matching PROPERTY_NAME:[ASC|DESC]
      */
-    public getCurrencies (filterEnabledCurrencies?: boolean, filterType?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceCurrencyResource;  }> {
+    public getCurrencies (filterDefault?: boolean, filterEnabledCurrencies?: boolean, filterType?: string, size?: number, page?: number, order?: string) : Promise<{ response: http.ClientResponse; body: PageResourceCurrencyResource;  }> {
         const localVarPath = this.basePath + '/currencies';
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (filterDefault !== undefined) {
+            queryParameters['filter_default'] = ObjectSerializer.serialize(filterDefault, "boolean");
+        }
 
         if (filterEnabledCurrencies !== undefined) {
             queryParameters['filter_enabled_currencies'] = ObjectSerializer.serialize(filterEnabledCurrencies, "boolean");
@@ -45144,14 +45254,14 @@ export class ObjectsApi {
      * 
      * @summary Update an object
      * @param templateId The id of the template this object is part of
-     * @param entitlementId The id of the entitlement
+     * @param objectId The id of the object
      * @param cascade Whether to cascade group changes, such as in the limited gettable behavior. A 400 error will return otherwise if the group is already in use with different values.
      * @param objectItem The object item object
      */
-    public updateObjectItem (templateId: string, entitlementId: number, cascade?: boolean, objectItem?: EntitlementItem) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+    public updateObjectItem (templateId: string, objectId: number, cascade?: boolean, objectItem?: ObjectResource) : Promise<{ response: http.ClientResponse; body?: any;  }> {
         const localVarPath = this.basePath + '/objects/{template_id}/{object_id}'
             .replace('{' + 'template_id' + '}', String(templateId))
-            .replace('{' + 'entitlement_id' + '}', String(entitlementId));
+            .replace('{' + 'object_id' + '}', String(objectId));
         let queryParameters: any = {};
         let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
         let formParams: any = {};
@@ -45162,9 +45272,9 @@ export class ObjectsApi {
             throw new Error('Required parameter templateId was null or undefined when calling updateObjectItem.');
         }
 
-        // verify required parameter 'entitlementId' is not null or undefined
-        if (entitlementId === null || entitlementId === undefined) {
-            throw new Error('Required parameter entitlementId was null or undefined when calling updateObjectItem.');
+        // verify required parameter 'objectId' is not null or undefined
+        if (objectId === null || objectId === undefined) {
+            throw new Error('Required parameter objectId was null or undefined when calling updateObjectItem.');
         }
 
         if (cascade !== undefined) {
@@ -45181,7 +45291,7 @@ export class ObjectsApi {
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: ObjectSerializer.serialize(objectItem, "EntitlementItem")
+            body: ObjectSerializer.serialize(objectItem, "ObjectResource")
         };
 
         this.authentications.oauth2_client_credentials_grant.applyToRequest(requestOptions);
@@ -49362,7 +49472,7 @@ export class SearchApi {
     }
     /**
      * The body is an ElasticSearch query in JSON format. Please see their <a href='https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html'>documentation</a> for details on the format and search options. The searchable object's format depends on on the type but mostly matches the resource from it's main endpoint. Exceptions include referenced objects (like user) being replaced with the full user resource to allow deeper searching.
-     * @summary Search an index
+     * @summary Search an index with no template
      * @param type The index type
      * @param query The query to be used for the search
      * @param size The number of documents returned per page
@@ -49405,6 +49515,79 @@ export class SearchApi {
         this.authentications.oauth2_client_credentials_grant.applyToRequest(requestOptions);
 
         this.authentications.oauth2_password_grant.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: PageResourceMapstringobject;  }>((resolve, reject) => {
+            request(requestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "PageResourceMapstringobject");
+                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * The body is an ElasticSearch query in JSON format. Please see their <a href='https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html'>documentation</a> for details on the format and search options. The searchable object's format depends on on the type but mostly matches the resource from it's main endpoint. Exceptions include referenced objects (like user) being replaced with the full user resource to allow deeper searching.
+     * @summary Search an index with a template
+     * @param type The index type
+     * @param template The index template
+     * @param query The query to be used for the search
+     * @param size The number of documents returned per page
+     * @param page The number of the page returned, starting with 1
+     */
+    public searchIndexWithTemplate (type: string, template: string, query?: any, size?: number, page?: number) : Promise<{ response: http.ClientResponse; body: PageResourceMapstringobject;  }> {
+        const localVarPath = this.basePath + '/search/index/{type}/{template}'
+            .replace('{' + 'type' + '}', String(type))
+            .replace('{' + 'template' + '}', String(template));
+        let queryParameters: any = {};
+        let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'type' is not null or undefined
+        if (type === null || type === undefined) {
+            throw new Error('Required parameter type was null or undefined when calling searchIndexWithTemplate.');
+        }
+
+        // verify required parameter 'template' is not null or undefined
+        if (template === null || template === undefined) {
+            throw new Error('Required parameter template was null or undefined when calling searchIndexWithTemplate.');
+        }
+
+        if (size !== undefined) {
+            queryParameters['size'] = ObjectSerializer.serialize(size, "number");
+        }
+
+        if (page !== undefined) {
+            queryParameters['page'] = ObjectSerializer.serialize(page, "number");
+        }
+
+
+        let useFormData = false;
+
+        let requestOptions: request.Options = {
+            method: 'POST',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: ObjectSerializer.serialize(query, "any")
+        };
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -58000,8 +58183,8 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * 
-     * @summary Removes a group from the system IF no resources are attached to it
+     * All groups listing this as the parent are also removed and users are in turn removed from this and those groups. This may result in users no longer being in this group's parent if they were not added to it directly as well.
+     * @summary Removes a group from the system
      * @param uniqueName The group unique name
      */
     public deleteGroup (uniqueName: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
@@ -58229,6 +58412,60 @@ export class UsersGroupsApi {
                     reject(error);
                 } else {
                     body = ObjectSerializer.deserialize(body, "GroupResource");
+                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Returns a list of ancestor groups in reverse order (parent, then grandparent, etc
+     * @summary Get group ancestors
+     * @param uniqueName The group unique name
+     */
+    public getGroupAncestors (uniqueName: string) : Promise<{ response: http.ClientResponse; body: Array<GroupResource>;  }> {
+        const localVarPath = this.basePath + '/users/groups/{unique_name}/ancestors'
+            .replace('{' + 'unique_name' + '}', String(uniqueName));
+        let queryParameters: any = {};
+        let headerParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'uniqueName' is not null or undefined
+        if (uniqueName === null || uniqueName === undefined) {
+            throw new Error('Required parameter uniqueName was null or undefined when calling getGroupAncestors.');
+        }
+
+
+        let useFormData = false;
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: Array<GroupResource>;  }>((resolve, reject) => {
+            request(requestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "Array<GroupResource>");
                     if (response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
@@ -58848,7 +59085,7 @@ export class UsersGroupsApi {
         });
     }
     /**
-     * 
+     * If adding/removing/changing parent, user membership in group/new parent groups may be modified. The parent being removed will remove members from this sub group unless they were added explicitly to the parent and the new parent will gain members unless they were already a part of it.
      * @summary Update a group
      * @param uniqueName The group unique name
      * @param groupResource The updated group
